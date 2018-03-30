@@ -1,4 +1,4 @@
-include README LICENSE
+include README.rst LICENSE
 include osqp_sources/CMakeLists.txt
 recursive-include osqp_sources/configure *
 recursive-include osqp_sources/src *
