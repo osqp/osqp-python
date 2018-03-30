@@ -178,11 +178,17 @@ packages = ['osqp',
             'osqp.codegen',
             'osqppurepy']
 
+# Read README.rst file
+def readme():
+    with open('README.rst') as f:
+        return f.read()
+    
 setup(name='osqp',
       version='0.3.0',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
+      long_description=readme(),
       package_dir={'osqp': 'module',
                    'osqppurepy': 'modulepurepy'},
       include_package_data=True,  # Include package data from MANIFEST.in
