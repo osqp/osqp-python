@@ -1,5 +1,5 @@
-Python interface for OSQP: The Operator Splitting QP Solver 
-===========================================================
+Python interface for OSQP
+=========================
 
 .. image:: https://travis-ci.org/oxfordcontrol/osqp-python.svg?branch=master
     :target: https://travis-ci.org/oxfordcontrol/osqp-python
