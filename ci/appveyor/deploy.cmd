@@ -3,6 +3,8 @@
 REM Needed to enable to define OSQP_DEPLOY_DIR within the file
 @setlocal enabledelayedexpansion
 
+IF "%APPVEYOR_REPO_TAG%" == "true" (
+
 REM Anaconda deploy
 cd %APPVEYOR_BUILD_FOLDER%\conda_recipe
 
@@ -27,3 +29,4 @@ IF "%TEST_PYPI%" == "true" (
 REM Close parenthesis for deploying only if it is a tagged commit
 )
 @echo off
+
