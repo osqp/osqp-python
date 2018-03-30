@@ -1,8 +1,13 @@
 Python interface for OSQP: The Operator Splitting QP Solver 
 ===========================================================
 
-|Build Status| |Build status| |codecov.io|
+.. image:: https://travis-ci.org/oxfordcontrol/osqp-python.svg?branch=master
+    :target: https://travis-ci.org/oxfordcontrol/osqp-python
 
+.. image:: https://ci.appveyor.com/api/projects/status/79kru1jue00xsr2l/branch/master?svg=true
+    :target: https://ci.appveyor.com/project/bstellato/osqp-python/
+
+	     
 Python wrapper for `OSQP <http://osqp.readthedocs.io/>`__: the Operator
 Splitting QP Solver.
 
@@ -25,10 +30,3 @@ Documentation
 -------------
 
 The interface is documented `here <http://osqp.readthedocs.io/>`__.
-
-.. |Build Status| image:: https://travis-ci.org/oxfordcontrol/OSQP.jl.svg?branch=master
-   :target: https://travis-ci.org/oxfordcontrol/OSQP.jl
-.. |Build status| image:: https://ci.appveyor.com/api/projects/status/t9t79ncgl9449k1a/branch/master?svg=true
-   :target: https://ci.appveyor.com/project/bstellato/osqp-jl-v2y0g/branch/master
-.. |codecov.io| image:: http://codecov.io/github/oxfordcontrol/OSQP.jl/coverage.svg?branch=master
-   :target: http://codecov.io/github/oxfordcontrol/OSQP.jl?branch=master
