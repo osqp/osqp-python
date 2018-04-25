@@ -3,7 +3,7 @@ import osqppurepy as osqppurepy
 import scipy.sparse as sparse
 import scipy as sp
 import numpy as np
-import mathprogbasepy as mpbpy
+#  import mathprogbasepy as mpbpy
 
 sp.random.seed(5)
 
@@ -53,14 +53,15 @@ norm_q = np.linalg.norm(q)
 # print(P.todense())
 
 osqp_opts = {'rho': 0.001,
-             'polish': True,
+             'adaptive_rho_interval': 100,
+             #  'polish': True,
              'check_termination': 1,
              'scaling': 15}
 
 
-# GUROBI
-qp = mpbpy.QuadprogProblem(P, q, A, l, u)
-res_gurobi = qp.solve(solver=mpbpy.GUROBI, verbose=True)
+#  # GUROBI
+#  qp = mpbpy.QuadprogProblem(P, q, A, l, u)
+#  res_gurobi = qp.solve(solver=mpbpy.GUROBI, verbose=True)
 
 # OSQP
 model = osqp.OSQP()
