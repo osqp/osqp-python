@@ -165,7 +165,7 @@ class settings(object):
         self.warm_start = kwargs.pop('warm_start', True)
         self.polish = kwargs.pop('polish', False)
         self.polish_refine_iter = kwargs.pop('polish_refine_iter', 3)
-        self.adaptive_rho = kwargs.pop('adaptive_rho', False)
+        self.adaptive_rho = kwargs.pop('adaptive_rho', True)
         self.adaptive_rho_interval = kwargs.pop('adaptive_rho_interval', 200)
         self.adaptive_rho_tolerance = kwargs.pop('adaptive_rho_tolerance', 5)
         self.adaptive_rho_fraction = kwargs.pop('adaptive_rho_fraction', 0.7)

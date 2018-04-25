@@ -1,0 +1,2 @@
+# Ignore all static libraries
+*.a
