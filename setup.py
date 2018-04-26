@@ -103,7 +103,7 @@ for f in cfiles:  # Copy C files
 # List with OSQP H files
 hfiles = [os.path.join(osqp_dir, 'include', f)
           for f in os.listdir(os.path.join(osqp_dir, 'include'))
-          if f.endswith('.h') and f not in ('glob_opts.h', 'cs.h',
+          if f.endswith('.h') and f not in ('osqp_configure.h', 'cs.h',
                                             'ctrlc.h', 'polish.h',
                                             'lin_sys.h')]
 hfiles += [os.path.join(suitesparse_dir, f)
@@ -120,7 +120,7 @@ for f in hfiles:  # Copy header files
     copy(f, osqp_codegen_sources_h_dir)
 
 # List with OSQP configure files
-configure_files = [os.path.join(osqp_dir, 'configure', 'glob_opts.h.in')]
+configure_files = [os.path.join(osqp_dir, 'configure', 'osqp_configure.h.in')]
 osqp_codegen_sources_configure_dir = os.path.join(osqp_codegen_sources_dir, 'configure')
 if os.path.exists(osqp_codegen_sources_configure_dir):  # Create destination directory
     sh.rmtree(osqp_codegen_sources_configure_dir)
@@ -182,7 +182,7 @@ packages = ['osqp',
 def readme():
     with open('README.rst') as f:
         return f.read()
-    
+
 setup(name='osqp',
       version='0.3.0',
       author='Bartolomeo Stellato, Goran Banjac',

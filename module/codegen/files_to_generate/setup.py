@@ -10,7 +10,7 @@ from subprocess import call
 '''
 Define macros
 '''
-# Pass EMBEDDED flag to cmake to generate glob_opts.h file
+# Pass EMBEDDED flag to cmake to generate osqp_configure.h file
 cmake_args = []
 embedded_flag = EMBEDDED_FLAG
 cmake_args += ['-DEMBEDDED:INT=%i' % embedded_flag]
