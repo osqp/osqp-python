@@ -1,4 +1,5 @@
 from __future__ import print_function
+import distutils.sysconfig as sysconfig
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from shutil import copyfile, copy
@@ -31,6 +32,8 @@ define_macros += [('PYTHON', None)]
 # Pass python version to cmake
 py_version = "%i.%i" % sys.version_info[:2]
 cmake_args += ['-DPYTHON_VER_NUM=%s' % py_version]
+cmake_args += ['-DPYTHON_INCLUDE_DIR=%s' % sysconfig.get_python_inc()]
+cmake_args += ['-DPYTHON_LIBRARY=%s' % sysconfig.get_config_var('LIBDIR')]
 
 
 # Define osqp and suitesparse directories
