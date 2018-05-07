@@ -1,10 +1,20 @@
+import distutils.sysconfig as sysconfig
 from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 from platform import system
-from numpy import get_include
 from glob import glob
 import os
 import shutil as sh
 from subprocess import call
+
+
+class build_ext_osqp(build_ext):
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
 
 '''
@@ -14,6 +24,8 @@ Define macros
 cmake_args = []
 embedded_flag = EMBEDDED_FLAG
 cmake_args += ['-DEMBEDDED:INT=%i' % embedded_flag]
+cmake_args += ['-DPYTHON_INCLUDE_DIR=%s' % sysconfig.get_python_inc()]
+cmake_args += ['-DPYTHON_LIBRARY=%s' % sysconfig.get_config_var('LIBDIR')]
 
 # Pass Python flag to compile interface
 define_macros = []
@@ -45,8 +57,7 @@ if system() == 'Linux':
 '''
 Include directory
 '''
-include_dirs = [get_include(),                  # Numpy includes
-                os.path.join('..', 'include')]  # OSQP includes
+include_dirs = [os.path.join('..', 'include')]  # OSQP includes
 
 '''
 Source files
@@ -69,6 +80,8 @@ setup(name='PYTHON_EXT_NAME',
       author_email='bartolomeo.stellato@gmail.com',
       description='This is the Python module for embedded OSQP: ' +
                   'Operator Splitting solver for Quadratic Programs.',
+      setup_requires=["numpy >= 1.7"],
       install_requires=["numpy >= 1.7", "future"],
       license='Apache 2.0',
+      cmdclass={'build_ext': build_ext_osqp},
       ext_modules=[PYTHON_EXT_NAME])

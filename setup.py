@@ -3,7 +3,6 @@ import distutils.sysconfig as sysconfig
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 from shutil import copyfile, copy
-from numpy import get_include
 from glob import glob
 import shutil as sh
 from subprocess import call, check_output
@@ -44,7 +43,6 @@ suitesparse_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'suitesparse')
 
 # Interface files
 include_dirs = [
-    get_include(),                                      # Numpy directories
     os.path.join(osqp_dir, 'include'),                  # osqp.h
     # suitesparse_ldl headers to extract workspace for codegen
     os.path.join(suitesparse_dir),
@@ -138,6 +136,13 @@ for f in configure_files:  # Copy configure files
 
 
 class build_ext_osqp(build_ext):
+    def finalize_options(self):
+        build_ext.finalize_options(self)
+        # Prevent numpy from thinking it is still in its setup process:
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
+
     def build_extensions(self):
         # Compile OSQP using CMake
 
@@ -185,7 +190,7 @@ packages = ['osqp',
 def readme():
     with open('README.rst') as f:
         return f.read()
-    
+
 setup(name='osqp',
       version='0.3.0',
       author='Bartolomeo Stellato, Goran Banjac',
@@ -195,6 +200,7 @@ setup(name='osqp',
       package_dir={'osqp': 'module',
                    'osqppurepy': 'modulepurepy'},
       include_package_data=True,  # Include package data from MANIFEST.in
+      setup_requires=["numpy >= 1.7"],
       install_requires=["numpy >= 1.7", "scipy >= 0.13.2", "future"],
       license='Apache 2.0',
       url="http://osqp.readthedocs.io/",
