@@ -25,6 +25,9 @@ __pycache__/
 # C extensions
 *.so
 
+# Pytest
+.pytest_cache/
+
 # Distribution / packaging
 .Python
 env/
