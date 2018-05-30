@@ -165,7 +165,7 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     sys.stdout.flush()
     current_dir = os.getcwd()
     os.chdir(target_src_dir)
-    call(['python', 'setup.py', '--quiet', 'build_ext', '--inplace'])
+    call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'])
     print("[done]")
 
     # Copy compiled solver
