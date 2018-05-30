@@ -8,6 +8,7 @@ for PYBIN in /opt/python/*/bin; do
 
 	# Install and link cmake
 	${PYBIN}/pip install cmake
+	rm -rf /usr/local/bin/cmake
 	ln -s $PYBIN/cmake /usr/local/bin/cmake
 
 	# Install python dependencies
@@ -23,7 +24,10 @@ for PYBIN in /opt/python/*/bin; do
 
 	# Install package and test
 	${PYBIN}/pip install osqp --no-index -f /io/dist
-	(cd /io/; ${PYBIN}/pytest -x)
+
+	# Test
+	cd /io/
+	${PYBIN}/pytest
 
 done
 
