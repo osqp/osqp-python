@@ -24,7 +24,8 @@ env:
 install: bash ci/travis/install.sh
 script:
  - bash ci/travis/script.sh
- - bash ci/travis/manylinux.sh
+ - docker pull $MANYLINUX_DOCKER_IMAGE
+ - docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh
 
 deploy:
   # Deploy on tags
