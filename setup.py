@@ -200,7 +200,7 @@ setup(name='osqp',
       package_dir={'osqp': 'module',
                    'osqppurepy': 'modulepurepy'},
       include_package_data=True,  # Include package data from MANIFEST.in
-      setup_requires=["numpy >= 1.7", "cmake"],
+      setup_requires=["numpy >= 1.7"],
       install_requires=["numpy >= 1.7", "scipy >= 0.13.2", "future"],
       license='Apache 2.0',
       url="http://osqp.readthedocs.io/",
