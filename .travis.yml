@@ -25,7 +25,7 @@ install: bash ci/travis/install.sh
 script:
  - bash ci/travis/script.sh
  - docker pull $MANYLINUX_DOCKER_IMAGE
- - docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh
+ - docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh $PYTHON_VERSION
 
 deploy:
   # Deploy on tags

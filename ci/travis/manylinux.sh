@@ -3,10 +3,14 @@ set -e -x
 
 # Package manylinux image
 
+# Get original python version
+PYTHON_VERSION=$1
+
 # Create wheels
 for PYBIN in /opt/python/*/bin; do
 
-	if [[ ${PYBIN} != *"34"* ]]; then
+	# Create wheel only for current python version
+	if [[ ${PYBIN} = *"${PYTHON_VERSION//.}"* ]]; then
 
 		# Install and link cmake
 		${PYBIN}/pip install cmake
