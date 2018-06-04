@@ -127,12 +127,6 @@ os.makedirs(osqp_codegen_sources_configure_dir)
 for f in configure_files:  # Copy configure files
     copy(f, osqp_codegen_sources_configure_dir)
 
-# List of files to generate  (No longer needed. It is in MANIFEST.in)
-#  files_to_generate = glob(os.path.join('module', 'codegen',
-                                      #  'files_to_generate', '*.*'))
-
-
-
 class build_ext_osqp(build_ext):
     def finalize_options(self):
         build_ext.finalize_options(self)
