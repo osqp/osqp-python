@@ -165,7 +165,7 @@ class settings(object):
         self.warm_start = kwargs.pop('warm_start', True)
         self.polish = kwargs.pop('polish', False)
         self.polish_refine_iter = kwargs.pop('polish_refine_iter', 3)
-        self.adaptive_rho = kwargs.pop('adaptive_rho', False)
+        self.adaptive_rho = kwargs.pop('adaptive_rho', True)
         self.adaptive_rho_interval = kwargs.pop('adaptive_rho_interval', 200)
         self.adaptive_rho_tolerance = kwargs.pop('adaptive_rho_tolerance', 5)
         self.adaptive_rho_fraction = kwargs.pop('adaptive_rho_fraction', 0.7)
@@ -239,7 +239,7 @@ class info(object):
     polish_time     - time taken for polish phase (seconds)
     run_time        - total time  (seconds)
     rho_updates     - number of rho updates
-    rho_estimate    - optimal rho estimate 
+    rho_estimate    - optimal rho estimate
     """
     def __init__(self):
         self.iter = 0
@@ -250,7 +250,7 @@ class info(object):
         self.rho_updates = 0.0
 
 
-class pol(object):
+class polish(object):
     """
     Polishing structure containing active constraints at the solution
 
@@ -327,7 +327,7 @@ class OSQP(object):
     work    - workspace
     """
     def __init__(self):
-        self._version = "0.3.0"
+        self._version = "0.3.1"
 
     @property
     def version(self):
@@ -872,7 +872,7 @@ class OSQP(object):
 
         # No all checks managed to pass. Problem not dual infeasible
         return False
-    
+
     def compute_rho_estimate(self):
         # Iterates
         x = self.work.x
@@ -896,17 +896,17 @@ class OSQP(object):
         # Compute new rho
         new_rho = self.work.settings.rho * np.sqrt(pri_res/(dua_res + 1e-10))
         return min(max(new_rho, RHO_MIN), RHO_MAX)
-    
+
     def adapt_rho(self):
         """
         Adapt rho value based on current primal and dual residuals
         """
-        # Compute new rho 
+        # Compute new rho
         rho_new = self.compute_rho_estimate()
 
         # Update rho estimate
         self.work.info.rho_estimate = rho_new
-        
+
         # Settings
         adaptive_rho_tolerance = self.work.settings.adaptive_rho_tolerance
 
@@ -917,7 +917,7 @@ class OSQP(object):
             self.update_rho(rho_new)
             # Update rho updates count
             self.work.info.rho_updates += 1
-    
+
     def reset_info(self, info):
         """
         Reset information after problem updates
@@ -1157,7 +1157,7 @@ class OSQP(object):
         self.work.info = info()
 
         # Polishing structure
-        self.work.pol = pol()
+        self.work.pol = polish()
 
         # End timer
         self.work.info.setup_time = time.time() - self.work.timer

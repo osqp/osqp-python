@@ -33,4 +33,4 @@ python setup.py install
 
 # Test OSQP Python
 cd ${TRAVIS_BUILD_DIR}
-pytest
+python -m pytest

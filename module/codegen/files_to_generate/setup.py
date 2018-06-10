@@ -20,12 +20,10 @@ class build_ext_osqp(build_ext):
 '''
 Define macros
 '''
-# Pass EMBEDDED flag to cmake to generate glob_opts.h file
+# Pass EMBEDDED flag to cmake to generate osqp_configure.h file
 cmake_args = []
 embedded_flag = EMBEDDED_FLAG
 cmake_args += ['-DEMBEDDED:INT=%i' % embedded_flag]
-cmake_args += ['-DPYTHON_INCLUDE_DIR=%s' % sysconfig.get_python_inc()]
-cmake_args += ['-DPYTHON_LIBRARY=%s' % sysconfig.get_config_var('LIBDIR')]
 
 # Pass Python flag to compile interface
 define_macros = []
@@ -75,7 +73,7 @@ PYTHON_EXT_NAME = Extension('PYTHON_EXT_NAME',
 
 
 setup(name='PYTHON_EXT_NAME',
-      version='0.3.0',
+      version='0.3.1',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='This is the Python module for embedded OSQP: ' +

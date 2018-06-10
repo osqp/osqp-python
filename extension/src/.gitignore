@@ -1,1 +1,2 @@
-libosqpstatic.*
+# Ignore all static libraries
+*.a

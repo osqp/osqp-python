@@ -1,10 +1,10 @@
 package:
   name: osqp
-  version: "0.3.0"
+  version: "0.3.1"
 
 source:
   git_url: https://github.com/oxfordcontrol/osqp-python.git
-  git_tag: v0.3.0
+  git_tag: v0.3.1
 
 
 requirements:
