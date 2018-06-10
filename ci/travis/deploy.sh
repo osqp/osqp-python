@@ -31,43 +31,44 @@ anaconda -t $ANACONDA_TOKEN upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcont
 echo "Successfully deployed to Anaconda.org."
 
 
-# NB: Binary Linux packages not supported on Pypi
-cd ${TRAVIS_BUILD_DIR}
-
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-
-	echo "Creating pip binary package..."
-	python setup.py bdist_wheel
-
-
-	echo "Deploying to Pypi..."
-	if [[ "$TEST_PYPI" == "true" ]]; then
-	    twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*     # Test pypi repo
-	else
-	    twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*         # Main pypi repo
-	fi
-	echo "Successfully deployed to Pypi"
-
-else if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-
-	# Create manylinux wheel
-	echo "Creating pip manylinux package..."
-
-	# Install docker
-	docker pull $MANYLINUX_DOCKER_IMAGE
-
-	# Run docker image
-	docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh
-
-	echo "Deploying to Pypi..."
-	if [[ "$TEST_PYPI" == "true" ]]; then
-		twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*     # Test pypi repo
-	else
-		twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*         # Main pypi repo
-	fi
-	echo "Successfully deployed to Pypi"
-
-fi
-fi
+# Removed pypi deployment (replaced by repository oxfordcontrol/osqp-wheels)
+# # NB: Binary Linux packages not supported on Pypi
+# cd ${TRAVIS_BUILD_DIR}
+#
+# if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+#
+#         echo "Creating pip binary package..."
+#         python setup.py bdist_wheel
+#
+#
+#         echo "Deploying to Pypi..."
+#         if [[ "$TEST_PYPI" == "true" ]]; then
+#             twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*     # Test pypi repo
+#         else
+#             twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*         # Main pypi repo
+#         fi
+#         echo "Successfully deployed to Pypi"
+#
+# else if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+#
+#         # Create manylinux wheel
+#         echo "Creating pip manylinux package..."
+#
+#         # Install docker
+#         docker pull $MANYLINUX_DOCKER_IMAGE
+#
+#         # Run docker image
+#         docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh
+#
+#         echo "Deploying to Pypi..."
+#         if [[ "$TEST_PYPI" == "true" ]]; then
+#                 twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*     # Test pypi repo
+#         else
+#                 twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*         # Main pypi repo
+#         fi
+#         echo "Successfully deployed to Pypi"
+#
+# fi
+# fi
 
 exit 0

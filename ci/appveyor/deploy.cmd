@@ -14,17 +14,18 @@ if errorlevel 1 exit /b 1
 call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol
 if errorlevel 1 exit /b 1
 
-REM pypi deploy
-cd %APPVEYOR_BUILD_FOLDER%
-call activate test-environment
-python setup.py bdist_wheel
-IF "%TEST_PYPI%" == "true" (
-    twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
-    if errorlevel 1 exit /b 1
-) ELSE (
-    twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
-    if errorlevel 1 exit /b 1
-)
+REM  Removed pypi deployment (replaced by repository oxfordcontrol/osqp-wheels)
+REM  REM pypi deploy
+REM  cd %APPVEYOR_BUILD_FOLDER%
+REM  call activate test-environment
+REM  python setup.py bdist_wheel
+REM  IF "%TEST_PYPI%" == "true" (
+REM      twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
+REM      if errorlevel 1 exit /b 1
+REM  ) ELSE (
+REM      twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
+REM      if errorlevel 1 exit /b 1
+REM  )
 
 REM Close parenthesis for deploying only if it is a tagged commit
 )
