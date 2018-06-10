@@ -84,8 +84,9 @@ endif()
 
 # Generate header file with the global options
 # ---------------------------------------------
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure/glob_opts.h.in
-               ${CMAKE_CURRENT_SOURCE_DIR}/include/glob_opts.h)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure/osqp_configure.h.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/include/osqp_configure.h
+               NEWLINE_STYLE LF)
 
 # Include header directory
 # ----------------------------------------------
@@ -111,6 +112,7 @@ set(
     include/auxil.h
     include/constants.h
     include/glob_opts.h
+    include/osqp_configure.h
     include/lin_alg.h
     include/osqp.h
     include/types.h

@@ -13,7 +13,7 @@ hash -r
 source activate testenv
 
 
-# Create shared library archive for Bintray only if Python 3.6 
+# Create shared library archive for Bintray only if Python 3.6
 # NB: need to do it only once
 if [[ "$PYTHON_VERSION" == "3.6" ]]; then
 echo "Creating Bintray package..."
@@ -48,11 +48,16 @@ if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
 	fi
 	echo "Successfully deployed to Pypi"
 
-else if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.6" ]]; then
-	# Choose one python version to upload source distribution (3.6)
-	echo "Creating pip source package..."
-	python setup.py sdist
+else if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
 
+	# Create manylinux wheel
+	echo "Creating pip manylinux package..."
+
+	# Install docker
+	docker pull $MANYLINUX_DOCKER_IMAGE
+
+	# Run docker image
+	docker run --rm -v `pwd`:/io $MANYLINUX_DOCKER_IMAGE /io/ci/travis/manylinux.sh
 
 	echo "Deploying to Pypi..."
 	if [[ "$TEST_PYPI" == "true" ]]; then
