@@ -9,7 +9,7 @@ python setup.py install
 
 :: Test python interface
 cd %APPVEYOR_BUILD_FOLDER%
-pytest
+python -m pytest
 if errorlevel 1 exit /b 1
 
 @echo off
