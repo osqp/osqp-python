@@ -13,11 +13,6 @@ hash -r
 source activate testenv
 
 
-# Create shared library archive for Bintray only if Python 3.6
-# NB: need to do it only once
-if [[ "$PYTHON_VERSION" == "3.6" ]]; then
-echo "Creating Bintray package..."
-
 
 # Anaconda
 cd ${TRAVIS_BUILD_DIR}/conda_recipe
@@ -68,7 +63,6 @@ echo "Successfully deployed to Anaconda.org."
 #         fi
 #         echo "Successfully deployed to Pypi"
 #
-# fi
 # fi
 
 exit 0
