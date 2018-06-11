@@ -176,6 +176,7 @@ _osqp = Extension('osqp._osqp',
 
 packages = ['osqp',
             'osqp.codegen',
+            'osqp.tests',
             'osqppurepy']
 
 # Read README.rst file
