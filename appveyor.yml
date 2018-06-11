@@ -27,9 +27,6 @@ install:
 test_script:
   - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\script.cmd"
 
-deploy_script:
-  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\deploy.cmd"
-
 # on_finish:
 #   # Uncomment for remote desktop debug
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))

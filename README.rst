@@ -7,7 +7,7 @@ Python interface for OSQP
 .. image:: https://ci.appveyor.com/api/projects/status/79kru1jue00xsr2l/branch/master?svg=true
     :target: https://ci.appveyor.com/project/bstellato/osqp-python/
 
-	     
+
 Python wrapper for `OSQP <http://osqp.readthedocs.io/>`__: the Operator
 Splitting QP Solver.
 
@@ -30,3 +30,9 @@ Documentation
 -------------
 
 The interface is documented `here <http://osqp.readthedocs.io/>`__.
+
+
+Packaging
+---------
+This repository just performs the tests and does not build any python package.
+We use the external repositories for [conda recipes](https://github.com/oxfordcontrol/osqp-recipes) and [python wheels](https://github.com/oxfordcontrol/osqp-wheels).

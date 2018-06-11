@@ -16,12 +16,3 @@ env:
 install: bash ci/travis/install.sh
 script:
  - bash ci/travis/script.sh
-
-deploy:
-  # Deploy on tags
-  - provider: script
-    script: "bash $TRAVIS_BUILD_DIR/ci/travis/deploy.sh"
-    on:
-      tags: true
-    skip_cleanup: true
-
