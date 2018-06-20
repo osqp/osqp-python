@@ -29,7 +29,7 @@ is defined by a positive semidefinite matrix ``P in S^n_+`` and vector
 Documentation
 -------------
 
-The interface is documented `here <http://osqp.readthedocs.io/>`__.
+The interface is documented `here <https://osqp.org/>`__.
 
 
 Packaging
