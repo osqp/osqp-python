@@ -8,7 +8,7 @@ Python interface for OSQP
     :target: https://ci.appveyor.com/project/bstellato/osqp-python/
 
 
-Python wrapper for `OSQP <http://osqp.readthedocs.io/>`__: the Operator
+Python wrapper for `OSQP <https://osqp.org/>`__: the Operator
 Splitting QP Solver.
 
 The OSQP (Operator Splitting Quadratic Program) solver is a numerical

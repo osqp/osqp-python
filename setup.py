@@ -196,7 +196,7 @@ setup(name='osqp',
       setup_requires=["numpy >= 1.7"],
       install_requires=["numpy >= 1.7", "scipy >= 0.13.2", "future"],
       license='Apache 2.0',
-      url="http://osqp.readthedocs.io/",
+      url="https://osqp.org/",
       cmdclass={'build_ext': build_ext_osqp},
       packages=packages,
       ext_modules=[_osqp])
