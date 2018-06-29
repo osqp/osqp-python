@@ -21,12 +21,11 @@ lib_subdir = []
 if system() == 'Windows':
     if sys.version_info.major == 3:
       cmake_args += ['-G', 'Visual Studio 14 2015 Win64']
-      cmake_build_flags += ['--config', 'Release']
-      lib_name = 'osqpstatic.lib'
-      lib_subdir = ['Release']
     else:
-      cmake_args += ['-G', 'MinGW Makefiles']
-      lib_name = 'libosqpstatic.a'
+      cmake_args += ['-G', 'Visual Studio 9 2008 Win64']
+    cmake_build_flags += ['--config', 'Release']
+    lib_name = 'osqpstatic.lib'
+    lib_subdir = ['Release']
 
 else:  # Linux or Mac
     cmake_args += ['-G', 'Unix Makefiles']
