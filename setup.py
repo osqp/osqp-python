@@ -13,14 +13,24 @@ import sys
 
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
+cmake_build_flags = []
 define_macros = []
+lib_subdir = []
 
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
-    cmake_args += ['-G', 'MinGW Makefiles']
+    if sys.version_info.major == 3:
+      cmake_args += ['-G', 'Visual Studio 14 2015 Win64']
+      cmake_build_flags += ['--config', 'Release']
+      lib_name = 'osqpstatic.lib'
+      lib_subdir = ['Release']
+    else:
+      cmake_args += ['-G', 'MinGW Makefiles']
+      lib_name = 'libosqpstatic.a'
 
 else:  # Linux or Mac
     cmake_args += ['-G', 'Unix Makefiles']
+    lib_name = 'libosqpstatic.a'
 
 # Pass Python option to CMake and Python interface compilation
 cmake_args += ['-DPYTHON=ON']
@@ -65,9 +75,7 @@ if system() == 'Windows' and sys.version_info[0] == 3:
     libraries += ['legacy_stdio_definitions']
 
 # Add OSQP compiled library
-lib_ext = '.a'
-extra_objects = [os.path.join('extension', 'src', 'libosqp%s' % lib_ext)]
-
+extra_objects = [os.path.join('extension', 'src', lib_name)]
 
 '''
 Copy C sources for code generation
@@ -149,14 +157,15 @@ class build_ext_osqp(build_ext):
 
         # Compile static library with CMake
         call(['cmake'] + cmake_args + ['..'])
-        call(['cmake', '--build', '.', '--target', 'osqpstatic'])
+        call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
+             cmake_build_flags)
 
         # Change directory back to the python interface
         os.chdir(current_dir)
 
         # Copy static library to src folder
-        lib_name = 'libosqp%s' % lib_ext
-        lib_origin = os.path.join(osqp_build_dir, 'out', lib_name)
+        lib_origin = [osqp_build_dir, 'out'] + lib_subdir + [lib_name]
+        lib_origin = os.path.join(*lib_origin)
         copyfile(lib_origin, os.path.join('extension', 'src', lib_name))
 
         # Run extension

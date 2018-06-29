@@ -1,0 +1,42 @@
+{% set data = load_setup_py_data() %}
+
+package:
+  name: osqp
+  version: {{ data['version'] }}
+
+source:
+  path: ../
+
+build:
+  number: 0
+  script: {{ PYTHON }} setup.py install --single-version-externally-managed --record record.txt
+
+requirements:
+  host:
+    - python {{ python }}
+    - numpy {{ numpy }}
+    - setuptools
+  build:
+    - {{ compiler('c') }}
+    - cmake
+  run:
+    - python
+    - {{ pin_compatible('numpy') }}
+    - scipy
+    - future
+
+test:
+  requires:
+    - pytest
+    - cmake
+  commands:
+    - python -m pytest --pyargs osqp.tests
+
+about:
+  home: https://osqp.org
+  license: Apache, Version 2
+  license_family: Apache
+  license_file: LICENSE
+  summary: 'Python interface for OSQP: the Operator Splitting QP Solver.'
+  doc_url: https://osqp.org
+  dev_url: https://github.com/oxfordcontrol/osqp-python
