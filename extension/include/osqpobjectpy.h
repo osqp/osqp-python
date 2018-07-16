@@ -44,6 +44,9 @@ static PyObject * OSQP_solve(OSQP *self)
 		// Create status object
 		PyObject * status;
 
+        // Create obj_val object
+		PyObject * obj_val;
+
 		// Create solution objects
 		PyObject * x, *y, *prim_inf_cert, *dual_inf_cert;
 
@@ -115,22 +118,29 @@ static PyObject * OSQP_solve(OSQP *self)
 		// Store status string
 		status = PyUnicode_FromString(self->workspace->info->status);
 
+        // Store obj_val
+        if (self->workspace->info->status_val == OSQP_NON_CVX) {	// non convex
+		    obj_val = PyFloat_FromDouble(Py_NAN);
+        } else {
+            obj_val = PyFloat_FromDouble(self->workspace->info->obj_val);
+        }
+
 		// Create info_list
 #ifdef PROFILING
 #ifdef DLONG
 
 #ifdef DFLOAT
-		argparse_string = "LOLLfffffffLf";
+		argparse_string = "LOLLOffffffLf";
 #else
-		argparse_string = "LOLLdddddddLd";
+		argparse_string = "LOLLOddddddLd";
 #endif
 
 #else
 
 #ifdef DFLOAT
-		argparse_string = "iOiifffffffif";
+		argparse_string = "iOiiOffffffif";
 #else
-		argparse_string = "iOiidddddddid";
+		argparse_string = "iOiiOddddddid";
 #endif
 
 #endif
@@ -140,7 +150,7 @@ static PyObject * OSQP_solve(OSQP *self)
 				status,
 				self->workspace->info->status_val,
 				self->workspace->info->status_polish,
-				self->workspace->info->obj_val,
+                obj_val,
 				self->workspace->info->pri_res,
 				self->workspace->info->dua_res,
 				self->workspace->info->setup_time,
@@ -155,17 +165,17 @@ static PyObject * OSQP_solve(OSQP *self)
 #ifdef DLONG
 
 #ifdef DFLOAT
-		argparse_string = "LOLLfffLf";
+		argparse_string = "LOLLOffLf";
 #else
-		argparse_string = "LOLLdddLd";
+		argparse_string = "LOLLOddLd";
 #endif
 
 #else
 
 #ifdef DFLOAT
-		argparse_string = "iOiifffif";
+		argparse_string = "iOiiOffif";
 #else
-		argparse_string = "iOiidddid";
+		argparse_string = "iOiiOddid";
 #endif
 
 #endif
@@ -175,7 +185,7 @@ static PyObject * OSQP_solve(OSQP *self)
 				status,
 				self->workspace->info->status_val,
 				self->workspace->info->status_polish,
-				self->workspace->info->obj_val,
+				obj_val,
 				self->workspace->info->pri_res,
 				self->workspace->info->dua_res,
 				self->workspace->info->rho_updates,
@@ -342,9 +352,9 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
 
     if(!strcmp(constant_name, "OSQP_NAN")){
         #ifdef DFLOAT
-        return Py_BuildValue("f", OSQP_NAN);
+        return Py_BuildValue("f", Py_NAN);
         #else
-        return Py_BuildValue("d", OSQP_NAN);
+        return Py_BuildValue("d", Py_NAN);
         #endif
     }
 
@@ -352,7 +362,7 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
         return Py_BuildValue("i", OSQP_SOLVED);
     }
 
-		if(!strcmp(constant_name, "OSQP_SOLVED_INACCURATE")){
+	if(!strcmp(constant_name, "OSQP_SOLVED_INACCURATE")){
         return Py_BuildValue("i", OSQP_SOLVED_INACCURATE);
     }
 
@@ -364,20 +374,24 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
         return Py_BuildValue("i", OSQP_PRIMAL_INFEASIBLE);
     }
 
-		if(!strcmp(constant_name, "OSQP_PRIMAL_INFEASIBLE_INACCURATE")){
-				return Py_BuildValue("i", OSQP_PRIMAL_INFEASIBLE_INACCURATE);
-		}
+	if(!strcmp(constant_name, "OSQP_PRIMAL_INFEASIBLE_INACCURATE")){
+			return Py_BuildValue("i", OSQP_PRIMAL_INFEASIBLE_INACCURATE);
+	}
 
     if(!strcmp(constant_name, "OSQP_DUAL_INFEASIBLE")){
         return Py_BuildValue("i", OSQP_DUAL_INFEASIBLE);
     }
 
-		if(!strcmp(constant_name, "OSQP_DUAL_INFEASIBLE_INACCURATE")){
-				return Py_BuildValue("i", OSQP_DUAL_INFEASIBLE_INACCURATE);
-		}
+	if(!strcmp(constant_name, "OSQP_DUAL_INFEASIBLE_INACCURATE")){
+		return Py_BuildValue("i", OSQP_DUAL_INFEASIBLE_INACCURATE);
+	}
 
     if(!strcmp(constant_name, "OSQP_MAX_ITER_REACHED")){
         return Py_BuildValue("i", OSQP_MAX_ITER_REACHED);
+    }
+
+    if(!strcmp(constant_name, "OSQP_NON_CVX")){
+        return Py_BuildValue("i", OSQP_NON_CVX);
     }
 
     if(!strcmp(constant_name, "OSQP_TIME_LIMIT_REACHED")){
