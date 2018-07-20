@@ -19,6 +19,7 @@ OSQP_SOLVED = 1
 OSQP_MAX_ITER_REACHED = -2
 OSQP_PRIMAL_INFEASIBLE = -3
 OSQP_DUAL_INFEASIBLE = -4
+OSQP_NON_CVX = -7
 OSQP_UNSOLVED = -10
 
 # Parameter bounds
@@ -35,7 +36,7 @@ PRINT_INTERVAL = 200
 OSQP_INFTY = 1e+20
 
 # OSQP Nan
-OSQP_NAN = 1e+20  # Just as placeholder. Not real value
+OSQP_NAN = np.nan
 
 # Linear system solver options
 SUITESPARSE_LDL_SOLVER = 0
@@ -619,6 +620,8 @@ class OSQP(object):
             self.work.info.status = "dual infeasible inaccurate"
         elif status == OSQP_MAX_ITER_REACHED:
             self.work.info.status = "maximum iterations reached"
+        elif status == OSQP_NON_CVX:
+            self.work.info.status = "problem non convex"
 
     def cold_start(self):
         """
@@ -999,6 +1002,12 @@ class OSQP(object):
             eps_rel *= 10
             eps_prim_inf *= 10
             eps_dual_inf *= 10
+
+        # If residuals are too large, the problem is probably non convex
+        if (self.work.info.pri_res > 2*OSQP_INFTY) or (self.work.info.dua_res > 2*OSQP_INFTY):
+            self.work.info.status_val = OSQP_NON_CVX
+            self.work.info.obj_val = OSQP_NAN
+            return 1
 
         if self.work.data.m == 0:  # No constraints -> always  primal feasible
             pri_check = 1
