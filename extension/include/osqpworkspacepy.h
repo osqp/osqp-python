@@ -146,6 +146,7 @@
      npy_intp Anzmax      = (npy_intp)data->A->p[data->A->n];
      npy_intp m           = (npy_intp)(data->m);
      npy_intp m_plus_n    = (npy_intp)(data->m + data->n);
+     npy_intp m_plus_n_x3 = 3*m_plus_n;
 
      int float_type = get_float_type();
      int int_type   = get_int_type();
@@ -169,7 +170,7 @@
      PyObject *D         = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->D);
      PyObject *etree     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->etree);
      PyObject *Lnz_vec   = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Lnz);
-     PyObject *iwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->iwork);
+     PyObject *iwork     = PyArray_SimpleNewFromData(1, &m_plus_n_x3, int_type,   solver->iwork);
      PyObject *bwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->bwork);
      PyObject *fwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->fwork);
      

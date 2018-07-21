@@ -144,19 +144,17 @@ def write_linsys_solver(f, linsys_solver, name, embedded_flag):
     f.write("c_float linsys_solver_bp[%d];\n" % (len(linsys_solver['Dinv'])))
 
     if embedded_flag != 1:
-        write_vec(f, linsys_solver['Pdiag_idx'],
-                  'linsys_solver_Pdiag_idx', 'c_int')
-        write_mat(f, linsys_solver['KKT'], 'linsys_solver_KKT')
-        write_vec(f, linsys_solver['PtoKKT'], 'linsys_solver_PtoKKT', 'c_int')
-        write_vec(f, linsys_solver['AtoKKT'], 'linsys_solver_AtoKKT', 'c_int')
-        write_vec(f, linsys_solver['rhotoKKT'],
-                  'linsys_solver_rhotoKKT', 'c_int')
-        write_vec(f, linsys_solver['Lnz'], 'linsys_solver_Lnz', 'c_int')
-        write_vec(f, linsys_solver['Y'], 'linsys_solver_Y', 'c_float')
-        write_vec(f, linsys_solver['Pattern'],
-                  'linsys_solver_Pattern', 'c_int')
-        write_vec(f, linsys_solver['Flag'], 'linsys_solver_Flag', 'c_int')
-        write_vec(f, linsys_solver['Parent'], 'linsys_solver_Parent', 'c_int')
+        write_vec(f, linsys_solver['Pdiag_idx'], 'linsys_solver_Pdiag_idx', 'c_int')
+        write_mat(f, linsys_solver['KKT'],       'linsys_solver_KKT')
+        write_vec(f, linsys_solver['PtoKKT'],    'linsys_solver_PtoKKT',    'c_int')
+        write_vec(f, linsys_solver['AtoKKT'],    'linsys_solver_AtoKKT',    'c_int')
+        write_vec(f, linsys_solver['rhotoKKT'],  'linsys_solver_rhotoKKT',  'c_int')
+        write_vec(f, linsys_solver['D'],         'linsys_solver_D',         'c_float')
+        write_vec(f, linsys_solver['etree'],     'linsys_solver_etree',     'c_int')
+        write_vec(f, linsys_solver['Lnz'],       'linsys_solver_Lnz',       'c_int')
+        write_vec(f, linsys_solver['iwork'],     'linsys_solver_iwork',     'c_int')
+        write_vec(f, linsys_solver['bwork'],     'linsys_solver_bwork',     'c_int')
+        write_vec(f, linsys_solver['fwork'],     'linsys_solver_fwork',     'c_float')
 
     f.write("qdldl_solver %s = " % name)
     f.write("{QDLDL_SOLVER, &solve_linsys_qdldl, ")
@@ -165,7 +163,7 @@ def write_linsys_solver(f, linsys_solver, name, embedded_flag):
                 "&linsys_solver_L, linsys_solver_Dinv, linsys_solver_P, linsys_solver_bp, linsys_solver_Pdiag_idx, " +
                 "%d, " % linsys_solver['Pdiag_n'] +
                 "&linsys_solver_KKT, linsys_solver_PtoKKT, linsys_solver_AtoKKT, linsys_solver_rhotoKKT, " +
-                "linsys_solver_Lnz, linsys_solver_Y, linsys_solver_Pattern, linsys_solver_Flag, linsys_solver_Parent};\n\n")
+                "linsys_solver_D, linsys_solver_etree, linsys_solver_Lnz, linsys_solver_iwork, linsys_solver_bwork, linsys_solver_fwork};\n\n")
     else:
         f.write("&linsys_solver_L, linsys_solver_Dinv, linsys_solver_P, linsys_solver_bp};\n\n")
 
@@ -255,6 +253,7 @@ def render_workspace(variables, output):
     f.write("#include \"types.h\"\n")
     f.write("#include \"constants.h\"\n")
     f.write("#include \"qdldl.h\"\n\n")
+    f.write("#include \"qdldl_interface.h\"\n\n")
 
     '''
     Write data structure

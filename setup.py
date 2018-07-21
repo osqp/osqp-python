@@ -99,8 +99,8 @@ for f in cfiles:  # Copy C files
 # List with OSQP H files
 hfiles = [os.path.join(osqp_dir, 'include', f)
           for f in os.listdir(os.path.join(osqp_dir, 'include'))
-          if f.endswith('.h') and f not in ('osqp_configure.h', 'cs.h',
-                                            'ctrlc.h', 'polish.h',
+          if f.endswith('.h') and f not in ('qdldl_types.h', 'osqp_configure.h',
+                                            'cs.h', 'ctrlc.h', 'polish.h',
                                             'lin_sys.h')]
 hfiles += [os.path.join(qdldl_dir, f)
            for f in os.listdir(qdldl_dir)
@@ -116,7 +116,8 @@ for f in hfiles:  # Copy header files
     copy(f, osqp_codegen_sources_h_dir)
 
 # List with OSQP configure files
-configure_files = [os.path.join(osqp_dir, 'configure', 'osqp_configure.h.in')]
+configure_files = [os.path.join(osqp_dir, 'configure', 'osqp_configure.h.in'),
+                   os.path.join(qdldl_dir, 'qdldl_sources', 'configure', 'qdldl_types.h.in')]
 osqp_codegen_sources_configure_dir = os.path.join(osqp_codegen_sources_dir, 'configure')
 if os.path.exists(osqp_codegen_sources_configure_dir):  # Create destination directory
     sh.rmtree(osqp_codegen_sources_configure_dir)
