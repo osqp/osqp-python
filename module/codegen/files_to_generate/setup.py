@@ -20,7 +20,8 @@ class build_ext_osqp(build_ext):
 '''
 Define macros
 '''
-# Pass EMBEDDED flag to cmake to generate osqp_configure.h file
+# Pass EMBEDDED flag to cmake to generate osqp_configure.h
+# and qdldl_types.h files
 cmake_args = []
 embedded_flag = EMBEDDED_FLAG
 cmake_args += ['-DEMBEDDED:INT=%i' % embedded_flag]
