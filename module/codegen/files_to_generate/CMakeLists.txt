@@ -103,8 +103,8 @@ set(
     src/osqp/proj.c
     src/osqp/scaling.c
     src/osqp/util.c
-    src/osqp/suitesparse_ldl.c
-    src/osqp/ldl.c
+    src/osqp/qdldl_interface.c
+    src/osqp/qdldl.c
 )
 
 set(
@@ -120,8 +120,8 @@ set(
     include/scaling.h
     include/util.h
     include/workspace.h
-    include/suitesparse_ldl.h
-    include/ldl.h
+    include/qdldl_interface.h
+    include/qdldl.h
 )
 
 if (NOT(EMBEDDED EQUAL 1))

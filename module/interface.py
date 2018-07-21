@@ -373,18 +373,18 @@ class OSQP(object):
             raise TypeError("Setting linsys_solver " +
                             "is required to be a string.")
         linsys_solver_str = linsys_solver_str.lower()
-        if linsys_solver_str == 'suitesparse ldl':
+        if linsys_solver_str == 'qdldl':
             settings['linsys_solver'] = \
-                    self._model.constant('SUITESPARSE_LDL_SOLVER')
+                    self._model.constant('QDLDL_SOLVER')
         elif linsys_solver_str == 'mkl pardiso':
             settings['linsys_solver'] = self._model.constant('MKL_PARDISO_SOLVER')
-        # Default solver: Suitesparse LDL
+        # Default solver: QDLDL
         elif linsys_solver_str == '':
             settings['linsys_solver'] = \
-                    self._model.constant('SUITESPARSE_LDL_SOLVER')
-        else:   # default solver: Suitesparse LDL
+                    self._model.constant('QDLDL_SOLVER')
+        else:   # default solver: QDLDL
             warn("Linear system solver not recognized. " + 
-                 "Using default solver Suitesparse LDL.")
+                 "Using default solver QDLDL.")
             settings['linsys_solver'] = \
-                self._model.constant('SUITESPARSE_LDL_SOLVER')
+                self._model.constant('QDLDL_SOLVER')
 

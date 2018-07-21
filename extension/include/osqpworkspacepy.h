@@ -1,7 +1,7 @@
 #ifndef OSQPWORKSPACEPY_H
 #define OSQPWORKSPACEPY_H
 
-#include "suitesparse_ldl.h"
+#include "qdldl_interface.h"
 
 /**********************************************
  * OSQP Workspace creation in Python objects  *
@@ -130,7 +130,7 @@
 
 
  static PyObject *OSQP_get_linsys_solver(OSQP *self){
-     suitesparse_ldl_solver * solver = (suitesparse_ldl_solver *) self->workspace->linsys_solver;
+     qdldl_solver * solver = (qdldl_solver *) self->workspace->linsys_solver;
      OSQPData *data = self->workspace->data;
 
      npy_intp Ln          = (npy_intp)solver->L->n;
@@ -166,12 +166,13 @@
      PyObject *PtoKKT    = PyArray_SimpleNewFromData(1, &Pnzmax,      int_type,   solver->PtoKKT);
      PyObject *AtoKKT    = PyArray_SimpleNewFromData(1, &Anzmax,      int_type,   solver->AtoKKT);
      PyObject *rhotoKKT  = PyArray_SimpleNewFromData(1, &m,           int_type,   solver->rhotoKKT);
+     PyObject *D         = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->D);
+     PyObject *etree     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->etree);
      PyObject *Lnz_vec   = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Lnz);
-     PyObject *Y         = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->Y);
-     PyObject *Pattern   = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Pattern);
-     PyObject *Flag      = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Flag);
-     PyObject *Parent    = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Parent);
-
+     PyObject *iwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->iwork);
+     PyObject *bwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->bwork);
+     PyObject *fwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->fwork);
+     
      /* Change data ownership. */
      PyArray_ENABLEFLAGS((PyArrayObject *) Lp,        NPY_ARRAY_OWNDATA);
      PyArray_ENABLEFLAGS((PyArrayObject *) Li,        NPY_ARRAY_OWNDATA);
@@ -186,25 +187,28 @@
      PyArray_ENABLEFLAGS((PyArrayObject *) PtoKKT,    NPY_ARRAY_OWNDATA);
      PyArray_ENABLEFLAGS((PyArrayObject *) AtoKKT,    NPY_ARRAY_OWNDATA);
      PyArray_ENABLEFLAGS((PyArrayObject *) rhotoKKT,  NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) D,         NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) etree,     NPY_ARRAY_OWNDATA);
      PyArray_ENABLEFLAGS((PyArrayObject *) Lnz_vec,   NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Y,         NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Pattern,   NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Flag,      NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Parent,    NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) iwork,     NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) bwork,     NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) fwork,     NPY_ARRAY_OWNDATA);
 
      return_dict = Py_BuildValue(
          "{s:{s:i,s:i,s:i,s:O,s:O,s:O,s:i},"  // L
          "s:O,s:O,s:O,"                       // Dinv, P, bp
          "s:O,s:i,"                           // Pdiag_idx, Pdiag_n
          "s:{s:i,s:i,s:i,s:O,s:O,s:O,s:i},"   // KKT
-         "s:O,s:O,s:O,s:O,s:O,"               // PtoKKT, AtoKKT, Lnz, Y
-         "s:O,s:O,s:O}",                      // Pattern, Flag, Parent
+         "s:O,s:O,s:O,"                       // PtoKKT, AtoKKT, rhotoKKT,
+         "s:O,s:O,s:O,"                       // D, etree, Lnz
+         "s:O,s:O,s:O}",                      // iwork, bwork, fwork
          "L", "nzmax", Lnzmax, "m", Ln, "n", Ln, "p", Lp, "i", Li, "x", Lx, "nz", Lnz,
          "Dinv", Dinv, "P", P, "bp", bp,
          "Pdiag_idx", Pdiag_idx, "Pdiag_n", Pdiag_n,
          "KKT", "nzmax", KKTnzmax, "m", KKTn, "n", KKTn, "p", KKTp, "i", KKTi, "x", KKTx, "nz", KKTnz,
-         "PtoKKT", PtoKKT, "AtoKKT", AtoKKT, "rhotoKKT", rhotoKKT, "Lnz", Lnz_vec, "Y", Y,
-         "Pattern", Pattern, "Flag", Flag, "Parent", Parent);
+         "PtoKKT", PtoKKT, "AtoKKT", AtoKKT, "rhotoKKT", rhotoKKT,
+         "D", D, "etree", etree, "Lnz", Lnz_vec,
+         "iwork", iwork, "bwork", bwork, "fwork", fwork);
 
      return return_dict;
  }
@@ -245,14 +249,14 @@ static PyObject *OSQP_get_workspace(OSQP *self){
     PyObject *settings_py;
     PyObject *return_dict;
 
-    // Check if linear systems solver is SUITESPARSE_LDL_SOLVER
+    // Check if linear systems solver is QDLDL_SOLVER
     if(!self->workspace){
         PyErr_SetString(PyExc_ValueError, "Solver is uninitialized.  No data have been configured.");
         return (PyObject *) NULL;
     }
 
-    if(self->workspace->linsys_solver->type != SUITESPARSE_LDL_SOLVER){
-        PyErr_SetString(PyExc_ValueError, "OSQP setup was not performed using SuiteSparse LDL! Run setup with linsys_solver as SuiteSparse LDL");
+    if(self->workspace->linsys_solver->type != QDLDL_SOLVER){
+        PyErr_SetString(PyExc_ValueError, "OSQP setup was not performed using QDLDL! Run setup with linsys_solver set as QDLDL");
         return (PyObject *) NULL;
     }
 

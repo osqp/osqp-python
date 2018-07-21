@@ -33,18 +33,17 @@ py_version = "%i.%i" % sys.version_info[:2]
 cmake_args += ['-DPYTHON_INCLUDE_DIRS=%s' % sysconfig.get_python_inc()]
 
 
-# Define osqp and suitesparse directories
+# Define osqp and qdldl directories
 current_dir = os.getcwd()
 osqp_dir = os.path.join('osqp_sources')
 osqp_build_dir = os.path.join(osqp_dir, 'build')
-suitesparse_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'suitesparse')
+qdldl_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'qdldl')
 
 # Interface files
 include_dirs = [
-    os.path.join(osqp_dir, 'include'),                  # osqp.h
-    # suitesparse_ldl headers to extract workspace for codegen
-    os.path.join(suitesparse_dir),
-    os.path.join('extension', 'include')]               # auxiliary .h files
+    os.path.join(osqp_dir, 'include'),      # osqp.h
+    os.path.join(qdldl_dir),                # qdldl_interface header to extract workspace for codegen
+    os.path.join('extension', 'include')]   # auxiliary .h files
 
 sources_files = glob(os.path.join('extension', 'src', '*.c'))
 
@@ -67,8 +66,7 @@ if system() == 'Windows' and sys.version_info[0] == 3:
 
 # Add OSQP compiled library
 lib_ext = '.a'
-extra_objects = [os.path.join('extension', 'src',
-                 'libosqpstatic%s' % lib_ext)]
+extra_objects = [os.path.join('extension', 'src', 'libosqp%s' % lib_ext)]
 
 
 '''
@@ -86,12 +84,11 @@ cfiles = [os.path.join(osqp_dir, 'src', f)
           for f in os.listdir(os.path.join(osqp_dir, 'src'))
           if f.endswith('.c') and f not in ('cs.c', 'ctrlc.c', 'polish.c',
           'lin_sys.c')]
-cfiles += [os.path.join(suitesparse_dir, f)
-           for f in os.listdir(suitesparse_dir)
-           if f.endswith('.c') and f != 'SuiteSparse_config.c']
-cfiles += [os.path.join(suitesparse_dir, 'ldl', 'src', f)
-           for f in os.listdir(os.path.join(suitesparse_dir, 'ldl', 'src'))
+cfiles += [os.path.join(qdldl_dir, f)
+           for f in os.listdir(qdldl_dir)
            if f.endswith('.c')]
+cfiles += [os.path.join(qdldl_dir, 'qdldl_sources', 'src', f)
+           for f in os.listdir(os.path.join(qdldl_dir, 'qdldl_sources', 'src'))]
 osqp_codegen_sources_c_dir = os.path.join(osqp_codegen_sources_dir, 'src')
 if os.path.exists(osqp_codegen_sources_c_dir):  # Create destination directory
     sh.rmtree(osqp_codegen_sources_c_dir)
@@ -105,11 +102,11 @@ hfiles = [os.path.join(osqp_dir, 'include', f)
           if f.endswith('.h') and f not in ('osqp_configure.h', 'cs.h',
                                             'ctrlc.h', 'polish.h',
                                             'lin_sys.h')]
-hfiles += [os.path.join(suitesparse_dir, f)
-           for f in os.listdir(suitesparse_dir)
-           if f.endswith('.h') and f != 'SuiteSparse_config.h']
-hfiles += [os.path.join(suitesparse_dir, 'ldl', 'include', f)
-           for f in os.listdir(os.path.join(suitesparse_dir, 'ldl', 'include'))
+hfiles += [os.path.join(qdldl_dir, f)
+           for f in os.listdir(qdldl_dir)
+           if f.endswith('.h')]
+hfiles += [os.path.join(qdldl_dir, 'qdldl_sources', 'include', f)
+           for f in os.listdir(os.path.join(qdldl_dir, 'qdldl_sources', 'include'))
            if f.endswith('.h')]
 osqp_codegen_sources_h_dir = os.path.join(osqp_codegen_sources_dir, 'include')
 if os.path.exists(osqp_codegen_sources_h_dir):  # Create destination directory
@@ -157,7 +154,7 @@ class build_ext_osqp(build_ext):
         os.chdir(current_dir)
 
         # Copy static library to src folder
-        lib_name = 'libosqpstatic%s' % lib_ext
+        lib_name = 'libosqp%s' % lib_ext
         lib_origin = os.path.join(osqp_build_dir, 'out', lib_name)
         copyfile(lib_origin, os.path.join('extension', 'src', lib_name))
 
