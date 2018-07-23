@@ -399,8 +399,8 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
     }
 
 		// Linear system solvers
-		if(!strcmp(constant_name, "SUITESPARSE_LDL_SOLVER")){
-				return Py_BuildValue("i", SUITESPARSE_LDL_SOLVER);
+		if(!strcmp(constant_name, "QDLDL_SOLVER")){
+				return Py_BuildValue("i", QDLDL_SOLVER);
 		}
 
 		if(!strcmp(constant_name, "MKL_PARDISO_SOLVER")){
