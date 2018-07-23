@@ -183,7 +183,7 @@ def readme():
         return f.read()
 
 setup(name='osqp',
-      version='0.3.1',
+      version='0.4.0',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
