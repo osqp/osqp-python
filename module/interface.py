@@ -191,7 +191,7 @@ class OSQP(object):
         # Update matrix A
         if Ax is not None:
             if Ax_idx is not None and len(Ax) != len(Ax_idx):
-                    raise ValueError("Ax and Ax_idx must have same length")
+                raise ValueError("Ax and Ax_idx must have same length")
             if Px is None:
                 self._model.update_A(Ax, Ax_idx, len(Ax))
 
@@ -206,8 +206,12 @@ class OSQP(object):
            Ax is None:
             P = kwargs.pop('P', None)
             A = kwargs.pop('A', None)
-            if P is not None:
+            if Px_idx is not None:
+                raise ValueError("Vector Px has not been specified!")
+            elif P is not None:
                 raise ValueError("Matrix P cannot be updated this way!")
+            elif Ax_idx is not None:
+                raise ValueError("Vector Ax has not been specified!")
             elif A is not None:
                 raise ValueError("Matrix A cannot be updated this way!")
             else:
