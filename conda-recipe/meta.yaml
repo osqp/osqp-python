@@ -29,7 +29,7 @@ requirements:
   run:
     - python
     - {{ pin_compatible('numpy') }}
-    - scipy
+    - scipy >=0.13.2
     - future
 
 test:

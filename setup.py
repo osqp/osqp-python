@@ -27,12 +27,12 @@ if system() == 'Windows':
     if sys.maxsize // 2 ** 32 > 0:
       cmake_args[-1] += ' Win64'
     cmake_build_flags += ['--config', 'Release']
-    lib_name = 'osqpstatic.lib'
+    lib_name = 'osqp.lib'
     lib_subdir = ['Release']
 
 else:  # Linux or Mac
     cmake_args += ['-G', 'Unix Makefiles']
-    lib_name = 'libosqpstatic.a'
+    lib_name = 'libosqp.a'
 
 # Pass Python option to CMake and Python interface compilation
 cmake_args += ['-DPYTHON=ON']
