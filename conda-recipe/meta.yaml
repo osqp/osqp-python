@@ -1,0 +1,49 @@
+{% set data = load_setup_py_data() %}
+
+# Note for macOS: make sure to follow the instructions here to
+# obtain the proper macOS SDK, and to set CONDA_BUILD_SYSROOT:
+#   https://conda.io/docs/user-guide/tasks/build-packages/compiler-tools.html#macos-sdk
+# I recommend putting the conda_build_config.yaml file described
+# there in your home directory, so that it applies to all of your
+# conda recipes.
+
+package:
+  name: osqp
+  version: {{ data.get('version') }}
+
+source:
+  path: ../
+
+build:
+  number: 0
+  script: {{ PYTHON }} setup.py install --single-version-externally-managed --record record.txt
+
+requirements:
+  host:
+    - python {{ python }}
+    - numpy {{ numpy }}
+    - setuptools
+  build:
+    - {{ compiler('c') }}
+    - cmake
+  run:
+    - python
+    - {{ pin_compatible('numpy') }}
+    - scipy >=0.13.2
+    - future
+
+test:
+  requires:
+    - pytest
+    - cmake
+  commands:
+    - python -m pytest --pyargs osqp.tests
+
+about:
+  home: https://osqp.org
+  license: Apache, Version 2
+  license_family: Apache
+  license_file: LICENSE
+  summary: 'Python interface for OSQP: the Operator Splitting QP Solver.'
+  doc_url: https://osqp.org
+  dev_url: https://github.com/oxfordcontrol/osqp-python
