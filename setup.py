@@ -6,21 +6,33 @@ from shutil import copyfile, copy
 from glob import glob
 import shutil as sh
 from subprocess import call, check_output
-from platform import system, architecture
+from platform import system
 import os
 import sys
 
 
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
+cmake_build_flags = []
 define_macros = []
+lib_subdir = []
 
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
-    cmake_args += ['-G', 'MinGW Makefiles']
+    if sys.version_info.major == 3:
+        cmake_args += ['-G', 'Visual Studio 14 2015']
+    else:
+        cmake_args += ['-G', 'Visual Studio 9 2008']
+    # Differentiate between 32-bit and 64-bit
+    if sys.maxsize // 2 ** 32 > 0:
+        cmake_args[-1] += ' Win64'
+    cmake_build_flags += ['--config', 'Release']
+    lib_name = 'osqp.lib'
+    lib_subdir = ['Release']
 
 else:  # Linux or Mac
     cmake_args += ['-G', 'Unix Makefiles']
+    lib_name = 'libosqp.a'
 
 # Pass Python option to CMake and Python interface compilation
 cmake_args += ['-DPYTHON=ON']
@@ -42,7 +54,10 @@ qdldl_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'qdldl')
 # Interface files
 include_dirs = [
     os.path.join(osqp_dir, 'include'),      # osqp.h
-    os.path.join(qdldl_dir),                # qdldl_interface header to extract workspace for codegen
+    os.path.join(qdldl_dir),                # qdldl_interface header to
+                                            # extract workspace for codegen
+    os.path.join(qdldl_dir, "qdldl_sources",
+                            "include"),     # qdldl includes for file types
     os.path.join('extension', 'include')]   # auxiliary .h files
 
 sources_files = glob(os.path.join('extension', 'src', '*.c'))
@@ -65,9 +80,7 @@ if system() == 'Windows' and sys.version_info[0] == 3:
     libraries += ['legacy_stdio_definitions']
 
 # Add OSQP compiled library
-lib_ext = '.a'
-extra_objects = [os.path.join('extension', 'src', 'libosqp%s' % lib_ext)]
-
+extra_objects = [os.path.join('extension', 'src', lib_name)]
 
 '''
 Copy C sources for code generation
@@ -83,7 +96,7 @@ os.makedirs(osqp_codegen_sources_dir)
 cfiles = [os.path.join(osqp_dir, 'src', f)
           for f in os.listdir(os.path.join(osqp_dir, 'src'))
           if f.endswith('.c') and f not in ('cs.c', 'ctrlc.c', 'polish.c',
-          'lin_sys.c')]
+                                            'lin_sys.c')]
 cfiles += [os.path.join(qdldl_dir, f)
            for f in os.listdir(qdldl_dir)
            if f.endswith('.c')]
@@ -125,6 +138,7 @@ os.makedirs(osqp_codegen_sources_configure_dir)
 for f in configure_files:  # Copy configure files
     copy(f, osqp_codegen_sources_configure_dir)
 
+
 class build_ext_osqp(build_ext):
     def finalize_options(self):
         build_ext.finalize_options(self)
@@ -149,14 +163,15 @@ class build_ext_osqp(build_ext):
 
         # Compile static library with CMake
         call(['cmake'] + cmake_args + ['..'])
-        call(['cmake', '--build', '.', '--target', 'osqpstatic'])
+        call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
+             cmake_build_flags)
 
         # Change directory back to the python interface
         os.chdir(current_dir)
 
         # Copy static library to src folder
-        lib_name = 'libosqp%s' % lib_ext
-        lib_origin = os.path.join(osqp_build_dir, 'out', lib_name)
+        lib_origin = [osqp_build_dir, 'out'] + lib_subdir + [lib_name]
+        lib_origin = os.path.join(*lib_origin)
         copyfile(lib_origin, os.path.join('extension', 'src', lib_name))
 
         # Run extension
@@ -177,13 +192,15 @@ packages = ['osqp',
             'osqp.tests',
             'osqppurepy']
 
+
 # Read README.rst file
 def readme():
     with open('README.rst') as f:
         return f.read()
 
+
 setup(name='osqp',
-      version='0.3.1',
+      version='0.4.0',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',

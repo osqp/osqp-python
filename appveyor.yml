@@ -1,5 +1,7 @@
-# Not a .NET project. We build it in the install script
-build: false
+branches:
+  only:
+    - master
+    - /v\d+\.\d+.*/
 
 platform:
   - x64
@@ -8,24 +10,36 @@ platform:
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
-  MINICONDA: C:\Miniconda
-  CMAKE_PROJECT: MinGW Makefiles
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
-
+    - PYTHON_VERSION: 3.7
 
 init:
   # Uncomment for remote desktop debug
   # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - ECHO %PYTHON_VERSION% %MINICONDA%
 
+# Not a .NET project. We build it in the install script
+build: false
+
 install:
-  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\install.cmd"
+  - git submodule update --init --recursive
+  - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
+  - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
+  - call %MINICONDA%\Scripts\activate
+  - conda.exe config --append channels conda-forge
+  - conda.exe install conda conda-build vs2008_express_vc_python_patch --yes
+  # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
+  - call %MINICONDA%\Scripts\setup_x64.bat
 
 test_script:
-  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\script.cmd"
+  - conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
+
+# deploy_script:
+#   - conda.exe install anaconda-client --yes
+#   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force
 
 # on_finish:
 #   # Uncomment for remote desktop debug
