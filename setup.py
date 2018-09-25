@@ -6,7 +6,7 @@ from shutil import copyfile, copy
 from glob import glob
 import shutil as sh
 from subprocess import call, check_output
-from platform import system, architecture
+from platform import system
 import os
 import sys
 
@@ -20,12 +20,12 @@ lib_subdir = []
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
     if sys.version_info.major == 3:
-      cmake_args += ['-G', 'Visual Studio 14 2015']
+        cmake_args += ['-G', 'Visual Studio 14 2015']
     else:
-      cmake_args += ['-G', 'Visual Studio 9 2008']
+        cmake_args += ['-G', 'Visual Studio 9 2008']
     # Differentiate between 32-bit and 64-bit
     if sys.maxsize // 2 ** 32 > 0:
-      cmake_args[-1] += ' Win64'
+        cmake_args[-1] += ' Win64'
     cmake_build_flags += ['--config', 'Release']
     lib_name = 'osqp.lib'
     lib_subdir = ['Release']
@@ -54,7 +54,8 @@ qdldl_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'qdldl')
 # Interface files
 include_dirs = [
     os.path.join(osqp_dir, 'include'),      # osqp.h
-    os.path.join(qdldl_dir),                # qdldl_interface header to extract workspace for codegen
+    os.path.join(qdldl_dir),                # qdldl_interface header to
+                                            # extract workspace for codegen
     os.path.join('extension', 'include')]   # auxiliary .h files
 
 sources_files = glob(os.path.join('extension', 'src', '*.c'))
@@ -93,7 +94,7 @@ os.makedirs(osqp_codegen_sources_dir)
 cfiles = [os.path.join(osqp_dir, 'src', f)
           for f in os.listdir(os.path.join(osqp_dir, 'src'))
           if f.endswith('.c') and f not in ('cs.c', 'ctrlc.c', 'polish.c',
-          'lin_sys.c')]
+                                            'lin_sys.c')]
 cfiles += [os.path.join(qdldl_dir, f)
            for f in os.listdir(qdldl_dir)
            if f.endswith('.c')]
@@ -134,6 +135,7 @@ if os.path.exists(osqp_codegen_sources_configure_dir):  # Create destination dir
 os.makedirs(osqp_codegen_sources_configure_dir)
 for f in configure_files:  # Copy configure files
     copy(f, osqp_codegen_sources_configure_dir)
+
 
 class build_ext_osqp(build_ext):
     def finalize_options(self):
@@ -188,10 +190,12 @@ packages = ['osqp',
             'osqp.tests',
             'osqppurepy']
 
+
 # Read README.rst file
 def readme():
     with open('README.rst') as f:
         return f.read()
+
 
 setup(name='osqp',
       version='0.4.0',
