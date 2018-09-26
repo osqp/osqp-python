@@ -13,16 +13,30 @@ class non_convex_tests(unittest.TestCase):
     def setUp(self):
 
         # Simple QP problem
-        P = sparse.csc_matrix([[2., 5.], [5., 1.]])
-        q = np.array([3, 4])
-        A = sparse.csc_matrix([[-1.0, 0.], [0., -1.], [-1., 3.], [2., 5.], [3., 4]])
-        u = np.array([0., 0., -15, 100, 80])
-        l = -np.inf * np.ones(len(u))
-        opts = {'verbose': False}
+        self.P = sparse.csc_matrix([[2., 5.], [5., 1.]])
+        self.q = np.array([3, 4])
+        self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.], [-1., 3.], [2., 5.], [3., 4]])
+        self.u = np.array([0., 0., -15, 100, 80])
+        self.l = -np.inf * np.ones(len(self.u))
         self.model = osqp.OSQP()
-        self.model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-    def test_non_convex(self):
+    def test_non_convex_small_sigma(self):
+        opts = {'verbose': False, 'sigma': 1e-6}
+        try:
+            # Setup should fail due to (P + sigma I) having a negative eigenvalue
+            test_setup = 1
+            self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
+        except ValueError:
+            test_setup = 0
+
+        # Assert test_setup flag
+        self.assertEqual(test_setup, 0)
+
+    def test_non_convex_big_sigma(self):
+        # Setup workspace with new sigma
+        opts = {'verbose': False, 'sigma': 5}
+        self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
+
         # Solve problem
         res = self.model.solve()
 
@@ -32,4 +46,3 @@ class non_convex_tests(unittest.TestCase):
 
     def test_nan(self):
         nptest.assert_approx_equal(self.model.constant('OSQP_NAN'), np.nan)
-

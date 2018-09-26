@@ -56,6 +56,8 @@ include_dirs = [
     os.path.join(osqp_dir, 'include'),      # osqp.h
     os.path.join(qdldl_dir),                # qdldl_interface header to
                                             # extract workspace for codegen
+    os.path.join(qdldl_dir, "qdldl_sources",
+                            "include"),     # qdldl includes for file types
     os.path.join('extension', 'include')]   # auxiliary .h files
 
 sources_files = glob(os.path.join('extension', 'src', '*.c'))
@@ -198,7 +200,7 @@ def readme():
 
 
 setup(name='osqp',
-      version='0.4.0',
+      version='0.4.1',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',

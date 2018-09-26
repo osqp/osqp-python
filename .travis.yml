@@ -3,21 +3,21 @@ language: C
 os:
   - linux
   - osx
-osx_image: xcode6.4
+osx_image: xcode8.3
 
 sudo: required
 
 env:
   global:
-    # ANACONDA_TOKEN
-    - secure: "bOFayXqJGwh8PxiKdQ3oVO+7YPYwPhxHssoe7gGoCHmpIQa8hgx8mv4Vop68rpZaDufDvB6JA59L4ZXHw+lwuW4tX64uH5a/YOxZBG+I1B5+e1PzcO0wrYpOkRV+2h9zLLKkxerNAMSgR4YUagt6I7w4WbFyT/PujXjJOhicO5PmjFb7rjb9gDGFQSXIXno1CK1k4/pumYge9QFMsW9Tv9pZORxmUCwyKHpkWFpl/4O4tUBqiQ5k55Vq936pcd5nT5SjaKPJ49pWxzQhead/Hq5TnAdLvOHXgRSKB5iMMix9e+6/8zl4hlVwP85Ivpszjzrxa5IsIiYXJkPbZHCoTMAS/UnNNfb141mmQ40Ojmvchg+vs9oCeNPbexu5ZR0a06RGzHU9Z37OmW2bpctUHAdWp69wChjRAO77dIQQypkYkTsWvFeCqT+I4NzaLhyMizdu3KKHG9rjgPbeNQyJACPkubSyjcYRdii58tNXfTN/PD4B+MDPFFTGUzeW0Xs2T7ToFPq5FCBEtZRyiHplKpUCdf2MrDCCICXjOfZMBZsMChWZtY9Lh0+BYE6a6efc4O4gHsVhCkgoM7Y6iB9r0GWdWB7TYPH4BljRSp3OuIOhMJpAaM3KFnSqYS5Mbpe58finZ03f6+CEpzvsBakvZvZGIgFs37oh8F+3PbRszH8="
+    # # ANACONDA_TOKEN
+    # - secure: "bOFayXqJGwh8PxiKdQ3oVO+7YPYwPhxHssoe7gGoCHmpIQa8hgx8mv4Vop68rpZaDufDvB6JA59L4ZXHw+lwuW4tX64uH5a/YOxZBG+I1B5+e1PzcO0wrYpOkRV+2h9zLLKkxerNAMSgR4YUagt6I7w4WbFyT/PujXjJOhicO5PmjFb7rjb9gDGFQSXIXno1CK1k4/pumYge9QFMsW9Tv9pZORxmUCwyKHpkWFpl/4O4tUBqiQ5k55Vq936pcd5nT5SjaKPJ49pWxzQhead/Hq5TnAdLvOHXgRSKB5iMMix9e+6/8zl4hlVwP85Ivpszjzrxa5IsIiYXJkPbZHCoTMAS/UnNNfb141mmQ40Ojmvchg+vs9oCeNPbexu5ZR0a06RGzHU9Z37OmW2bpctUHAdWp69wChjRAO77dIQQypkYkTsWvFeCqT+I4NzaLhyMizdu3KKHG9rjgPbeNQyJACPkubSyjcYRdii58tNXfTN/PD4B+MDPFFTGUzeW0Xs2T7ToFPq5FCBEtZRyiHplKpUCdf2MrDCCICXjOfZMBZsMChWZtY9Lh0+BYE6a6efc4O4gHsVhCkgoM7Y6iB9r0GWdWB7TYPH4BljRSp3OuIOhMJpAaM3KFnSqYS5Mbpe58finZ03f6+CEpzvsBakvZvZGIgFs37oh8F+3PbRszH8="
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.5
     - PYTHON_VERSION=3.6
     - PYTHON_VERSION=3.7
 
-install: 
+install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
         wget http://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh;
     else
