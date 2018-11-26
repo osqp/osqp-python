@@ -24,6 +24,7 @@ __pycache__/
 
 # C extensions
 *.so
+*.lib
 
 # Pytest
 .pytest_cache/

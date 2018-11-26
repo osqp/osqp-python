@@ -127,7 +127,7 @@ class OSQP(object):
         """
         Update OSQP problem arguments
 
-        Vectors q, l, u are supported
+        Vectors q, l, u and matrices P and A are supported
         """
 
         # get arguments
@@ -183,19 +183,8 @@ class OSQP(object):
         if l is not None and u is not None:
             self._model.update_bounds(l, u)
 
-        if q is None and \
-           l is None and \
-           u is None and \
-           Px is None and \
-           Ax is None:
-            P = kwargs.pop('P', None)
-            A = kwargs.pop('A', None)
-            if P is not None:
-                raise ValueError("Matrix P cannot be updated this way!")
-            elif A is not None:
-                raise ValueError("Matrix A cannot be updated this way!")
-            else:
-                raise ValueError("No updatable data has been specified!")
+        if q is None and l is None and u is None and P is None and A is None:
+            raise ValueError("No updatable data has been specified!")
 
     def update_settings(self, **kwargs):
         """
