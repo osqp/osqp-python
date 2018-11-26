@@ -7,7 +7,7 @@
  * OSQP Workspace creation in Python objects  *
  **********************************************/
 
- static PyObject *OSQP_get_rho_vectors(OSQP *self){
+ static PyObject *OSQP_get_rho_vectors(OSQP *self) {
 
      npy_intp m = (npy_intp)self->workspace->data->m;
 
@@ -34,11 +34,7 @@
  }
 
 
-
-
-
  static PyObject *OSQP_get_scaling(OSQP *self){
-
 
      if(self->workspace->settings->scaling) { // if scaling enabled
          npy_intp n = (npy_intp)self->workspace->data->n;  // Dimensions in R^n
@@ -71,6 +67,7 @@
                                      "D", D, "E", E, "Dinv", Dinv, "Einv", Einv);
 
          return return_dict;
+
     } else { // Scaling disabled. Return None
         Py_INCREF(Py_None);
         return Py_None;
@@ -237,7 +234,8 @@
          "warm_start", settings->warm_start,
          "scaled_termination", settings->scaled_termination,
          "check_termination", settings->check_termination,
-         "time_limit", (double)settings->time_limit);
+         "time_limit", (double)settings->time_limit
+         );
      return return_dict;
  }
 
@@ -251,12 +249,12 @@ static PyObject *OSQP_get_workspace(OSQP *self){
     PyObject *return_dict;
 
     // Check if linear systems solver is QDLDL_SOLVER
-    if(!self->workspace){
+    if(!self->workspace) {
         PyErr_SetString(PyExc_ValueError, "Solver is uninitialized.  No data have been configured.");
         return (PyObject *) NULL;
     }
 
-    if(self->workspace->linsys_solver->type != QDLDL_SOLVER){
+    if(self->workspace->linsys_solver->type != QDLDL_SOLVER) {
         PyErr_SetString(PyExc_ValueError, "OSQP setup was not performed using QDLDL! Run setup with linsys_solver set as QDLDL");
         return (PyObject *) NULL;
     }
@@ -268,11 +266,11 @@ static PyObject *OSQP_get_workspace(OSQP *self){
      settings_py      = OSQP_get_settings(self);
 
      return_dict = Py_BuildValue("{s:O,s:O,s:O,s:O,s:O}",
-                                           "rho_vectors",   rho_vectors_py,
-                                           "data",          data_py,
-                                           "linsys_solver", linsys_solver_py,
-                                           "scaling",       scaling_py,
-                                           "settings",      settings_py);
+                                 "rho_vectors",   rho_vectors_py,
+                                 "data",          data_py,
+                                 "linsys_solver", linsys_solver_py,
+                                 "scaling",       scaling_py,
+                                 "settings",      settings_py);
      return return_dict;
 }
 
