@@ -1,7 +1,7 @@
-branches:
-  only:
-    - master
-    - /v\d+\.\d+.*/
+# branches:
+#   only:
+#     - master
+#     - /v\d+\.\d+.*/
 
 platform:
   - x64
