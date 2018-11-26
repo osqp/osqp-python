@@ -130,36 +130,37 @@ static PyObject * OSQP_solve(OSQP *self)
 #ifdef DLONG
 
 #ifdef DFLOAT
-		argparse_string = "LOLLOffffffLf";
+		argparse_string = "LOLLOfffffffLf";
 #else
-		argparse_string = "LOLLOddddddLd";
+		argparse_string = "LOLLOdddddddLd";
 #endif
 
 #else
 
 #ifdef DFLOAT
-		argparse_string = "iOiiOffffffif";
+		argparse_string = "iOiiOfffffffif";
 #else
-		argparse_string = "iOiiOddddddid";
+		argparse_string = "iOiiOdddddddid";
 #endif
 
 #endif
 
 		info_list = Py_BuildValue(argparse_string,
-				self->workspace->info->iter,
-				status,
-				self->workspace->info->status_val,
-				self->workspace->info->status_polish,
-                obj_val,
-				self->workspace->info->pri_res,
-				self->workspace->info->dua_res,
-				self->workspace->info->setup_time,
-				self->workspace->info->solve_time,
-				self->workspace->info->polish_time,
-				self->workspace->info->run_time,
-				self->workspace->info->rho_updates,
-				self->workspace->info->rho_estimate
-				);
+                        self->workspace->info->iter,
+                        status,
+                        self->workspace->info->status_val,
+                        self->workspace->info->status_polish,
+                        obj_val,
+                        self->workspace->info->pri_res,
+                        self->workspace->info->dua_res,
+                        self->workspace->info->setup_time,
+                        self->workspace->info->solve_time,
+                        self->workspace->info->update_time,
+                        self->workspace->info->polish_time,
+                        self->workspace->info->run_time,
+                        self->workspace->info->rho_updates,
+                        self->workspace->info->rho_estimate
+                        );
 #else
 
 #ifdef DLONG

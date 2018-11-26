@@ -18,6 +18,7 @@
     #ifdef PROFILING
     c_float setup_time;        /* time taken for setup phase (seconds) */
     c_float solve_time;        /* time taken for solve phase (seconds) */
+    c_float update_time;       /* time taken for update phase (seconds) */
     c_float polish_time;       /* time taken for polish phase (seconds) */
     c_float run_time;          /* total time taken (seconds) */
     #endif
@@ -39,6 +40,7 @@ static PyMemberDef OSQP_info_members[] = {
     #ifdef PROFILING
     {"setup_time", T_DOUBLE, offsetof(OSQP_info, setup_time), READONLY, "Setup time"},
     {"solve_time", T_DOUBLE, offsetof(OSQP_info, solve_time), READONLY, "Solve time"},
+    {"update_time", T_DOUBLE, offsetof(OSQP_info, update_time), READONLY, "Update time"},
     {"polish_time", T_DOUBLE, offsetof(OSQP_info, polish_time), READONLY, "Polish time"},
     {"run_time", T_DOUBLE, offsetof(OSQP_info, run_time), READONLY, "Total run time"},
     #endif
@@ -56,17 +58,17 @@ static c_int OSQP_info_init( OSQP_info * self, PyObject *args)
     #ifdef DLONG
 
     #ifdef DFLOAT
-    static char * argparse_string = "LULLfffffffLf";
+    static char * argparse_string = "LULLffffffffLf";
     #else
-    static char * argparse_string = "LULLdddddddLf";
+    static char * argparse_string = "LULLddddddddLf";
     #endif
 
     #else // DLONG
 
     #ifdef DFLOAT
-    static char * argparse_string = "iUiifffffffif";
+    static char * argparse_string = "iUiiffffffffif";
     #else
-    static char * argparse_string = "iUiidddddddid";
+    static char * argparse_string = "iUiiddddddddid";
     #endif
 
     #endif
@@ -81,6 +83,7 @@ static c_int OSQP_info_init( OSQP_info * self, PyObject *args)
                           &(self->dua_res),
                           &(self->setup_time),
                           &(self->solve_time),
+                          &(self->update_time),
                           &(self->polish_time),
                           &(self->run_time),
                           &(self->rho_updates),
