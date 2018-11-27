@@ -439,7 +439,6 @@ class OSQP(object):
             inf_norm_q = np.linalg.norm(q, np.inf)
             inf_norm_q = self._limit_scaling(inf_norm_q)
             scale_cost = np.maximum(inf_norm_q, norm_P_cols)
-            #  import ipdb; ipdb.set_trace()
             scale_cost = self._limit_scaling(scale_cost)
             scale_cost = 1. / scale_cost
 
@@ -465,8 +464,6 @@ class OSQP(object):
 
         if self.work.settings.verbose:
             print("Final cost scaling = %.10f" % c)
-
-        # import ipdb; ipdb.set_trace()
 
         # Assign scaled problem
         self.work.data = problem((n, m), P.data, P.indices, P.indptr, q,
@@ -1477,7 +1474,6 @@ class OSQP(object):
 
         # Update update_time
         self.work.info.update_time += time.time() - self.work.timer
-        import ipdb; ipdb.set_trace()
 
     def update_P_A(self, P_new, A_new):
         """
