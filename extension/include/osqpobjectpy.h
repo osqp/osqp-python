@@ -36,184 +36,181 @@ static c_int OSQP_dealloc(OSQP *self) {
 // Solve Optimization Problem
 static PyObject * OSQP_solve(OSQP *self) {
 	
-    if (self->workspace) {
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
 
-		// Create status object
-		PyObject * status;
+    // Create status object
+    PyObject * status;
 
-        // Create obj_val object
-		PyObject * obj_val;
+    // Create obj_val object
+    PyObject * obj_val;
 
-		// Create solution objects
-		PyObject * x, *y, *prim_inf_cert, *dual_inf_cert;
+    // Create solution objects
+    PyObject * x, *y, *prim_inf_cert, *dual_inf_cert;
 
-		// Define info related variables
-		static char *argparse_string;
-		PyObject *info_list;
-		PyObject *info;
+    // Define info related variables
+    static char *argparse_string;
+    PyObject *info_list;
+    PyObject *info;
 
-		// Results
-		PyObject *results_list;
-		PyObject *results;
+    // Results
+    PyObject *results_list;
+    PyObject *results;
 
-		// Temporary solution
-		npy_intp nd[] = {(npy_intp)self->workspace->data->n};  // Dimensions in R^n
-		npy_intp md[] = {(npy_intp)self->workspace->data->m};  // Dimensions in R^m
+    // Temporary solution
+    npy_intp nd[] = {(npy_intp)self->workspace->data->n};  // Dimensions in R^n
+    npy_intp md[] = {(npy_intp)self->workspace->data->m};  // Dimensions in R^m
 
-		/**
-		 *  Solve QP Problem
-		 */
-		osqp_solve(self->workspace);
+    /**
+     *  Solve QP Problem
+     */
+    osqp_solve(self->workspace);
 
-		// If problem is not primal or dual infeasible store it
-		if ((self->workspace->info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
-				(self->workspace->info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
-				(self->workspace->info->status_val != OSQP_DUAL_INFEASIBLE) &&
-				(self->workspace->info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE)){
+    // If problem is not primal or dual infeasible store it
+    if ((self->workspace->info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
+            (self->workspace->info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
+            (self->workspace->info->status_val != OSQP_DUAL_INFEASIBLE) &&
+            (self->workspace->info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE)){
 
-			// Primal and dual solutions
-			x = (PyObject *)PyArrayFromCArray(self->workspace->solution->x, nd);
-			y = (PyObject *)PyArrayFromCArray(self->workspace->solution->y, md);
+        // Primal and dual solutions
+        x = (PyObject *)PyArrayFromCArray(self->workspace->solution->x, nd);
+        y = (PyObject *)PyArrayFromCArray(self->workspace->solution->y, md);
 
-			// Infeasibility certificates -> None values
-			prim_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
-			dual_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        // Infeasibility certificates -> None values
+        prim_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        dual_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
-		} else if (self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE ||
-				self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
-            // primal infeasible
+    } else if (self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE ||
+            self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
+        // primal infeasible
 
-			// Primal and dual solution arrays -> None values
-			x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
-			y = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        // Primal and dual solution arrays -> None values
+        x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        y = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
-			// Primal infeasibility certificate
-			prim_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_y, md);
+        // Primal infeasibility certificate
+        prim_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_y, md);
 
-			// Dual infeasibility certificate -> None values
-			dual_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        // Dual infeasibility certificate -> None values
+        dual_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
 
-			// Set objective value to infinity
-			self->workspace->info->obj_val = NPY_INFINITY;
+        // Set objective value to infinity
+        self->workspace->info->obj_val = NPY_INFINITY;
 
-		} else {
-            // dual infeasible
+    } else {
+        // dual infeasible
 
-			// Primal and dual solution arrays -> None values
-			x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
-			y = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        // Primal and dual solution arrays -> None values
+        x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        y = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
-			// Primal infeasibility certificate -> None values
-			prim_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        // Primal infeasibility certificate -> None values
+        prim_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
-			// Dual infeasibility certificate
-			dual_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_x, nd);
+        // Dual infeasibility certificate
+        dual_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_x, nd);
 
-			// Set objective value to -infinity
-			self->workspace->info->obj_val = -NPY_INFINITY;
-		}
+        // Set objective value to -infinity
+        self->workspace->info->obj_val = -NPY_INFINITY;
+    }
 
-		/*  CREATE INFO OBJECT */
-		// Store status string
-		status = PyUnicode_FromString(self->workspace->info->status);
+    /*  CREATE INFO OBJECT */
+    // Store status string
+    status = PyUnicode_FromString(self->workspace->info->status);
 
-        // Store obj_val
-        if (self->workspace->info->status_val == OSQP_NON_CVX) {	// non convex
-		    obj_val = PyFloat_FromDouble(Py_NAN);
-        } else {
-            obj_val = PyFloat_FromDouble(self->workspace->info->obj_val);
-        }
+    // Store obj_val
+    if (self->workspace->info->status_val == OSQP_NON_CVX) {	// non convex
+        obj_val = PyFloat_FromDouble(Py_NAN);
+    } else {
+        obj_val = PyFloat_FromDouble(self->workspace->info->obj_val);
+    }
 
 #ifdef PROFILING
 
 #ifdef DLONG
 
 #ifdef DFLOAT
-		argparse_string = "LOLLOfffffffLf";
+    argparse_string = "LOLLOfffffffLf";
 #else
-		argparse_string = "LOLLOdddddddLd";
+    argparse_string = "LOLLOdddddddLd";
 #endif
 
 #else
 
 #ifdef DFLOAT
-		argparse_string = "iOiiOfffffffif";
+    argparse_string = "iOiiOfffffffif";
 #else
-		argparse_string = "iOiiOdddddddid";
+    argparse_string = "iOiiOdddddddid";
 #endif
 
 #endif
 
-		info_list = Py_BuildValue(argparse_string,
-                        self->workspace->info->iter,
-                        status,
-                        self->workspace->info->status_val,
-                        self->workspace->info->status_polish,
-                        obj_val,
-                        self->workspace->info->pri_res,
-                        self->workspace->info->dua_res,
-                        self->workspace->info->setup_time,
-                        self->workspace->info->solve_time,
-                        self->workspace->info->update_time,
-                        self->workspace->info->polish_time,
-                        self->workspace->info->run_time,
-                        self->workspace->info->rho_updates,
-                        self->workspace->info->rho_estimate
-                        );
+    info_list = Py_BuildValue(argparse_string,
+                    self->workspace->info->iter,
+                    status,
+                    self->workspace->info->status_val,
+                    self->workspace->info->status_polish,
+                    obj_val,
+                    self->workspace->info->pri_res,
+                    self->workspace->info->dua_res,
+                    self->workspace->info->setup_time,
+                    self->workspace->info->solve_time,
+                    self->workspace->info->update_time,
+                    self->workspace->info->polish_time,
+                    self->workspace->info->run_time,
+                    self->workspace->info->rho_updates,
+                    self->workspace->info->rho_estimate
+                    );
 #else
 
 #ifdef DLONG
 
 #ifdef DFLOAT
-		argparse_string = "LOLLOffLf";
+    argparse_string = "LOLLOffLf";
 #else
-		argparse_string = "LOLLOddLd";
+    argparse_string = "LOLLOddLd";
 #endif
 
 #else
 
 #ifdef DFLOAT
-		argparse_string = "iOiiOffif";
+    argparse_string = "iOiiOffif";
 #else
-		argparse_string = "iOiiOddid";
+    argparse_string = "iOiiOddid";
 #endif
 
 #endif
 
-		info_list = Py_BuildValue(argparse_string,
-				self->workspace->info->iter,
-				status,
-				self->workspace->info->status_val,
-				self->workspace->info->status_polish,
-				obj_val,
-				self->workspace->info->pri_res,
-				self->workspace->info->dua_res,
-				self->workspace->info->rho_updates,
-				self->workspace->info->rho_estimate,
-				);
+    info_list = Py_BuildValue(argparse_string,
+            self->workspace->info->iter,
+            status,
+            self->workspace->info->status_val,
+            self->workspace->info->status_polish,
+            obj_val,
+            self->workspace->info->pri_res,
+            self->workspace->info->dua_res,
+            self->workspace->info->rho_updates,
+            self->workspace->info->rho_estimate,
+            );
 #endif
 
-		info = PyObject_CallObject((PyObject *) &OSQP_info_Type, info_list);
+    info = PyObject_CallObject((PyObject *) &OSQP_info_Type, info_list);
 
-		/* Release the info argument list. */
-		Py_DECREF(info_list);
+    /* Release the info argument list. */
+    Py_DECREF(info_list);
 
-		/*  CREATE RESULTS OBJECT */
-		results_list = Py_BuildValue("OOOOO", x, y, prim_inf_cert, dual_inf_cert, info);
+    /*  CREATE RESULTS OBJECT */
+    results_list = Py_BuildValue("OOOOO", x, y, prim_inf_cert, dual_inf_cert, info);
 
-		// /* Call the class object. */
-		results = PyObject_CallObject((PyObject *) &OSQP_results_Type, results_list);
+    // /* Call the class object. */
+    results = PyObject_CallObject((PyObject *) &OSQP_results_Type, results_list);
 
-		// Return results
-		Py_DECREF(results_list);
-		return results;
+    // Return results
+    Py_DECREF(results_list);
+    return results;
 
-	} else {
-
-		PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
-		return (PyObject *) NULL;
-        
-	}
 }
 
 
@@ -234,6 +231,11 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
                              "scaled_termination",
                              "check_termination", "warm_start",
                              "time_limit", NULL};        // Settings
+
+    if (self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace already setup!");
+        return (PyObject *) NULL;
+    }
 
 #ifdef DLONG
 
@@ -292,7 +294,7 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
                                      &settings->check_termination,
                                      &settings->warm_start,
                                      &settings->time_limit)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Create Data from parsed vectors
@@ -323,6 +325,11 @@ static PyObject *OSQP_version(OSQP *self) {
 
 
 static PyObject *OSQP_dimensions(OSQP *self){
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
 #ifdef DLONG
     return Py_BuildValue("ll", self->workspace->data->n, self->workspace->data->m);
 #else
@@ -337,7 +344,7 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, "s", &(constant_name))) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
 
@@ -409,10 +416,17 @@ static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
     // If reached here error
     PyErr_SetString(PyExc_ValueError, "Constant not recognized");
     return (PyObject *) NULL;
+
 }
 
 
 static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *q, *q_cont;
     c_float * q_arr;
     int float_type = get_float_type();
@@ -421,7 +435,7 @@ static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &PyArray_Type, &q)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -443,6 +457,12 @@ static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
 }
 
 static PyObject *OSQP_update_lower_bound(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *l, *l_cont;
     c_float * l_arr;
     int float_type = get_float_type();
@@ -451,7 +471,7 @@ static PyObject *OSQP_update_lower_bound(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &PyArray_Type, &l)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -473,6 +493,12 @@ static PyObject *OSQP_update_lower_bound(OSQP *self, PyObject *args){
 }
 
 static PyObject *OSQP_update_upper_bound(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *u, *u_cont;
     c_float * u_arr;
     int float_type = get_float_type();
@@ -481,7 +507,7 @@ static PyObject *OSQP_update_upper_bound(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &PyArray_Type, &u)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -503,6 +529,12 @@ static PyObject *OSQP_update_upper_bound(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_bounds(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *l, *l_cont, *u, *u_cont;
     c_float * l_arr, * u_arr;
     int float_type = get_float_type();
@@ -513,7 +545,7 @@ static PyObject *OSQP_update_bounds(OSQP *self, PyObject *args){
     if( !PyArg_ParseTuple(args, argparse_string,
                           &PyArray_Type, &l,
                           &PyArray_Type, &u)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -539,6 +571,12 @@ static PyObject *OSQP_update_bounds(OSQP *self, PyObject *args){
 
 // Update elements of matrix P
 static PyObject * OSQP_update_P(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *Px, *Px_cont, *Px_idx, *Px_idx_cont;
     c_float * Px_arr;
     c_int * Px_idx_arr;
@@ -557,7 +595,7 @@ static PyObject * OSQP_update_P(OSQP *self, PyObject *args) {
                           &PyArray_Type, &Px,
                           &PyArray_Type, &Px_idx,
                           &Px_n)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Check if Px_idx is passed
@@ -590,6 +628,12 @@ static PyObject * OSQP_update_P(OSQP *self, PyObject *args) {
 
 // Update elements of matrix A
 static PyObject * OSQP_update_A(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *Ax, *Ax_cont, *Ax_idx, *Ax_idx_cont;
     c_float * Ax_arr;
     c_int * Ax_idx_arr;
@@ -608,7 +652,7 @@ static PyObject * OSQP_update_A(OSQP *self, PyObject *args) {
                           &PyArray_Type, &Ax,
                           &PyArray_Type, &Ax_idx,
                           &Ax_n)) {
-		return NULL;
+		return (PyObject *) NULL;
 	}
 
 	// Check if Ax_idx is passed
@@ -640,6 +684,12 @@ static PyObject * OSQP_update_A(OSQP *self, PyObject *args) {
 
 // Update elements of matrices P and A
 static PyObject * OSQP_update_P_A(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *Px, *Px_cont, *Px_idx, *Px_idx_cont;
     PyArrayObject *Ax, *Ax_cont, *Ax_idx, *Ax_idx_cont;
     c_float * Px_arr, * Ax_arr;
@@ -662,7 +712,7 @@ static PyObject * OSQP_update_P_A(OSQP *self, PyObject *args) {
                           &PyArray_Type, &Ax,
                           &PyArray_Type, &Ax_idx,
                           &Ax_n)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
 	// Check if Ax_idx is passed
@@ -709,6 +759,12 @@ static PyObject * OSQP_update_P_A(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_warm_start(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *x, *x_cont, *y, *y_cont;
     c_float * x_arr, * y_arr;
     int float_type = get_float_type();
@@ -719,7 +775,7 @@ static PyObject *OSQP_warm_start(OSQP *self, PyObject *args){
     if( !PyArg_ParseTuple(args, argparse_string,
                           &PyArray_Type, &x,
                           &PyArray_Type, &y)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -743,6 +799,12 @@ static PyObject *OSQP_warm_start(OSQP *self, PyObject *args){
 }
 
 static PyObject *OSQP_warm_start_x(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *x, *x_cont;
     c_float * x_arr;
     int float_type = get_float_type();
@@ -751,7 +813,7 @@ static PyObject *OSQP_warm_start_x(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &PyArray_Type, &x)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -772,6 +834,12 @@ static PyObject *OSQP_warm_start_x(OSQP *self, PyObject *args) {
 }
 
 static PyObject *OSQP_warm_start_y(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     PyArrayObject *y, *y_cont;
     c_float * y_arr;
     int float_type = get_float_type();
@@ -780,7 +848,7 @@ static PyObject *OSQP_warm_start_y(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &PyArray_Type, &y)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Get contiguous data structure
@@ -802,6 +870,12 @@ static PyObject *OSQP_warm_start_y(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_max_iter(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int max_iter_new;
 
 #ifdef DLONG
@@ -812,7 +886,7 @@ static PyObject *OSQP_update_max_iter(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &max_iter_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -825,6 +899,12 @@ static PyObject *OSQP_update_max_iter(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_eps_abs(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float eps_abs_new;
 
 #ifdef DFLOAT
@@ -835,7 +915,7 @@ static PyObject *OSQP_update_eps_abs(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &eps_abs_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -848,6 +928,12 @@ static PyObject *OSQP_update_eps_abs(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_eps_rel(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float eps_rel_new;
 
 #ifdef DFLOAT
@@ -858,7 +944,7 @@ static PyObject *OSQP_update_eps_rel(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &eps_rel_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -871,6 +957,12 @@ static PyObject *OSQP_update_eps_rel(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_eps_prim_inf(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float eps_prim_inf_new;
 
 #ifdef DFLOAT
@@ -881,7 +973,7 @@ static PyObject *OSQP_update_eps_prim_inf(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &eps_prim_inf_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -894,6 +986,12 @@ static PyObject *OSQP_update_eps_prim_inf(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_eps_dual_inf(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float eps_dual_inf_new;
 
 #ifdef DFLOAT
@@ -904,7 +1002,7 @@ static PyObject *OSQP_update_eps_dual_inf(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &eps_dual_inf_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -917,6 +1015,12 @@ static PyObject *OSQP_update_eps_dual_inf(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_rho(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float rho_new;
 
 #ifdef DFLOAT
@@ -927,7 +1031,7 @@ static PyObject *OSQP_update_rho(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &rho_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -940,6 +1044,12 @@ static PyObject *OSQP_update_rho(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_alpha(OSQP *self, PyObject *args) {
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float alpha_new;
 
 #ifdef DFLOAT
@@ -950,7 +1060,7 @@ static PyObject *OSQP_update_alpha(OSQP *self, PyObject *args) {
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &alpha_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -963,6 +1073,12 @@ static PyObject *OSQP_update_alpha(OSQP *self, PyObject *args) {
 
 
 static PyObject *OSQP_update_delta(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_float delta_new;
 
 #ifdef DFLOAT
@@ -973,7 +1089,7 @@ static PyObject *OSQP_update_delta(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &delta_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -986,6 +1102,12 @@ static PyObject *OSQP_update_delta(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_polish(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int polish_new;
 
 #ifdef DLONG
@@ -996,7 +1118,7 @@ static PyObject *OSQP_update_polish(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &polish_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1008,6 +1130,12 @@ static PyObject *OSQP_update_polish(OSQP *self, PyObject *args){
 }
 
 static PyObject *OSQP_update_polish_refine_iter(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int polish_refine_iter_new;
 
 #ifdef DLONG
@@ -1018,7 +1146,7 @@ static PyObject *OSQP_update_polish_refine_iter(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &polish_refine_iter_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1031,6 +1159,12 @@ static PyObject *OSQP_update_polish_refine_iter(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_verbose(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int verbose_new;
 
 #ifdef DLONG
@@ -1041,7 +1175,7 @@ static PyObject *OSQP_update_verbose(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &verbose_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1054,6 +1188,12 @@ static PyObject *OSQP_update_verbose(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_scaled_termination(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int scaled_termination_new;
 
 #ifdef DLONG
@@ -1064,7 +1204,7 @@ static PyObject *OSQP_update_scaled_termination(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &scaled_termination_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1076,6 +1216,12 @@ static PyObject *OSQP_update_scaled_termination(OSQP *self, PyObject *args){
 
 }
 static PyObject *OSQP_update_check_termination(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int check_termination_new;
 
 #ifdef DLONG
@@ -1086,7 +1232,7 @@ static PyObject *OSQP_update_check_termination(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &check_termination_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1100,6 +1246,12 @@ static PyObject *OSQP_update_check_termination(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_warm_start(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+
     c_int warm_start_new;
 
 #ifdef DLONG
@@ -1110,7 +1262,7 @@ static PyObject *OSQP_update_warm_start(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &warm_start_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
@@ -1123,6 +1275,12 @@ static PyObject *OSQP_update_warm_start(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_time_limit(OSQP *self, PyObject *args){
+
+    if (!self->workspace) {
+        PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
+        return (PyObject *) NULL;
+    }
+    
     c_float time_limit_new;
 
 #ifdef DFLOAT
@@ -1133,7 +1291,7 @@ static PyObject *OSQP_update_time_limit(OSQP *self, PyObject *args){
 
     // Parse arguments
     if( !PyArg_ParseTuple(args, argparse_string, &time_limit_new)) {
-        return NULL;
+        return (PyObject *) NULL;
     }
 
     // Perform Update
