@@ -65,16 +65,16 @@ class OSQP(object):
         # Create elements if they are not specified
         if P is None:
             P = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
+                                   np.zeros((0,), dtype=np.int),
+                                   np.zeros((n+1,), dtype=np.int)),
                                   shape=(n, n))
         if q is None:
             q = np.zeros(n)
 
         if A is None:
             A = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
+                                   np.zeros((0,), dtype=np.int),
+                                   np.zeros((n+1,), dtype=np.int)),
                                   shape=(m, n))
             l = np.zeros(A.shape[0])
             u = np.zeros(A.shape[0])
@@ -144,14 +144,16 @@ class OSQP(object):
             raise ValueError("q must have length n")
         if l is not None:
             if not isinstance(l, np.ndarray):
-                raise TypeError("l must be numpy.ndarray, not %s" % type(l).__name__)
+                raise TypeError("l must be numpy.ndarray, not %s" %
+                                type(l).__name__)
             elif len(l) != m:
                 raise ValueError("l must have length m")
             # Convert values to -OSQP_INFTY
             l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
         if u is not None:
             if not isinstance(u, np.ndarray):
-                raise TypeError("u must be numpy.ndarray, not %s" % type(u).__name__)
+                raise TypeError("u must be numpy.ndarray, not %s" %
+                                type(u).__name__)
             elif len(u) != m:
                 raise ValueError("u must have length m")
             # Convert values to OSQP_INFTY
@@ -373,16 +375,16 @@ class OSQP(object):
         linsys_solver_str = linsys_solver_str.lower()
         if linsys_solver_str == 'qdldl':
             settings['linsys_solver'] = \
-                    self._model.constant('QDLDL_SOLVER')
+                self._model.constant('QDLDL_SOLVER')
         elif linsys_solver_str == 'mkl pardiso':
-            settings['linsys_solver'] = self._model.constant('MKL_PARDISO_SOLVER')
+            settings['linsys_solver'] = self._model.constant(
+                'MKL_PARDISO_SOLVER')
         # Default solver: QDLDL
         elif linsys_solver_str == '':
             settings['linsys_solver'] = \
-                    self._model.constant('QDLDL_SOLVER')
+                self._model.constant('QDLDL_SOLVER')
         else:   # default solver: QDLDL
-            warn("Linear system solver not recognized. " + 
+            warn("Linear system solver not recognized. " +
                  "Using default solver QDLDL.")
             settings['linsys_solver'] = \
                 self._model.constant('QDLDL_SOLVER')
-
