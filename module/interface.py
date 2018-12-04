@@ -170,6 +170,8 @@ class OSQP(object):
         else:
             if len(Px_idx) > 0 and len(Px) != len(Px_idx):
                 raise ValueError("Px and Px_idx must have the same lengths")
+        if q is None and l is None and u is None and Px is None and Ax is None:
+            raise ValueError("No updatable data has been specified")
 
         # update linear cost
         if q is not None:
