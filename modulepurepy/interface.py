@@ -123,19 +123,10 @@ class OSQP(object):
                           A.data, A.indices, A.indptr,
                           l, u, **settings)
 
-    def update(self, **kwargs):
+    def update(self, q=None, l=None, u=None, P=None, A=None):
         """
         Update OSQP problem arguments
-
-        Vectors q, l, u are supported
         """
-
-        # get arguments
-        P = kwargs.pop('P', None)
-        A = kwargs.pop('A', None)
-        q = kwargs.pop('q', None)
-        l = kwargs.pop('l', None)
-        u = kwargs.pop('u', None)
 
         # Get problem dimensions
         (n, m) = (self._model.work.data.n, self._model.work.data.m)
@@ -156,13 +147,13 @@ class OSQP(object):
             self._model.update_P_A(P, A)
 
         if q is not None:
-            if len(q) != n:
-                raise ValueError("q must have length n")
+            if q.shape != (n,):
+                raise ValueError("q must have shape (n,)")
             self._model.update_lin_cost(q)
 
         if l is not None:
-            if len(l) != m:
-                raise ValueError("l must have length m")
+            if l.shape != (m,):
+                raise ValueError("l must have shape (m,)")
 
             # Convert values to OSQP_INFTY
             l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
@@ -171,8 +162,8 @@ class OSQP(object):
                 self._model.update_lower_bound(l)
 
         if u is not None:
-            if len(u) != m:
-                raise ValueError("u must have length m")
+            if u.shape != (m,):
+                raise ValueError("u must have shape (m,)")
 
             # Convert values to OSQP_INFTY
             u = np.minimum(u, self._model.constant('OSQP_INFTY'))
@@ -183,19 +174,8 @@ class OSQP(object):
         if l is not None and u is not None:
             self._model.update_bounds(l, u)
 
-        if q is None and \
-           l is None and \
-           u is None and \
-           Px is None and \
-           Ax is None:
-            P = kwargs.pop('P', None)
-            A = kwargs.pop('A', None)
-            if P is not None:
-                raise ValueError("Matrix P cannot be updated this way!")
-            elif A is not None:
-                raise ValueError("Matrix A cannot be updated this way!")
-            else:
-                raise ValueError("No updatable data has been specified!")
+        if q is None and l is None and u is None and P is None and A is None:
+            raise ValueError("No updatable data has been specified!")
 
     def update_settings(self, **kwargs):
         """

@@ -233,35 +233,34 @@ static PyObject * OSQP_solve(PyObject *self, PyObject *args)
     /**
      *  Solve QP Problem
      */
-     if (osqp_solve((&workspace)) == -1){
-			 	PySys_WriteStdout("Error: Workspace not initialized!\n");
-		 }
+    if (osqp_solve((&workspace)) == -1){
+		PySys_WriteStdout("Error: Workspace not initialized!\n");
+	}
 
     // Stop timer
     solve_time = toc(timer);
 
     // If problem is not primal or dual infeasible store it
     if (((&workspace)->info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
-		((&workspace)->info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
-        ((&workspace)->info->status_val != OSQP_DUAL_INFEASIBLE) &&
-		((&workspace)->info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE)) {
+		    ((&workspace)->info->status_val != OSQP_PRIMAL_INFEASIBLE_INACCURATE) &&
+            ((&workspace)->info->status_val != OSQP_DUAL_INFEASIBLE) &&
+    		((&workspace)->info->status_val != OSQP_DUAL_INFEASIBLE_INACCURATE)) {
 
-			// Construct primal and dual solution arrays
-			x = (PyObject *)PyArrayFromCArray((&workspace)->solution->x,
-								  nd);
-			y = (PyObject *)PyArrayFromCArray((&workspace)->solution->y,
-								  md);
+        // Construct primal and dual solution arrays
+        x = (PyObject *)PyArrayFromCArray((&workspace)->solution->x, nd);
+        y = (PyObject *)PyArrayFromCArray((&workspace)->solution->y, md);
 
     } else { // Problem primal or dual infeasible -> None values for x,y
-            x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
-            y = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        x = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
+        y = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
     }
 
-		// Free timer
+    // Free timer
     PyMem_Free(timer);
 
     // Return struct
-    return Py_BuildValue("OOiid", x, y, (&workspace)->info->status_val, (&workspace)->info->iter, solve_time);
+    return Py_BuildValue("OOiid", x, y, (&workspace)->info->status_val,
+                         (&workspace)->info->iter, solve_time);
 
 }
 

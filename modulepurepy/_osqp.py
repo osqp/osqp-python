@@ -63,6 +63,7 @@ class workspace(object):
     Additional workspace variables
     ------------------------------
     first_run              - flag to indicate if it is the first run
+    clear_update_time      - flag to indicate if update_time should be cleared
     timer                  - saved time instant for timing purposes
     x                      - primal iterate
     x_prev                 - previous primal iterate
@@ -236,6 +237,7 @@ class info(object):
     dua_res         - norm of dual residual
     setup_time      - time taken for setup phase (seconds)
     solve_time      - time taken for solve phase (seconds)
+    update_time     - time taken for update phase (seconds)
     polish_time     - time taken for polish phase (seconds)
     run_time        - total time  (seconds)
     rho_updates     - number of rho updates
@@ -246,6 +248,7 @@ class info(object):
         self.status_val = OSQP_UNSOLVED
         self.status = "Unsolved"
         self.status_polish = 0
+        self.update_time = 0.0
         self.polish_time = 0.0
         self.rho_updates = 0.0
 
@@ -436,7 +439,6 @@ class OSQP(object):
             inf_norm_q = np.linalg.norm(q, np.inf)
             inf_norm_q = self._limit_scaling(inf_norm_q)
             scale_cost = np.maximum(inf_norm_q, norm_P_cols)
-            #  import ipdb; ipdb.set_trace()
             scale_cost = self._limit_scaling(scale_cost)
             scale_cost = 1. / scale_cost
 
@@ -462,8 +464,6 @@ class OSQP(object):
 
         if self.work.settings.verbose:
             print("Final cost scaling = %.10f" % c)
-
-        # import ipdb; ipdb.set_trace()
 
         # Assign scaled problem
         self.work.data = problem((n, m), P.data, P.indices, P.indptr, q,
@@ -957,24 +957,33 @@ class OSQP(object):
         """
         Print status summary at each ADMM iteration
         """
+        if self.work.first_run:
+            runtime = self.work.info.setup_time + self.work.info.solve_time
+        else:
+            runtime = self.work.info.update_time + self.work.info.solve_time
         print("%4i  %11.4e   %8.2e   %8.2e   %8.2e  %8.2es" %
               (self.work.info.iter,
                self.work.info.obj_val,
                self.work.info.pri_res,
                self.work.info.dua_res,
                self.work.settings.rho,
-               self.work.info.setup_time + self.work.info.solve_time))
+               runtime))
 
     def print_polish(self):
         """
         Print polish information
         """
+        if self.work.first_run:
+            runtime = self.work.info.setup_time + self.work.info.solve_time + \
+                      self.work.info.polish_time
+        else:
+            runtime = self.work.info.update_time + self.work.info.solve_time + \
+                      self.work.info.polish_time
         print("plsh  %11.4e   %8.2e   %8.2e   --------  %8.2es" %
               (self.work.info.obj_val,
                self.work.info.pri_res,
                self.work.info.dua_res,
-               self.work.info.setup_time + self.work.info.solve_time +
-               self.work.info.polish_time))
+               runtime))
 
     def check_termination(self, approximate=False):
         """
@@ -1145,6 +1154,9 @@ class OSQP(object):
         # Flag indicating first run
         self.work.first_run = 1
 
+        # Flag indicating that the update_time should be set to zero
+        self.work.clear_update_time = 0
+
         # Settings
         self.work.settings = settings(**stgs)
 
@@ -1180,6 +1192,10 @@ class OSQP(object):
         """
         # Start timer
         self.work.timer = time.time()
+
+        # Clear update_time
+        if self.work.clear_update_time == 1:
+            self.work.info.update_time = 0.0
 
         # Print header
         if self.work.settings.verbose:
@@ -1270,8 +1286,8 @@ class OSQP(object):
             self.work.info.run_time = self.work.info.setup_time + \
                 self.work.info.solve_time + self.work.info.polish_time
         else:
-            self.work.info.run_time = self.work.info.solve_time + \
-                                      self.work.info.polish_time
+            self.work.info.run_time = self.work.info.update_time + \
+                self.work.info.solve_time + self.work.info.polish_time
 
         # Print footer
         if self.work.settings.verbose:
@@ -1284,6 +1300,9 @@ class OSQP(object):
         if self.work.first_run:
             self.work.first_run = 0
 
+        # Indicate that the update_time should be set to zero
+        self.work.clear_update_time = 1
+
         # Store results structure
         return results(self.work.solution, self.work.info, ls)
 
@@ -1295,6 +1314,13 @@ class OSQP(object):
         """
         Update linear cost without requiring factorization
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         # Copy cost vector
         self.work.data.q = np.copy(q_new)
 
@@ -1306,10 +1332,19 @@ class OSQP(object):
         # Reset solver info
         self.reset_info(self.work.info)
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_bounds(self, l_new, u_new):
         """
         Update counstraint bounds without requiring factorization
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
 
         # Check if bounds are correct
         if not np.greater_equal(u_new, l_new).all():
@@ -1331,10 +1366,20 @@ class OSQP(object):
         # If type of any constraint changed, update rho_vec and KKT matrix
         self.update_rho_vec()
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_lower_bound(self, l_new):
         """
         Update lower bound without requiring factorization
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         # Update lower bound
         self.work.data.l = l_new
 
@@ -1353,10 +1398,20 @@ class OSQP(object):
         # If type of any constraint changed, update rho_vec and KKT matrix
         self.update_rho_vec()
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_upper_bound(self, u_new):
         """
         Update upper bound without requiring factorization
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         # Update upper bound
         self.work.data.u = u_new
 
@@ -1375,10 +1430,20 @@ class OSQP(object):
         # If type of any constraint changed, update rho_vec and KKT matrix
         self.update_rho_vec()
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_P(self, P_new):
         """
         Update quadratic cost matrix
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         if self.work.settings.scaling:
             self.work.data.P = \
                 self.work.scaling.c * \
@@ -1387,20 +1452,40 @@ class OSQP(object):
             self.work.data.P = P_new
         self.work.linsys_solver = linsys_solver(self.work)
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_A(self, A_new):
         """
         Update constraint matrix
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         if self.work.settings.scaling:
             self.work.data.A = self.work.scaling.E.dot(A_new.dot(self.work.scaling.D))
         else:
             self.work.data.A = A_new
         self.work.linsys_solver = linsys_solver(self.work)
 
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
+
     def update_P_A(self, P_new, A_new):
         """
         Update quadratic cost and constraint matrices
         """
+        if self.work.clear_update_time == 1:
+            # Clear update_time
+            self.work.clear_update_time = 0
+            self.work.info.update_time = 0.0
+        # Start timer
+        self.work.timer = time.time()
+
         if self.work.settings.scaling:
             self.work.data.P = self.work.scaling.D.dot(P_new.dot(self.work.scaling.D))
             self.work.data.A = self.work.scaling.E.dot(A_new.dot(self.work.scaling.D))
@@ -1408,6 +1493,9 @@ class OSQP(object):
             self.work.data.P = P_new
             self.work.data.A = A_new
         self.work.linsys_solver = linsys_solver(self.work)
+
+        # Update update_time
+        self.work.info.update_time += time.time() - self.work.timer
 
     def warm_start(self, x, y):
         """

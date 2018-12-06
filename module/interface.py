@@ -65,16 +65,16 @@ class OSQP(object):
         # Create elements if they are not specified
         if P is None:
             P = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
+                                   np.zeros((0,), dtype=np.int),
+                                   np.zeros((n+1,), dtype=np.int)),
                                   shape=(n, n))
         if q is None:
             q = np.zeros(n)
 
         if A is None:
             A = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
+                                   np.zeros((0,), dtype=np.int),
+                                   np.zeros((n+1,), dtype=np.int)),
                                   shape=(m, n))
             l = np.zeros(A.shape[0])
             u = np.zeros(A.shape[0])
@@ -130,92 +130,76 @@ class OSQP(object):
                           A.data, A.indices, A.indptr,
                           l, u, **settings)
 
-    def update(self, **kwargs):
+    def update(self, q=None, l=None, u=None,
+               Px=None, Px_idx=np.array([]), Ax=None, Ax_idx=np.array([])):
         """
         Update OSQP problem arguments
-
-        Vectors q, l, u and matrices P and A are supported
         """
 
-        # get arguments
-        q = kwargs.pop('q', None)
-        l = kwargs.pop('l', None)
-        u = kwargs.pop('u', None)
-        Px = kwargs.pop('Px', None)
-        Px_idx = kwargs.pop('Px_idx', None)
-        Ax = kwargs.pop('Ax', None)
-        Ax_idx = kwargs.pop('Ax_idx', None)
-
-        # Get problem dimensions
+        # get problem dimensions
         (n, m) = self._model.dimensions()
 
-        # Update linear cost
-        if q is not None:
-            if len(q) != n:
-                raise ValueError("q must have length n")
-            self._model.update_lin_cost(q)
-
-        # Update lower bound
+        # check consistency of the input arguments
+        if q is not None and len(q) != n:
+            raise ValueError("q must have length n")
         if l is not None:
-            if len(l) != m:
+            if not isinstance(l, np.ndarray):
+                raise TypeError("l must be numpy.ndarray, not %s" %
+                                type(l).__name__)
+            elif len(l) != m:
                 raise ValueError("l must have length m")
-
-            # Convert values to OSQP_INFTY
+            # Convert values to -OSQP_INFTY
             l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
-
-            if u is None:
-                self._model.update_lower_bound(l)
-
-        # Update upper bound
         if u is not None:
-            if len(u) != m:
+            if not isinstance(u, np.ndarray):
+                raise TypeError("u must be numpy.ndarray, not %s" %
+                                type(u).__name__)
+            elif len(u) != m:
                 raise ValueError("u must have length m")
-
             # Convert values to OSQP_INFTY
             u = np.minimum(u, self._model.constant('OSQP_INFTY'))
+        if Ax is None:
+            if len(Ax_idx) > 0:
+                raise ValueError("Vector Ax has not been specified")
+        else:
+            if len(Ax_idx) > 0 and len(Ax) != len(Ax_idx):
+                raise ValueError("Ax and Ax_idx must have the same lengths")
+        if Px is None:
+            if len(Px_idx) > 0:
+                raise ValueError("Vector Px has not been specified")
+        else:
+            if len(Px_idx) > 0 and len(Px) != len(Px_idx):
+                raise ValueError("Px and Px_idx must have the same lengths")
+        if q is None and l is None and u is None and Px is None and Ax is None:
+            raise ValueError("No updatable data has been specified")
 
-            if l is None:
-                self._model.update_upper_bound(u)
+        # update linear cost
+        if q is not None:
+            self._model.update_lin_cost(q)
 
-        # Update bounds
+        # update lower bound
+        if l is not None and u is None:
+            self._model.update_lower_bound(l)
+
+        # update upper bound
+        if u is not None and l is None:
+            self._model.update_upper_bound(u)
+
+        # update bounds
         if l is not None and u is not None:
             self._model.update_bounds(l, u)
 
-        # Update matrix P
-        if Px is not None:
-            if Px_idx is not None and len(Px) != len(Px_idx):
-                raise ValueError("Px and Px_idx must have same length")
-            if Ax is None:
-                self._model.update_P(Px, Px_idx, len(Px))
+        # update matrix P
+        if Px is not None and Ax is None:
+            self._model.update_P(Px, Px_idx, len(Px))
 
-        # Update matrix A
-        if Ax is not None:
-            if Ax_idx is not None and len(Ax) != len(Ax_idx):
-                raise ValueError("Ax and Ax_idx must have same length")
-            if Px is None:
-                self._model.update_A(Ax, Ax_idx, len(Ax))
+        # update matrix A
+        if Ax is not None and Px is None:
+            self._model.update_A(Ax, Ax_idx, len(Ax))
 
-        # Update matrices P and A
+        # update matrices P and A
         if Px is not None and Ax is not None:
             self._model.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
-
-        if q is None and \
-           l is None and \
-           u is None and \
-           Px is None and \
-           Ax is None:
-            P = kwargs.pop('P', None)
-            A = kwargs.pop('A', None)
-            if Px_idx is not None:
-                raise ValueError("Vector Px has not been specified!")
-            elif P is not None:
-                raise ValueError("Matrix P cannot be updated this way!")
-            elif Ax_idx is not None:
-                raise ValueError("Vector Ax has not been specified!")
-            elif A is not None:
-                raise ValueError("Matrix A cannot be updated this way!")
-            else:
-                raise ValueError("No updatable data has been specified!")
 
     def update_settings(self, **kwargs):
         """
@@ -393,16 +377,16 @@ class OSQP(object):
         linsys_solver_str = linsys_solver_str.lower()
         if linsys_solver_str == 'qdldl':
             settings['linsys_solver'] = \
-                    self._model.constant('QDLDL_SOLVER')
+                self._model.constant('QDLDL_SOLVER')
         elif linsys_solver_str == 'mkl pardiso':
-            settings['linsys_solver'] = self._model.constant('MKL_PARDISO_SOLVER')
+            settings['linsys_solver'] = self._model.constant(
+                'MKL_PARDISO_SOLVER')
         # Default solver: QDLDL
         elif linsys_solver_str == '':
             settings['linsys_solver'] = \
-                    self._model.constant('QDLDL_SOLVER')
+                self._model.constant('QDLDL_SOLVER')
         else:   # default solver: QDLDL
-            warn("Linear system solver not recognized. " + 
+            warn("Linear system solver not recognized. " +
                  "Using default solver QDLDL.")
             settings['linsys_solver'] = \
                 self._model.constant('QDLDL_SOLVER')
-

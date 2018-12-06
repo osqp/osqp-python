@@ -21,6 +21,7 @@ typedef struct {
     PyArrayObject *u;
 } PyOSQPData;
 
+
 // Get integer type from OSQP setup
 static int get_int_type(void) {
     switch (sizeof(c_int)) {
@@ -36,6 +37,7 @@ static int get_int_type(void) {
         return NPY_INT64; /* defaults to 4 byte int */
     }
 }
+
 
 // Get float type from OSQP setup
 static int get_float_type(void) {
@@ -53,7 +55,7 @@ static int get_float_type(void) {
 
 
 // Function working on Python 3.6
-static PyArrayObject * PyArrayFromCArray(c_float *arrayin, npy_intp * nd){
+static PyArrayObject * PyArrayFromCArray(c_float *arrayin, npy_intp * nd) {
     int i;
     PyArrayObject * arrayout;
     double * data;
@@ -67,7 +69,6 @@ static PyArrayObject * PyArrayFromCArray(c_float *arrayin, npy_intp * nd){
     }
 
     return arrayout;
-
 }
 
 // Original function supposed to work (Not in Python 3.6)
@@ -136,13 +137,12 @@ static PyOSQPData * create_pydata(c_int n, c_int m,
     py_d->l = get_contiguous(l, float_type);
     py_d->u = get_contiguous(u, float_type);
 
-    // Retrun
+    // Return
     return py_d;
-
 }
 
 // Create data structure from arrays
-static OSQPData * create_data(PyOSQPData * py_d){
+static OSQPData * create_data(PyOSQPData * py_d) {
 
     // Allocate OSQPData structure
     OSQPData * data = (OSQPData *)c_malloc(sizeof(OSQPData));
@@ -200,7 +200,6 @@ static c_int free_data(OSQPData *data, PyOSQPData * py_d){
     }
 
     return 0;
-
 }
 
 #endif

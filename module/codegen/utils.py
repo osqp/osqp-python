@@ -36,8 +36,6 @@ def write_mat(f, mat, name):
     write_vec(f, mat['p'], name + '_p', 'c_int')
     write_vec(f, mat['x'], name + '_x', 'c_float')
 
-    # import ipdb; ipdb.set_trace()
-
     f.write("csc %s = {" % name)
     f.write("%d, " % mat['nzmax'])
     f.write("%d, " % mat['m'])
