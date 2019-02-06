@@ -150,9 +150,9 @@ def write_linsys_solver(f, linsys_solver, name, embedded_flag):
         write_vec(f, linsys_solver['D'],         'linsys_solver_D',         'QDLDL_float')
         write_vec(f, linsys_solver['etree'],     'linsys_solver_etree',     'QDLDL_int')
         write_vec(f, linsys_solver['Lnz'],       'linsys_solver_Lnz',       'QDLDL_int')
-        write_vec(f, linsys_solver['iwork'],     'linsys_solver_iwork',     'QDLDL_int')
-        write_vec(f, linsys_solver['bwork'],     'linsys_solver_bwork',     'QDLDL_bool')
-        write_vec(f, linsys_solver['fwork'],     'linsys_solver_fwork',     'QDLDL_float')
+        f.write("QDLDL_int   linsys_solver_iwork[%d];\n" % len(linsys_solver['iwork']))
+        f.write("QDLDL_bool  linsys_solver_bwork[%d];\n" % len(linsys_solver['bwork']))
+        f.write("QDLDL_float linsys_solver_fwork[%d];\n" % len(linsys_solver['fwork']))
 
     f.write("qdldl_solver %s = " % name)
     f.write("{QDLDL_SOLVER, &solve_linsys_qdldl, ")
