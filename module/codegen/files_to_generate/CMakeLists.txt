@@ -80,6 +80,10 @@ else()
 	set(QDLDL_INT_TYPE "int")
 endif()
 
+# boolean type is always unsigned char for
+# now, since _Bool does not exist in C89
+set(QDLDL_BOOL_TYPE "unsigned char")
+
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/configure/qdldl_types.h.in
                ${CMAKE_CURRENT_SOURCE_DIR}/include/qdldl_types.h
                NEWLINE_STYLE LF)
