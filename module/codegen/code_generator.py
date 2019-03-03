@@ -13,7 +13,7 @@ from . import utils
 
 
 def codegen(work, target_dir, python_ext_name, project_type, embedded,
-            force_rewrite, loop_unrolling):
+            force_rewrite, loop_unrolling, float_flag, long_flag):
     """
     Generate code
     """
@@ -124,6 +124,10 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
         utils.render_ldl(template_vars, os.path.join(target_src_dir,
                                                      'osqp', 'ldl.c'))
 
+    # Add cmake args
+    cmake_args = '-DEMBEDDED:INT=%d -DDFLOAT:BOOL=%s -DDLONG:BOOL=%s' % \
+                 (embedded, float_flag, long_flag)
+
     # Render workspace
     utils.render_workspace(template_vars,
                            os.path.join(target_include_dir, 'workspace.h'))
@@ -156,7 +160,7 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
             sh.rmtree('build')
         os.makedirs('build')
         os.chdir('build')
-        call(['cmake', '-G', "%s" % project_type, '..'])
+        call(['cmake', cmake_args, '-G', project_type, '..'])
         os.chdir(current_dir)
         print("[done]")
 
