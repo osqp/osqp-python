@@ -13,7 +13,7 @@ class non_convex_tests(unittest.TestCase):
     def setUp(self):
 
         # Simple QP problem
-        self.P = sparse.csc_matrix([[2., 5.], [5., 1.]])
+        self.P = sparse.triu([[2., 5.], [5., 1.]], format='csc')
         self.q = np.array([3, 4])
         self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.], [-1., 3.], [2., 5.], [3., 4]])
         self.u = np.array([0., 0., -15, 100, 80])

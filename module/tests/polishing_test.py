@@ -29,7 +29,7 @@ class polish_tests(unittest.TestCase):
     def test_polish_simple(self):
 
         # Simple QP problem
-        self.P = sparse.csc_matrix([[11, 0], [0, 0]])
+        self.P = sparse.diags([11., 0.], format='csc')
         self.q = np.array([3, 4])
         self.A = sparse.csc_matrix([[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
         self.u = np.array([0, 0, -15, 100, 80])
@@ -89,7 +89,7 @@ class polish_tests(unittest.TestCase):
         self.n = 30
         self.m = 50
         Pt = sp.randn(self.n, self.n)
-        self.P = sparse.csc_matrix(np.dot(Pt.T, Pt))
+        self.P = sparse.triu(np.dot(Pt.T, Pt), format='csc')
         self.q = sp.randn(self.n)
         self.A = sparse.csc_matrix(sp.randn(self.m, self.n))
         self.l = -3 + sp.randn(self.m)
