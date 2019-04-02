@@ -60,7 +60,7 @@ static c_int OSQP_info_init( OSQP_info * self, PyObject *args) {
 #ifdef DFLOAT
     static char * argparse_string = "LULLffffffffLf";
 #else
-    static char * argparse_string = "LULLddddddddLf";
+    static char * argparse_string = "LULLddddddddLd";
 #endif
 
 #else   // DLONG
