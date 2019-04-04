@@ -13,7 +13,7 @@ from . import utils
 
 
 def codegen(work, target_dir, python_ext_name, project_type, embedded,
-            force_rewrite, loop_unrolling, float_flag, long_flag):
+            force_rewrite, float_flag, long_flag):
     """
     Generate code
     """
@@ -83,20 +83,19 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     c_sources = glob(os.path.join(osqp_path, 'codegen', 'sources',
                                   'src', '*.c'))
     if embedded == 1:
-        # Remobe kkt.c from embedded sources
+        # Remove kkt.c from embedded sources
         c_sources.remove(os.path.join(osqp_path, 'codegen', 'sources',
                                       'src', 'kkt.c'))
-
     for source in c_sources:
-        if loop_unrolling:
-            if source != 'ldl.c':  # Do not copy ldl. We will generate it
-                sh.copy(source, os.path.join(target_src_dir, 'osqp'))
-        else:
-            sh.copy(source, os.path.join(target_src_dir, 'osqp'))
+        sh.copy(source, os.path.join(target_src_dir, 'osqp'))
 
     # Copy header files
     c_headers = glob(os.path.join(osqp_path, 'codegen', 'sources',
                                   'include', '*.h'))
+    if embedded == 1:
+        # Remove kkt.h from embedded sources
+        c_headers.remove(os.path.join(osqp_path, 'codegen', 'sources',
+                                      'include', 'kkt.h'))
     for header in c_headers:
         sh.copy(header, target_include_dir)
 
@@ -118,11 +117,6 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
                      'scaling':         work['scaling'],
                      'embedded_flag':   embedded,
                      'python_ext_name': python_ext_name}
-
-    if loop_unrolling:
-        # Render ldl.c file
-        utils.render_ldl(template_vars, os.path.join(target_src_dir,
-                                                     'osqp', 'ldl.c'))
 
     # Add cmake args
     cmake_args = '-DEMBEDDED:INT=%d -DDFLOAT:BOOL=%s -DDLONG:BOOL=%s' % \
