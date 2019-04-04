@@ -46,8 +46,8 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
 
     # Check if python module already exists
     resp = None  # Initialize response
-    if any(glob('%s*' % python_ext_name + module_ext)):
-        module_name = glob('%s*' % python_ext_name + module_ext)[0]
+    if any(glob('%s*%s' % (python_ext_name, module_ext))):
+        module_name = glob('%s*%s' % (python_ext_name, module_ext))[0]
         if force_rewrite:
             os.remove(module_name)
         else:

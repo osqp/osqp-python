@@ -86,9 +86,6 @@ def write_settings(f, settings, name, embedded_flag):
         f.write("%d, " % settings['adaptive_rho'])
         f.write("%d, " % settings['adaptive_rho_interval'])
         f.write("(c_float)%.20f, " % settings['adaptive_rho_tolerance'])
-        f.write("\n#ifdef PROFILING\n")
-        f.write("(c_float)%.20f, " % settings['adaptive_rho_fraction'])
-        f.write("\n#endif  // PROFILING\n")
 
     f.write("%d, " % settings['max_iter'])
     f.write("(c_float)%.20f, " % settings['eps_abs'])
@@ -101,10 +98,6 @@ def write_settings(f, settings, name, embedded_flag):
     f.write("%d, " % settings['scaled_termination'])
     f.write("%d, " % settings['check_termination'])
     f.write("%d, " % settings['warm_start'])
-
-    f.write("\n#ifdef PROFILING\n")
-    f.write("(c_float)%.20f " % settings['time_limit'])
-    f.write("\n#endif  // PROFILING\n")
 
     f.write("};\n\n")
 
@@ -248,172 +241,29 @@ def render_workspace(variables, output):
 
     # Include types, constants and linsys_solver header
     f.write("#include \"types.h\"\n")
-    f.write("#include \"constants.h\"\n")
     f.write("#include \"qdldl.h\"\n\n")
     f.write("#include \"qdldl_interface.h\"\n\n")
 
-    '''
-    Write data structure
-    '''
+    # Write data structure
     write_data(f, data, 'data')
 
-    '''
-    Write settings structure
-    '''
+    # Write settings structure
     write_settings(f, settings, 'settings', embedded_flag)
 
-    '''
-    Write scaling structure
-    '''
+    # Write scaling structure
     write_scaling(f, scaling, 'scaling')
 
-    '''
-    Write linsys_solver structure
-    '''
+    # Write linsys_solver structure
     write_linsys_solver(f, linsys_solver, 'linsys_solver', embedded_flag)
 
-    '''
-    Define empty solution structure
-    '''
+    # Define empty solution structure
     write_solution(f, data, 'solution')
 
-    '''
-    Define info structure
-    '''
+    # Define info structure
     write_info(f, 'info')
 
-    '''
-    Define workspace structure
-    '''
+    # Define workspace structure
     write_workspace(f, n, m, rho_vectors, embedded_flag, 'workspace')
-
-    f.close()
-
-
-def write_ldl_lsolve(f, variables):
-    """
-    Write LDL_lsolve to file
-    """
-
-    data = variables['data']
-    linsys_solver = variables['linsys_solver']
-    Lp = linsys_solver['L']['p']
-
-    f.write("void LDL_lsolve(LDL_int n, c_float X [ ], LDL_int Lp [ ]")
-    f.write(", LDL_int Li [ ], c_float Lx [ ]){\n")
-    f.write("LDL_int p;\n")
-
-    # Unroll for loop
-    for j in range(data['m'] + data['n']):
-        if Lp[j+1] > Lp[j]:  # Write loop ONLY if necessary
-            f.write("for (p = %i ; p < %i ; p++){\n" % (Lp[j], Lp[j+1]))
-            f.write("X [Li [p]] -= Lx [p] * X [%i];\n" % (j))
-            f.write("}\n")
-
-    # Close function
-    f.write("}\n\n")
-
-
-def write_ldl_ltsolve(f, variables):
-    """
-    Write LDL_ltsolve to file
-    """
-    data = variables['data']
-    linsys_solver = variables['linsys_solver']
-    Lp = linsys_solver['L']['p']
-
-    f.write("void LDL_ltsolve(LDL_int n, c_float X [ ], LDL_int Lp [ ]")
-    f.write(", LDL_int Li [ ], c_float Lx [ ]){\n")
-    f.write("LDL_int p;\n")
-
-    # Unroll the loop
-    for j in range(data['m'] + data['n'] - 1, -1, -1):
-        if Lp[j+1] > Lp[j]:  # Write loop ONLY if necessary
-            f.write("for (p = %i ; p < %i ; p++){\n" % (Lp[j], Lp[j+1]))
-            f.write("X [%i] -= Lx [p] * X [Li [p]] ;\n" % (j))
-            f.write("}\n")
-
-    # Close function
-    f.write("}\n\n")
-
-
-def write_ldl_dinvsolve(f, variables):
-    """
-    Write LDL_dinvsolve
-    """
-    data = variables['data']
-
-    f.write("void LDL_dinvsolve(LDL_int n, c_float X [ ], ")
-    f.write("c_float Dinv [ ]) {\n")
-    f.write("LDL_int i;\n")
-    f.write("for (i = 0 ; i < %i ; i++){\n" % (data['m'] + data['n']))
-    f.write("X[i] *= Dinv[i];\n")
-    f.write("}\n")
-
-    # Close function
-    f.write("}\n\n")
-
-
-def write_ldl_perm(f, variables):
-    """
-    Write LDL_perm
-    """
-    data = variables['data']
-
-    f.write("void LDL_perm(LDL_int n, c_float X [ ], c_float B [ ],")
-    f.write(" LDL_int P [ ]){\n")
-    f.write("LDL_int j;\n")
-
-    f.write("for (j = 0 ; j < %i ; j++){\n" % (data['m'] + data['n']))
-    f.write("X [j] = B [P [j]];\n")
-    f.write("}\n")
-
-    # Close function
-    f.write("}\n\n")
-
-
-def write_ldl_permt(f, variables):
-    """
-    Write LDL_permt
-    """
-    data = variables['data']
-
-    f.write("void LDL_permt(LDL_int n, c_float X [ ], c_float B [ ],")
-    f.write(" LDL_int P [ ]){\n")
-    f.write("LDL_int j;\n")
-
-    f.write("for (j = 0 ; j < %i ; j++){\n" % (data['m'] + data['n']))
-    f.write("X [P [j]] = B [j] ;\n")
-    f.write("}\n")
-
-    # Close function
-    f.write("}\n\n")
-
-
-def render_ldl(variables, output):
-    """
-    Render LDL file so that loops can be unrolled
-    """
-
-    f = open(output, 'w')
-
-    # Include header
-    f.write("#include \"ldl.h\"\n\n")
-
-    # Write ldl_lsolve
-    write_ldl_lsolve(f, variables)
-
-    # Write ldl_ltsolve
-    write_ldl_ltsolve(f, variables)
-
-    # Write ldl_dinvsolve
-    write_ldl_dinvsolve(f, variables)
-
-    # Write ldl_perm
-    write_ldl_perm(f, variables)
-
-    # Write ldl_permt
-    write_ldl_permt(f, variables)
 
     f.close()
 
