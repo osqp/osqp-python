@@ -60,10 +60,6 @@ def write_mat_extern(f, mat, name):
     """
     Write matrix prototype to file
     """
-    write_vec_extern(f, mat['i'], name + '_i', 'c_int')
-    write_vec_extern(f, mat['p'], name + '_p', 'c_int')
-    write_vec_extern(f, mat['x'], name + '_x', 'c_float')
-
     f.write("extern csc %s;\n" % name)
 
 
