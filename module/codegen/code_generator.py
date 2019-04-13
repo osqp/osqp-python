@@ -124,7 +124,8 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
 
     # Render workspace
     utils.render_workspace(template_vars,
-                           os.path.join(target_include_dir, 'workspace.h'))
+                           os.path.join(target_include_dir, 'workspace.h'),
+                           os.path.join(target_src_dir, 'osqp', 'workspace.c'))
 
     # Render setup.py
     utils.render_setuppy(template_vars,
@@ -172,7 +173,7 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     sys.stdout.flush()
     module_name = glob('%s*' % python_ext_name + module_ext)
     if not any(module_name):
-        raise ValueError('No python module generated! ' +
+        raise ValueError('No Python module generated! ' +
                          'Some errors have occurred.')
     module_name = module_name[0]
     sh.copy(module_name, current_dir)
