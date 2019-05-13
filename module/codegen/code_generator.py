@@ -13,7 +13,7 @@ from . import utils
 
 
 def codegen(work, target_dir, python_ext_name, project_type, embedded,
-            force_rewrite, loop_unrolling, float_flag, long_flag):
+            force_rewrite, float_flag, long_flag):
     """
     Generate code
     """
@@ -46,8 +46,8 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
 
     # Check if python module already exists
     resp = None  # Initialize response
-    if any(glob('%s*' % python_ext_name + module_ext)):
-        module_name = glob('%s*' % python_ext_name + module_ext)[0]
+    if any(glob('%s*%s' % (python_ext_name, module_ext))):
+        module_name = glob('%s*%s' % (python_ext_name, module_ext))[0]
         if force_rewrite:
             os.remove(module_name)
         else:
@@ -83,20 +83,19 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     c_sources = glob(os.path.join(osqp_path, 'codegen', 'sources',
                                   'src', '*.c'))
     if embedded == 1:
-        # Remobe kkt.c from embedded sources
+        # Remove kkt.c from embedded sources
         c_sources.remove(os.path.join(osqp_path, 'codegen', 'sources',
                                       'src', 'kkt.c'))
-
     for source in c_sources:
-        if loop_unrolling:
-            if source != 'ldl.c':  # Do not copy ldl. We will generate it
-                sh.copy(source, os.path.join(target_src_dir, 'osqp'))
-        else:
-            sh.copy(source, os.path.join(target_src_dir, 'osqp'))
+        sh.copy(source, os.path.join(target_src_dir, 'osqp'))
 
     # Copy header files
     c_headers = glob(os.path.join(osqp_path, 'codegen', 'sources',
                                   'include', '*.h'))
+    if embedded == 1:
+        # Remove kkt.h from embedded sources
+        c_headers.remove(os.path.join(osqp_path, 'codegen', 'sources',
+                                      'include', 'kkt.h'))
     for header in c_headers:
         sh.copy(header, target_include_dir)
 
@@ -119,18 +118,14 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
                      'embedded_flag':   embedded,
                      'python_ext_name': python_ext_name}
 
-    if loop_unrolling:
-        # Render ldl.c file
-        utils.render_ldl(template_vars, os.path.join(target_src_dir,
-                                                     'osqp', 'ldl.c'))
-
     # Add cmake args
     cmake_args = '-DEMBEDDED:INT=%d -DDFLOAT:BOOL=%s -DDLONG:BOOL=%s' % \
                  (embedded, float_flag, long_flag)
 
     # Render workspace
     utils.render_workspace(template_vars,
-                           os.path.join(target_include_dir, 'workspace.h'))
+                           os.path.join(target_include_dir, 'workspace.h'),
+                           os.path.join(target_src_dir, 'osqp', 'workspace.c'))
 
     # Render setup.py
     utils.render_setuppy(template_vars,
@@ -178,7 +173,7 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     sys.stdout.flush()
     module_name = glob('%s*' % python_ext_name + module_ext)
     if not any(module_name):
-        raise ValueError('No python module generated! ' +
+        raise ValueError('No Python module generated! ' +
                          'Some errors have occurred.')
     module_name = module_name[0]
     sh.copy(module_name, current_dir)

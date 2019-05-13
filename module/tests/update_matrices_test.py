@@ -28,7 +28,7 @@ class update_matrices_tests(unittest.TestCase):
         self.q = np.random.randn(self.n)
         self.A = sparse.random(self.m, self.n, density=p, format='csc')
         self.A_new = self.A.copy()
-        self.A_new.data += np.random.randn(self.A_new.nnz, format='csc')
+        self.A_new.data += np.random.randn(self.A_new.nnz)
         self.l = np.zeros(self.m)
         self.u = 30 + np.random.randn(self.m)
         self.opts = {'eps_abs': 1e-08,

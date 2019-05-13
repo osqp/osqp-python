@@ -30,22 +30,60 @@
 
 
 static PyMemberDef OSQP_info_members[] = {
+#ifdef DLONG
+    {"iter", T_LONGLONG, offsetof(OSQP_info, iter), READONLY, "Primal solution"},
+#else   // DLONG
     {"iter", T_INT, offsetof(OSQP_info, iter), READONLY, "Primal solution"},
+#endif  // DLONG
+
     {"status", T_OBJECT, offsetof(OSQP_info, status), READONLY, "Solver status"},
+
+#ifdef DLONG
+    {"status_val", T_LONGLONG, offsetof(OSQP_info, status_val), READONLY, "Solver status value"},
+    {"status_polish", T_LONGLONG, offsetof(OSQP_info, status_polish), READONLY, "Polishing status value"},
+#else   // DLONG
     {"status_val", T_INT, offsetof(OSQP_info, status_val), READONLY, "Solver status value"},
     {"status_polish", T_INT, offsetof(OSQP_info, status_polish), READONLY, "Polishing status value"},
+#endif  // DLONG
+
+#ifdef DFLOAT
+    {"obj_val", T_FLOAT, offsetof(OSQP_info, obj_val), READONLY, "Objective value"},
+    {"pri_res", T_FLOAT, offsetof(OSQP_info, pri_res), READONLY, "Primal residual"},
+    {"dua_res", T_FLOAT, offsetof(OSQP_info, dua_res), READONLY, "Dual residual"},
+#else   // DFLOAT
     {"obj_val", T_DOUBLE, offsetof(OSQP_info, obj_val), READONLY, "Objective value"},
     {"pri_res", T_DOUBLE, offsetof(OSQP_info, pri_res), READONLY, "Primal residual"},
     {"dua_res", T_DOUBLE, offsetof(OSQP_info, dua_res), READONLY, "Dual residual"},
+#endif  // DFLOAT
+
 #ifdef PROFILING
+#ifdef DFLOAT
+    {"setup_time", T_FLOAT, offsetof(OSQP_info, setup_time), READONLY, "Setup time"},
+    {"solve_time", T_FLOAT, offsetof(OSQP_info, solve_time), READONLY, "Solve time"},
+    {"update_time", T_FLOAT, offsetof(OSQP_info, update_time), READONLY, "Update time"},
+    {"polish_time", T_FLOAT, offsetof(OSQP_info, polish_time), READONLY, "Polish time"},
+    {"run_time", T_FLOAT, offsetof(OSQP_info, run_time), READONLY, "Total run time"},
+#else   // DFLOAT
     {"setup_time", T_DOUBLE, offsetof(OSQP_info, setup_time), READONLY, "Setup time"},
     {"solve_time", T_DOUBLE, offsetof(OSQP_info, solve_time), READONLY, "Solve time"},
     {"update_time", T_DOUBLE, offsetof(OSQP_info, update_time), READONLY, "Update time"},
     {"polish_time", T_DOUBLE, offsetof(OSQP_info, polish_time), READONLY, "Polish time"},
     {"run_time", T_DOUBLE, offsetof(OSQP_info, run_time), READONLY, "Total run time"},
-#endif
+#endif  // DFLOAT
+#endif  // PROFILING
+
+#ifdef DLONG
+    {"rho_updates", T_LONGLONG, offsetof(OSQP_info, rho_updates), READONLY, "Number of rho updates"},
+#else   // DLONG
     {"rho_updates", T_INT, offsetof(OSQP_info, rho_updates), READONLY, "Number of rho updates"},
+#endif  // DLONG
+
+#ifdef DFLOAT
+    {"rho_estimate", T_FLOAT, offsetof(OSQP_info, rho_estimate), READONLY, "Optimal rho estimate"},
+#else   // DFLOAT
     {"rho_estimate", T_DOUBLE, offsetof(OSQP_info, rho_estimate), READONLY, "Optimal rho estimate"},
+#endif  // DFLOAT
+
     {NULL}
 };
 
@@ -60,7 +98,7 @@ static c_int OSQP_info_init( OSQP_info * self, PyObject *args) {
 #ifdef DFLOAT
     static char * argparse_string = "LULLffffffffLf";
 #else
-    static char * argparse_string = "LULLddddddddLf";
+    static char * argparse_string = "LULLddddddddLd";
 #endif
 
 #else   // DLONG

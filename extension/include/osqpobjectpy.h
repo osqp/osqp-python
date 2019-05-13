@@ -243,10 +243,12 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
 
 #ifdef DLONG
 
+// NB: linsys_solver is enum type which is stored as int (regardless on how c_int is defined).
+
 #ifdef DFLOAT
-    static char * argparse_string = "(LL)O!O!O!O!O!O!O!O!O!|LLLffffLffffffLLLLLLLf";
+    static char * argparse_string = "(LL)O!O!O!O!O!O!O!O!O!|LLLffffLffffffiLLLLLLf";
 #else
-    static char * argparse_string = "(LL)O!O!O!O!O!O!O!O!O!|LLLddddLddddddLLLLLLLd";
+    static char * argparse_string = "(LL)O!O!O!O!O!O!O!O!O!|LLLddddLddddddiLLLLLLd";
 #endif
 
 #else
