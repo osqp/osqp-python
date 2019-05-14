@@ -8,6 +8,7 @@ from scipy import sparse
 import unittest
 import numpy.testing as nptest
 
+
 class non_convex_tests(unittest.TestCase):
 
     def setUp(self):
@@ -15,7 +16,8 @@ class non_convex_tests(unittest.TestCase):
         # Simple QP problem
         self.P = sparse.triu([[2., 5.], [5., 1.]], format='csc')
         self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.], [-1., 3.], [2., 5.], [3., 4]])
+        self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.],
+                                    [-1., 3.], [2., 5.], [3., 4]])
         self.u = np.array([0., 0., -15, 100, 80])
         self.l = -np.inf * np.ones(len(self.u))
         self.model = osqp.OSQP()
