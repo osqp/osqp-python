@@ -32,7 +32,7 @@ install:
   - conda.exe config --append channels conda-forge
   - conda.exe install conda conda-verify conda-build vs2008_express_vc_python_patch --yes
   # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
-  - call %MINICONDA%\Scripts\setup_x64.bat
+  # - call %MINICONDA%\Scripts\setup_x64.bat
 
 test_script:
   - conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
