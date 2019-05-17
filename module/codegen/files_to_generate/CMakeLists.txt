@@ -126,6 +126,7 @@ set(
     src/osqp/qdldl_interface.c
     src/osqp/scaling.c
     src/osqp/util.c
+    src/osqp/workspace.c
 )
 
 set(

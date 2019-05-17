@@ -334,7 +334,7 @@ class OSQP(object):
 
     def codegen(self, folder, project_type='', parameters='vectors',
                 python_ext_name='emosqp', force_rewrite=False,
-                loop_unrolling=False, FLOAT=False, LONG=True):
+                FLOAT=False, LONG=True):
         """
         Generate embeddable C code for the problem
         """
@@ -377,8 +377,7 @@ class OSQP(object):
 
         # Generate code with codegen module
         cg.codegen(work, folder, python_ext_name, project_type,
-                   embedded, force_rewrite, loop_unrolling,
-                   float_flag, long_flag)
+                   embedded, force_rewrite, float_flag, long_flag)
 
     def _linsys_solver_str_to_int(self, settings):
         linsys_solver_str = settings.pop('linsys_solver', '')
