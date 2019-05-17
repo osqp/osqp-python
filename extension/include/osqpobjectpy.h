@@ -221,6 +221,7 @@ static PyObject * OSQP_solve(OSQP *self) {
 // Setup optimization problem
 static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     c_int n, m;  // Problem dimensions
+    c_int exitflag;
 	PyOSQPData *pydata;
 	OSQPData * data;
 	OSQPSettings * settings;
@@ -311,13 +312,13 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     data = create_data(pydata);
 
     // Create Workspace object
-    self->workspace = osqp_setup(data, settings);
+    exitflag = osqp_setup(&(self->workspace), data, settings);
 
     // Cleanup data and settings
     free_data(data, pydata);
     c_free(settings);
 
-    if (self->workspace){ // Workspace allocation correct
+    if (!exitflag){ // Workspace allocation correct
         // Return workspace
         Py_INCREF(Py_None);
         return Py_None;
@@ -334,7 +335,7 @@ static PyObject *OSQP_version(OSQP *self) {
 
 
 static PyObject *OSQP_dimensions(OSQP *self){
-    
+
     // Check that the workspace is initialized
     if (!self->workspace) {
         PyErr_SetString(PyExc_ValueError, "Workspace not initialized!");
@@ -435,6 +436,7 @@ static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
     PyArrayObject *q, *q_cont;
     c_float * q_arr;
     int float_type = get_float_type();
+    int exitflag = 0;
 
     static char * argparse_string = "O!";
 
@@ -456,10 +458,16 @@ static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
     q_arr = (c_float *)PyArray_DATA(q_cont);
 
     // Update linear cost
-    osqp_update_lin_cost(self->workspace, q_arr);
+    exitflag = osqp_update_lin_cost(self->workspace, q_arr);
 
     // Free data
     Py_DECREF(q_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "Linear cost update error!");
+        return (PyObject *) NULL;
+    }
+
 
     // Return None
     Py_INCREF(Py_None);
@@ -472,6 +480,7 @@ static PyObject *OSQP_update_lower_bound(OSQP *self, PyObject *args){
     PyArrayObject *l, *l_cont;
     c_float * l_arr;
     int float_type = get_float_type();
+    int exitflag = 0;
 
     static char * argparse_string = "O!";
 
@@ -493,10 +502,15 @@ static PyObject *OSQP_update_lower_bound(OSQP *self, PyObject *args){
     l_arr = (c_float *)PyArray_DATA(l_cont);
 
     // Update lower bound
-    osqp_update_lower_bound(self->workspace, l_arr);
+    exitflag = osqp_update_lower_bound(self->workspace, l_arr);
 
     // Free data
     Py_DECREF(l_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "Lower bound update error!");
+        return (PyObject *) NULL;
+    }
 
     // Return None
     Py_INCREF(Py_None);
@@ -509,6 +523,7 @@ static PyObject *OSQP_update_upper_bound(OSQP *self, PyObject *args){
     PyArrayObject *u, *u_cont;
     c_float * u_arr;
     int float_type = get_float_type();
+    int exitflag = 0;
 
     static char * argparse_string = "O!";
 
@@ -530,10 +545,16 @@ static PyObject *OSQP_update_upper_bound(OSQP *self, PyObject *args){
     u_arr = (c_float *)PyArray_DATA(u_cont);
 
     // Update upper bound
-    osqp_update_upper_bound(self->workspace, u_arr);
+    exitflag = osqp_update_upper_bound(self->workspace, u_arr);
 
     // Free data
     Py_DECREF(u_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "Upper bound update error!");
+        return (PyObject *) NULL;
+    }
+
 
     // Return None
     Py_INCREF(Py_None);
@@ -546,6 +567,7 @@ static PyObject *OSQP_update_bounds(OSQP *self, PyObject *args){
     PyArrayObject *l, *l_cont, *u, *u_cont;
     c_float * l_arr, * u_arr;
     int float_type = get_float_type();
+    int exitflag = 0;
 
     static char * argparse_string = "O!O!";
 
@@ -571,11 +593,17 @@ static PyObject *OSQP_update_bounds(OSQP *self, PyObject *args){
     u_arr = (c_float *)PyArray_DATA(u_cont);
 
     // Update bounds
-    osqp_update_bounds(self->workspace, l_arr, u_arr);
+    exitflag = osqp_update_bounds(self->workspace, l_arr, u_arr);
 
     // Free data
     Py_DECREF(l_cont);
     Py_DECREF(u_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "Bounds update error!");
+        return (PyObject *) NULL;
+    }
+
 
     // Return None
     Py_INCREF(Py_None);
@@ -590,6 +618,7 @@ static PyObject * OSQP_update_P(OSQP *self, PyObject *args) {
     c_float * Px_arr;
     c_int * Px_idx_arr;
     c_int Px_n;
+    int exitflag = 0;
     int float_type = get_float_type();
     int int_type = get_int_type();
 
@@ -629,11 +658,17 @@ static PyObject * OSQP_update_P(OSQP *self, PyObject *args) {
     Px_arr = (c_float *)PyArray_DATA(Px_cont);
 
     // Update matrix P
-    osqp_update_P(self->workspace, Px_arr, Px_idx_arr, Px_n);
+    exitflag = osqp_update_P(self->workspace, Px_arr, Px_idx_arr, Px_n);
 
     // Free data
     Py_DECREF(Px_cont);
     if (PyObject_Length((PyObject *)Px_idx) > 0) Py_DECREF(Px_idx_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "P update error!");
+        return (PyObject *) NULL;
+    }
+
 
     // Return None
     Py_INCREF(Py_None);
@@ -650,6 +685,7 @@ static PyObject * OSQP_update_A(OSQP *self, PyObject *args) {
     c_int Ax_n;
     int float_type = get_float_type();
     int int_type = get_int_type();
+    int exitflag = 0;
 
 #ifdef DLONG
     static char * argparse_string = "O!O!L";
@@ -687,11 +723,16 @@ static PyObject * OSQP_update_A(OSQP *self, PyObject *args) {
     Ax_arr = (c_float *)PyArray_DATA(Ax_cont);
 
     // Update matrix A
-    osqp_update_A(self->workspace, Ax_arr, Ax_idx_arr, Ax_n);
+    exitflag = osqp_update_A(self->workspace, Ax_arr, Ax_idx_arr, Ax_n);
 
     // Free data
     Py_DECREF(Ax_cont);
     if (PyObject_Length((PyObject *)Ax_idx) > 0) Py_DECREF(Ax_idx_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "A update error!");
+        return (PyObject *) NULL;
+    }
 
     // Return None
     Py_INCREF(Py_None);
@@ -709,12 +750,15 @@ static PyObject * OSQP_update_P_A(OSQP *self, PyObject *args) {
     c_int Px_n, Ax_n;
     int float_type = get_float_type();
     int int_type = get_int_type();
+    int exitflag = 0;
 
 #ifdef DLONG
     static char * argparse_string = "O!O!LO!O!L";
 #else
     static char * argparse_string = "O!O!iO!O!i";
 #endif
+
+    exitflag = 0;  // Assume successful execution
 
     // Check that the workspace is initialized
     if (!self->workspace) {
@@ -760,15 +804,20 @@ static PyObject * OSQP_update_P_A(OSQP *self, PyObject *args) {
     Ax_arr = (c_float *)PyArray_DATA(Ax_cont);
 
     // Update matrices P and A
-    osqp_update_P_A(self->workspace,
-                    Px_arr, Px_idx_arr, Px_n,
-                    Ax_arr, Ax_idx_arr, Ax_n);
+    exitflag = osqp_update_P_A(self->workspace,
+                               Px_arr, Px_idx_arr, Px_n,
+                               Ax_arr, Ax_idx_arr, Ax_n);
 
     // Free data
     Py_DECREF(Px_cont);
     if (PyObject_Length((PyObject *)Px_idx) > 0) Py_DECREF(Px_idx_cont);
     Py_DECREF(Ax_cont);
     if (PyObject_Length((PyObject *)Ax_idx) > 0) Py_DECREF(Ax_idx_cont);
+
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "P and A update error!");
+        return (PyObject *) NULL;
+    }
 
     // Return None
     Py_INCREF(Py_None);
@@ -1043,6 +1092,7 @@ static PyObject *OSQP_update_eps_dual_inf(OSQP *self, PyObject *args) {
 static PyObject *OSQP_update_rho(OSQP *self, PyObject *args) {
 
     c_float rho_new;
+    int exitflag = 0;
 
 #ifdef DFLOAT
     static char * argparse_string = "f";
@@ -1062,7 +1112,13 @@ static PyObject *OSQP_update_rho(OSQP *self, PyObject *args) {
     }
 
     // Perform Update
-    osqp_update_rho(self->workspace, rho_new);
+    exitflag = osqp_update_rho(self->workspace, rho_new);
+
+    if (exitflag){
+        PyErr_SetString(PyExc_ValueError, "rho update error!");
+        return (PyObject *) NULL;
+    }
+
 
     // Return None
     Py_INCREF(Py_None);
@@ -1311,7 +1367,7 @@ static PyObject *OSQP_update_warm_start(OSQP *self, PyObject *args){
 
 
 static PyObject *OSQP_update_time_limit(OSQP *self, PyObject *args){
-    
+
     c_float time_limit_new;
 
 #ifdef DFLOAT
