@@ -23,10 +23,10 @@ class update_matrices_tests(unittest.TestCase):
         Pt_new = Pt.copy()
         Pt_new.data += 0.1 * np.random.randn(Pt.nnz)
 
-        self.P = sparse.triu(Pt.T.dot(Pt) + sparse.eye(self.n), format='csc')
-        self.P_new = sparse.triu(Pt_new.T.dot(Pt_new) + sparse.eye(self.n), format='csc')
+        self.P = Pt.T.dot(Pt).tocsc() + sparse.eye(self.n).tocsc()
+        self.P_new = Pt_new.T.dot(Pt_new).tocsc() + sparse.eye(self.n).tocsc()
         self.q = np.random.randn(self.n)
-        self.A = sparse.random(self.m, self.n, density=p, format='csc')
+        self.A = sparse.random(self.m, self.n, density=p).tocsc()
         self.A_new = self.A.copy()
         self.A_new.data += np.random.randn(self.A_new.nnz)
         self.l = np.zeros(self.m)
@@ -51,8 +51,9 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P(self):
         # Update matrix P
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
+        Px_idx = np.arange(Pnew_triu.nnz)
         self.model.update(Px=Px, Px_idx=Px_idx)
         res = self.model.solve()
 
@@ -65,7 +66,8 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P_allind(self):
         # Update matrix P
-        Px = self.P_new.data
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
         self.model.update(Px=Px)
         res = self.model.solve()
 
@@ -105,8 +107,9 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P_A_indP_indA(self):
         # Update matrices P and A
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
+        Px_idx = np.arange(Pnew_triu.nnz)
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax, Ax_idx=Ax_idx)
@@ -121,8 +124,9 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P_A_indP(self):
         # Update matrices P and A
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
+        Px_idx = np.arange(Pnew_triu.nnz)
         Ax = self.A_new.data
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax)
         res = self.model.solve()
@@ -136,7 +140,8 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P_A_indA(self):
         # Update matrices P and A
-        Px = self.P_new.data
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
         self.model.update(Px=Px, Ax=Ax, Ax_idx=Ax_idx)
@@ -151,7 +156,8 @@ class update_matrices_tests(unittest.TestCase):
 
     def test_update_P_A_allind(self):
         # Update matrices P and A
-        Px = self.P_new.data
+        Pnew_triu = sparse.triu(self.P_new).tocsc()
+        Px = Pnew_triu.data
         Ax = self.A_new.data
         self.model.update(Px=Px, Ax=Ax)
         res = self.model.solve()
