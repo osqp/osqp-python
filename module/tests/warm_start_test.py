@@ -2,7 +2,7 @@
 import osqp
 # import osqppurepy as osqp
 import numpy as np
-import scipy.sparse as spspa
+from scipy import sparse
 import scipy as sp
 
 # Unit Test
@@ -28,12 +28,12 @@ class warm_start_tests(unittest.TestCase):
         sp.random.seed(2)
         self.n = 100
         self.m = 200
-        self.A = spspa.random(self.m, self.n, density=0.9).tocsc()
+        self.A = sparse.random(self.m, self.n, density=0.9, format='csc')
         self.l = -sp.rand(self.m) * 2.
         self.u = sp.rand(self.m) * 2.
 
-        P = spspa.random(self.n, self.n, density=0.9)
-        self.P = P.dot(P.T).tocsc()
+        P = sparse.random(self.n, self.n, density=0.9)
+        self.P = sparse.triu(P.dot(P.T), format='csc')
         self.q = sp.randn(self.n)
 
         # Setup solver

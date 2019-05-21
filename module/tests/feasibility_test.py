@@ -26,7 +26,7 @@ class feasibility_tests(unittest.TestCase):
         self.m = 30
         self.P = sparse.csc_matrix((self.n, self.n))
         self.q = np.zeros(self.n)
-        self.A = sparse.random(self.m, self.n, density=1.0).tocsc()
+        self.A = sparse.random(self.m, self.n, density=1.0, format='csc')
         self.u = np.random.rand(self.m)
         self.l = self.u
         self.opts = {'verbose': False,

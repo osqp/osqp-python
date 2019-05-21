@@ -26,7 +26,12 @@ build: false
 
 install:
   - git submodule update --init --recursive
+    # Setup 32 bit
   - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
+  # - if "%PLATFORM%"=="x86"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+    # Setup 64 bit
+  # - if "%PLATFORM%"=="x64" call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
+  # - if "%PLATFORM%"=="x64"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge

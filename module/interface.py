@@ -103,6 +103,10 @@ class OSQP(object):
                 len(A.shape) == 2:
             raise TypeError("A is required to be a sparse matrix")
 
+        # If P is not triu, then convert it to triu
+        if sparse.tril(P, -1).data.size > 0:
+            P = sparse.triu(P, format='csc')
+
         # Convert matrices in CSC form and to individual pointers
         if not sparse.isspmatrix_csc(P):
             warn("Converting sparse P to a CSC " +

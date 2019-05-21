@@ -2,7 +2,7 @@
 import osqp
 # import osqppurepy as osqp
 import numpy as np
-import scipy.sparse as spspa
+from scipy import sparse
 
 # Unit Test
 import unittest
@@ -28,9 +28,9 @@ class dual_infeasibility_tests(unittest.TestCase):
     def test_dual_infeasible_lp(self):
 
         # Dual infeasible example
-        self.P = spspa.csc_matrix((2, 2))
+        self.P = sparse.csc_matrix((2, 2))
         self.q = np.array([2, -1])
-        self.A = spspa.eye(2).tocsc()
+        self.A = sparse.eye(2, format='csc')
         self.l = np.array([0., 0.])
         self.u = np.array([np.inf, np.inf])
 
@@ -48,9 +48,9 @@ class dual_infeasibility_tests(unittest.TestCase):
     def test_dual_infeasible_qp(self):
 
         # Dual infeasible example
-        self.P = spspa.csc_matrix(np.diag(np.array([4., 0.])))
+        self.P = sparse.diags([4., 0.], format='csc')
         self.q = np.array([0, 2])
-        self.A = spspa.csc_matrix([[1., 1.], [-1., 1.]])
+        self.A = sparse.csc_matrix([[1., 1.], [-1., 1.]])
         self.l = np.array([-np.inf, -np.inf])
         self.u = np.array([2., 3.])
 
@@ -69,9 +69,9 @@ class dual_infeasibility_tests(unittest.TestCase):
 
         self.n = 2
         self.m = 4
-        self.P = spspa.csc_matrix((2, 2))
+        self.P = sparse.csc_matrix((2, 2))
         self.q = np.array([-1., -1.])
-        self.A = spspa.csc_matrix([[1., -1.], [-1., 1.], [1., 0.], [0., 1.]])
+        self.A = sparse.csc_matrix([[1., -1.], [-1., 1.], [1., 0.], [0., 1.]])
         self.l = np.array([1., 1., 0., 0.])
         self.u = np.inf * np.ones(self.m)
 

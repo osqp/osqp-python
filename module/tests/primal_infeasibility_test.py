@@ -1,7 +1,7 @@
 # Test osqp python module
 import osqp
 # import osqppurepy as osqp
-import scipy.sparse as spspa
+from scipy import sparse
 import scipy as sp
 import numpy as np
 
@@ -32,10 +32,10 @@ class primal_infeeasibility_tests(unittest.TestCase):
         self.n = 50
         self.m = 500
         # Generate random Matrices
-        Pt = spspa.random(self.n, self.n)
-        self.P = Pt.T.dot(Pt).tocsc()
+        Pt = sparse.random(self.n, self.n)
+        self.P = sparse.triu(Pt.T.dot(Pt), format='csc')
         self.q = sp.randn(self.n)
-        self.A = spspa.random(self.m, self.n).tolil()  # Lil for efficiency
+        self.A = sparse.random(self.m, self.n).tolil()  # Lil for efficiency
         self.u = 3 + sp.randn(self.m)
         self.l = -3 + sp.randn(self.m)
 
@@ -62,9 +62,9 @@ class primal_infeeasibility_tests(unittest.TestCase):
 
         self.n = 2
         self.m = 4
-        self.P = spspa.csc_matrix((2, 2))
+        self.P = sparse.csc_matrix((2, 2))
         self.q = np.array([-1., -1.])
-        self.A = spspa.csc_matrix([[1., -1.], [-1., 1.], [1., 0.], [0., 1.]])
+        self.A = sparse.csc_matrix([[1., -1.], [-1., 1.], [1., 0.], [0., 1.]])
         self.l = np.array([1., 1., 0., 0.])
         self.u = np.inf * np.ones(self.m)
 
