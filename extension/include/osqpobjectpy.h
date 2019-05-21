@@ -220,6 +220,7 @@ static PyObject * OSQP_solve(OSQP *self) {
 
 // Setup optimization problem
 static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
+    c_int exitflag;
     c_int n, m;  // Problem dimensions
 	PyOSQPData *pydata;
 	OSQPData * data;
@@ -311,19 +312,19 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     data = create_data(pydata);
 
     // Create Workspace object
-    self->workspace = osqp_setup(data, settings);
+    exitflag = osqp_setup(&(self->workspace), data, settings);
 
     // Cleanup data and settings
     free_data(data, pydata);
     c_free(settings);
 
-    if (self->workspace){ // Workspace allocation correct
+    if (exitflag){
+        PyErr_SetString(PyExc_ValueError, "Workspace allocation error!");
+        return (PyObject *) NULL;
+    } else { // Workspace allocation correct
         // Return workspace
         Py_INCREF(Py_None);
         return Py_None;
-    } else {
-        PyErr_SetString(PyExc_ValueError, "Workspace allocation error!");
-        return (PyObject *) NULL;
     }
 }
 

@@ -151,57 +151,63 @@
      PyObject *return_dict;
 
      /* Build Arrays. */
-     PyObject *Lp        = PyArray_SimpleNewFromData(1, &Ln_plus_1,   int_type,   solver->L->p);
-     PyObject *Li        = PyArray_SimpleNewFromData(1, &Lnzmax,      int_type,   solver->L->i);
-     PyObject *Lx        = PyArray_SimpleNewFromData(1, &Lnzmax,      float_type, solver->L->x);
-     PyObject *Dinv      = PyArray_SimpleNewFromData(1, &Ln,          float_type, solver->Dinv);
-     PyObject *P         = PyArray_SimpleNewFromData(1, &Ln,          int_type,   solver->P);
-     PyObject *bp        = PyArray_SimpleNewFromData(1, &Ln,          float_type, solver->bp);
-     PyObject *Pdiag_idx = PyArray_SimpleNewFromData(1, &Pdiag_n,     int_type,   solver->Pdiag_idx);
-     PyObject *KKTp      = PyArray_SimpleNewFromData(1, &KKTn_plus_1, int_type,   solver->KKT->p);
-     PyObject *KKTi      = PyArray_SimpleNewFromData(1, &KKTnzmax,    int_type,   solver->KKT->i);
-     PyObject *KKTx      = PyArray_SimpleNewFromData(1, &KKTnzmax,    float_type, solver->KKT->x);
-     PyObject *PtoKKT    = PyArray_SimpleNewFromData(1, &Pnzmax,      int_type,   solver->PtoKKT);
-     PyObject *AtoKKT    = PyArray_SimpleNewFromData(1, &Anzmax,      int_type,   solver->AtoKKT);
-     PyObject *rhotoKKT  = PyArray_SimpleNewFromData(1, &m,           int_type,   solver->rhotoKKT);
-     PyObject *D         = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->D);
-     PyObject *etree     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->etree);
-     PyObject *Lnz_vec   = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Lnz);
-     PyObject *iwork     = PyArray_SimpleNewFromData(1, &m_plus_n_x3, int_type,   solver->iwork);
-     PyObject *bwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->bwork);
-     PyObject *fwork     = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->fwork);
+     PyObject *Lp           = PyArray_SimpleNewFromData(1, &Ln_plus_1,   int_type,   solver->L->p);
+     PyObject *Li           = PyArray_SimpleNewFromData(1, &Lnzmax,      int_type,   solver->L->i);
+     PyObject *Lx           = PyArray_SimpleNewFromData(1, &Lnzmax,      float_type, solver->L->x);
+     PyObject *Dinv         = PyArray_SimpleNewFromData(1, &Ln,          float_type, solver->Dinv);
+     PyObject *P            = PyArray_SimpleNewFromData(1, &Ln,          int_type,   solver->P);
+     PyObject *bp           = PyArray_SimpleNewFromData(1, &Ln,          float_type, solver->bp);
+     PyObject *sol          = PyArray_SimpleNewFromData(1, &Ln,          float_type, solver->sol);
+     PyObject *rho_inv_vec  = PyArray_SimpleNewFromData(1, &m,           float_type, solver->rho_inv_vec);
+     PyObject *Pdiag_idx    = PyArray_SimpleNewFromData(1, &Pdiag_n,     int_type,   solver->Pdiag_idx);
+     PyObject *KKTp         = PyArray_SimpleNewFromData(1, &KKTn_plus_1, int_type,   solver->KKT->p);
+     PyObject *KKTi         = PyArray_SimpleNewFromData(1, &KKTnzmax,    int_type,   solver->KKT->i);
+     PyObject *KKTx         = PyArray_SimpleNewFromData(1, &KKTnzmax,    float_type, solver->KKT->x);
+     PyObject *PtoKKT       = PyArray_SimpleNewFromData(1, &Pnzmax,      int_type,   solver->PtoKKT);
+     PyObject *AtoKKT       = PyArray_SimpleNewFromData(1, &Anzmax,      int_type,   solver->AtoKKT);
+     PyObject *rhotoKKT     = PyArray_SimpleNewFromData(1, &m,           int_type,   solver->rhotoKKT);
+     PyObject *D            = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->D);
+     PyObject *etree        = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->etree);
+     PyObject *Lnz_vec      = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->Lnz);
+     PyObject *iwork        = PyArray_SimpleNewFromData(1, &m_plus_n_x3, int_type,   solver->iwork);
+     PyObject *bwork        = PyArray_SimpleNewFromData(1, &m_plus_n,    int_type,   solver->bwork);
+     PyObject *fwork        = PyArray_SimpleNewFromData(1, &m_plus_n,    float_type, solver->fwork);
      
      /* Change data ownership. */
-     PyArray_ENABLEFLAGS((PyArrayObject *) Lp,        NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Li,        NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Lx,        NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Dinv,      NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) P,         NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) bp,        NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Pdiag_idx, NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) KKTp,      NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) KKTi,      NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) KKTx,      NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) PtoKKT,    NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) AtoKKT,    NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) rhotoKKT,  NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) D,         NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) etree,     NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) Lnz_vec,   NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) iwork,     NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) bwork,     NPY_ARRAY_OWNDATA);
-     PyArray_ENABLEFLAGS((PyArrayObject *) fwork,     NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Lp,          NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Li,          NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Lx,          NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Dinv,        NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) P,           NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) bp,          NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) sol,         NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) rho_inv_vec, NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Pdiag_idx,   NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) KKTp,        NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) KKTi,        NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) KKTx,        NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) PtoKKT,      NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) AtoKKT,      NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) rhotoKKT,    NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) D,           NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) etree,       NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) Lnz_vec,     NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) iwork,       NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) bwork,       NPY_ARRAY_OWNDATA);
+     PyArray_ENABLEFLAGS((PyArrayObject *) fwork,       NPY_ARRAY_OWNDATA);
 
      return_dict = Py_BuildValue(
          "{s:{s:i,s:i,s:i,s:O,s:O,s:O,s:i},"  // L
-         "s:O,s:O,s:O,"                       // Dinv, P, bp
+         "s:O,s:O,s:O,s:O,s:O,"               // Dinv, P, bp, sol, rho_inv_vec
+         "s:d,s:i,s:i,s:i,"                   // sigma, polish, n, m
          "s:O,s:i,"                           // Pdiag_idx, Pdiag_n
          "s:{s:i,s:i,s:i,s:O,s:O,s:O,s:i},"   // KKT
          "s:O,s:O,s:O,"                       // PtoKKT, AtoKKT, rhotoKKT,
          "s:O,s:O,s:O,"                       // D, etree, Lnz
          "s:O,s:O,s:O}",                      // iwork, bwork, fwork
          "L", "nzmax", Lnzmax, "m", Ln, "n", Ln, "p", Lp, "i", Li, "x", Lx, "nz", Lnz,
-         "Dinv", Dinv, "P", P, "bp", bp,
+         "Dinv", Dinv, "P", P, "bp", bp, "sol", sol, "rho_inv_vec", rho_inv_vec,
+         "sigma", (double)solver->sigma, "polish", solver->polish, "n", solver->n, "m", solver->m,
          "Pdiag_idx", Pdiag_idx, "Pdiag_n", Pdiag_n,
          "KKT", "nzmax", KKTnzmax, "m", KKTn, "n", KKTn, "p", KKTp, "i", KKTi, "x", KKTx, "nz", KKTnz,
          "PtoKKT", PtoKKT, "AtoKKT", AtoKKT, "rhotoKKT", rhotoKKT,

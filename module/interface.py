@@ -119,6 +119,9 @@ class OSQP(object):
         if not A.has_sorted_indices:
             A.sort_indices()
 
+        # Convert P to an upper triangular matrix
+        P = sparse.triu(P).tocsc()
+
         # Convert infinity values to OSQP Infinity
         u = np.minimum(u, self._model.constant('OSQP_INFTY'))
         l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
