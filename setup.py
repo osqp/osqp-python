@@ -10,7 +10,6 @@ from platform import system
 import os
 import sys
 
-
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
 cmake_build_flags = []
@@ -36,6 +35,11 @@ else:  # Linux or Mac
 
 # Pass Python option to CMake and Python interface compilation
 cmake_args += ['-DPYTHON=ON']
+
+# Remove long integers for numpy compatibility
+# https://github.com/numpy/numpy/issues/5906
+# https://github.com/ContinuumIO/anaconda-issues/issues/3823
+cmake_args += ['-DDLONG=OFF']
 
 # Pass python to compiler launched from setup.py
 define_macros += [('PYTHON', None)]
