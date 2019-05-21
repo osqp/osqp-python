@@ -187,11 +187,12 @@ def write_linsys_solver_src(f, linsys_solver, embedded_flag):
     """
 
     f.write("// Define linsys_solver structure\n")
-    write_mat(f, linsys_solver['L'], 'linsys_solver_L')
-    write_vec(f, linsys_solver['Dinv'], 'linsys_solver_Dinv', 'c_float')
-    write_vec(f, linsys_solver['P'], 'linsys_solver_P', 'c_int')
-    # Empty rhs
-    f.write("c_float linsys_solver_bp[%d];\n" % (len(linsys_solver['Dinv'])))
+    write_mat(f, linsys_solver['L'],            'linsys_solver_L')
+    write_vec(f, linsys_solver['Dinv'],         'linsys_solver_Dinv',           'c_float')
+    write_vec(f, linsys_solver['P'],            'linsys_solver_P',              'c_int')
+    f.write("c_float linsys_solver_bp[%d];\n"  % (len(linsys_solver['bp'])))
+    f.write("c_float linsys_solver_sol[%d];\n" % (len(linsys_solver['sol'])))
+    write_vec(f, linsys_solver['rho_inv_vec'],  'linsys_solver_rho_inv_vec',    'c_float')
 
     if embedded_flag != 1:
         write_vec(f, linsys_solver['Pdiag_idx'], 'linsys_solver_Pdiag_idx', 'c_int')
@@ -208,15 +209,23 @@ def write_linsys_solver_src(f, linsys_solver, embedded_flag):
 
     f.write("qdldl_solver linsys_solver = ")
     f.write("{QDLDL_SOLVER, &solve_linsys_qdldl, ")
+
     if embedded_flag != 1:
-        f.write("&update_linsys_solver_matrices_qdldl, &update_linsys_solver_rho_vec_qdldl, " +
-                "&linsys_solver_L, linsys_solver_Dinv, linsys_solver_P, linsys_solver_bp, linsys_solver_Pdiag_idx, " +
-                "%d, " % linsys_solver['Pdiag_n'] +
-                "&linsys_solver_KKT, linsys_solver_PtoKKT, linsys_solver_AtoKKT, linsys_solver_rhotoKKT, " +
+        f.write("&update_linsys_solver_matrices_qdldl, &update_linsys_solver_rho_vec_qdldl, ")
+
+    f.write("&linsys_solver_L, linsys_solver_Dinv, linsys_solver_P, linsys_solver_bp, linsys_solver_sol, linsys_solver_rho_inv_vec, ")
+    f.write("(c_float)%.20f, " % linsys_solver['sigma'])
+    f.write("%d, " % linsys_solver['n'])
+    f.write("%d, " % linsys_solver['m'])
+    
+    if embedded_flag != 1:
+        f.write("linsys_solver_Pdiag_idx, ")
+        f.write("%d, " % linsys_solver['Pdiag_n'])
+        f.write("&linsys_solver_KKT, linsys_solver_PtoKKT, linsys_solver_AtoKKT, linsys_solver_rhotoKKT, " +
                 "linsys_solver_D, linsys_solver_etree, linsys_solver_Lnz, " +
-                "linsys_solver_iwork, linsys_solver_bwork, linsys_solver_fwork};\n\n")
-    else:
-        f.write("&linsys_solver_L, linsys_solver_Dinv, linsys_solver_P, linsys_solver_bp};\n\n")
+                "linsys_solver_iwork, linsys_solver_bwork, linsys_solver_fwork, ")
+    
+    f.write("};\n\n")
 
 
 def write_linsys_solver_inc(f, linsys_solver, embedded_flag):
@@ -227,7 +236,9 @@ def write_linsys_solver_inc(f, linsys_solver, embedded_flag):
     write_mat_extern(f, linsys_solver['L'],    'linsys_solver_L')
     write_vec_extern(f, linsys_solver['Dinv'], 'linsys_solver_Dinv', 'c_float')
     write_vec_extern(f, linsys_solver['P'],    'linsys_solver_P',    'c_int')
-    f.write("extern c_float linsys_solver_bp[%d];\n" % len(linsys_solver['Dinv']))  # Empty rhs
+    f.write("extern c_float linsys_solver_bp[%d];\n"  % len(linsys_solver['bp']))
+    f.write("extern c_float linsys_solver_sol[%d];\n" % len(linsys_solver['sol']))
+    write_vec_extern(f, linsys_solver['rho_inv_vec'], 'linsys_solver_rho_inv_vec', 'c_float')
 
     if embedded_flag != 1:
         write_vec_extern(f, linsys_solver['Pdiag_idx'], 'linsys_solver_Pdiag_idx', 'c_int')
