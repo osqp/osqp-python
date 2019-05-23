@@ -11,7 +11,7 @@ environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
   BINTRAY_API_KEY:
-          secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
+    secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
@@ -40,13 +40,13 @@ install:
   - pip install cibuildwheel==0.10.2
 
 test_script:
-  - @setlocal enabledelayedexpansion
+  - call @setlocal enabledelayedexpansion
 
   # Recipes
-  - conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
+  - call conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
 
   # Get OSQP version from local package
-  - conda install --use-local osqp
+  - call conda install --use-local osqp
   - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
 
   # Wheels
