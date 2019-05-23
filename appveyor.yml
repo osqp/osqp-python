@@ -10,6 +10,8 @@ platform:
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
+  BINTRAY_API_KEY:
+          secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
@@ -28,23 +30,45 @@ install:
   - git submodule update --init --recursive
     # Setup 32 bit
   - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
-  # - if "%PLATFORM%"=="x86"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-    # Setup 64 bit
-  # - if "%PLATFORM%"=="x64" call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-  # - if "%PLATFORM%"=="x64"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
-  - conda.exe install conda conda-verify conda-build vs2008_express_vc_python_patch --yes
+  - conda.exe install conda conda-verify conda-build anaconda-client vs2008_express_vc_python_patch --yes
   # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
   - call %MINICONDA%\Scripts\setup_x64.bat
+  # Install cibuildwheel
+  - pip install cibuildwheel==0.10.2
 
 test_script:
+  - @setlocal enabledelayedexpansion
+
+  # Recipes
   - conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
 
-# deploy_script:
-#   - conda.exe install anaconda-client --yes
-#   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force
+  # Get OSQP version from local package
+  - conda install --use-local osqp
+  - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
+
+  # Wheels
+  - cibuildwheel --output-dir %REPO_DIR%/wheelhouse
+
+deploy_script:
+  - @setlocal enabledelayedexpansion
+
+  - |
+    set OSQP_PACKAGE_NAME="OSQP"
+    IF NOT "!OSQP_VERSION!"=="!OSQP_VERSION:dev=!" (
+        REM We are using a development version
+        set ANACONDA_LABLEL="dev"
+    )
+    ELSE (
+        REM We are using a standard version
+        set ANACONDA_LABLEL="main"
+    )
+  - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
+  # Upload all wheels to bintray
+  - for %%f in (%REPO_DIR%\wheelhouse\*.whl) do (curl -T %%f -ubstellato:%BINTRAY_API_KEY% -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:%OSQP_VERSION%" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/%OSQP_VERSION%/)
+  - curl -X POST -ubstellato:%BINTRAY_API_KEY% https://api.bintray.com/content/bstellato/generic/osqp-wheels/%OSQP_VERSION%/publish
 
 # on_finish:
 #   # Uncomment for remote desktop debug
