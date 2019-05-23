@@ -75,5 +75,5 @@ class primal_infeeasibility_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        self.assertEqual(res.info.status_val,
-                         self.model.constant('OSQP_PRIMAL_INFEASIBLE'))
+        self.assertIn(res.info.status_val, [self.model.constant('OSQP_PRIMAL_INFEASIBLE'),
+                                            self.model.constant('OSQP_DUAL_INFEASIBLE')])
