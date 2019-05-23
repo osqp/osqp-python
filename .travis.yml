@@ -6,11 +6,15 @@ os:
 osx_image: xcode8.3
 
 sudo: required
+services:
+  - docker
 
 env:
   global:
-    # # ANACONDA_TOKEN
-    # - secure: "bOFayXqJGwh8PxiKdQ3oVO+7YPYwPhxHssoe7gGoCHmpIQa8hgx8mv4Vop68rpZaDufDvB6JA59L4ZXHw+lwuW4tX64uH5a/YOxZBG+I1B5+e1PzcO0wrYpOkRV+2h9zLLKkxerNAMSgR4YUagt6I7w4WbFyT/PujXjJOhicO5PmjFb7rjb9gDGFQSXIXno1CK1k4/pumYge9QFMsW9Tv9pZORxmUCwyKHpkWFpl/4O4tUBqiQ5k55Vq936pcd5nT5SjaKPJ49pWxzQhead/Hq5TnAdLvOHXgRSKB5iMMix9e+6/8zl4hlVwP85Ivpszjzrxa5IsIiYXJkPbZHCoTMAS/UnNNfb141mmQ40Ojmvchg+vs9oCeNPbexu5ZR0a06RGzHU9Z37OmW2bpctUHAdWp69wChjRAO77dIQQypkYkTsWvFeCqT+I4NzaLhyMizdu3KKHG9rjgPbeNQyJACPkubSyjcYRdii58tNXfTN/PD4B+MDPFFTGUzeW0Xs2T7ToFPq5FCBEtZRyiHplKpUCdf2MrDCCICXjOfZMBZsMChWZtY9Lh0+BYE6a6efc4O4gHsVhCkgoM7Y6iB9r0GWdWB7TYPH4BljRSp3OuIOhMJpAaM3KFnSqYS5Mbpe58finZ03f6+CEpzvsBakvZvZGIgFs37oh8F+3PbRszH8="
+    # ANACONDA_TOKEN
+    - secure: "bOFayXqJGwh8PxiKdQ3oVO+7YPYwPhxHssoe7gGoCHmpIQa8hgx8mv4Vop68rpZaDufDvB6JA59L4ZXHw+lwuW4tX64uH5a/YOxZBG+I1B5+e1PzcO0wrYpOkRV+2h9zLLKkxerNAMSgR4YUagt6I7w4WbFyT/PujXjJOhicO5PmjFb7rjb9gDGFQSXIXno1CK1k4/pumYge9QFMsW9Tv9pZORxmUCwyKHpkWFpl/4O4tUBqiQ5k55Vq936pcd5nT5SjaKPJ49pWxzQhead/Hq5TnAdLvOHXgRSKB5iMMix9e+6/8zl4hlVwP85Ivpszjzrxa5IsIiYXJkPbZHCoTMAS/UnNNfb141mmQ40Ojmvchg+vs9oCeNPbexu5ZR0a06RGzHU9Z37OmW2bpctUHAdWp69wChjRAO77dIQQypkYkTsWvFeCqT+I4NzaLhyMizdu3KKHG9rjgPbeNQyJACPkubSyjcYRdii58tNXfTN/PD4B+MDPFFTGUzeW0Xs2T7ToFPq5FCBEtZRyiHplKpUCdf2MrDCCICXjOfZMBZsMChWZtY9Lh0+BYE6a6efc4O4gHsVhCkgoM7Y6iB9r0GWdWB7TYPH4BljRSp3OuIOhMJpAaM3KFnSqYS5Mbpe58finZ03f6+CEpzvsBakvZvZGIgFs37oh8F+3PbRszH8="
+    # BINTRAY_API_KEY
+    - secure: "U6ihXmjRVmJkmOfNagKxG8W3VcERrBl65e9GxvzEx8BoU/ifrRCQEc7CZMliMBVWUXTSZUe3jEuGl0voqi59/0yQgY2pf/AH0AAKUvuTvJ/9qiTyLKuii8K4mM/0SafJPHwSho6W9EoKpzvMNKCSEGGsD7ogF5jEthzIFWqOUnoUeK9hOdrzwz33Xl1xvQNF/mpCmehHc4DIu2zsW3pyftetJ86cVzGA5RgsnwPBh/lrD8qSX8rjJjS83itzQjkAGx5O9M1ouNWwctrQmLJE+fzHwNiH2o7XG8ZlvKQY1uvFS+UpLmAuZaoQlJqiBnT2iL19qUrx+Cqq179kHRsEQUssnpXmtadcAj145uHi2DcDD22HVSzYXge91g4475KZRqbvuP1/WnrnBUxJY/fW4zmqi/a5FfPwT2t2QF2WqNQilZ5fgiq9vx/ekjGL1oJ7sM6GE8HRud9LUo7zx1YjgY4C8nzibJxpISYdEEC9u09Y8H4vIqn7+BQ5M4gnUOO9ADDZ9+SqoD/tJAN+V5vrU2VmAyYlpeuJ92zf7FwwAE4RowmjCeJleuH88tySA4fpDExcE3ym6kFZ649PezrfAlVMhWzPU0RGJj1NtmjDEHn3qWmVmSk4VHZf595HZlyemLEDCQnpxTRdgTACWAFYzGQE3dkiT7LDMBPD2f7yskk="
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.5
@@ -26,28 +30,65 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda install conda conda-verify conda-build
+  - conda install conda conda-verify conda-build anaconda-client
   - conda info -a
-
-script:
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
-    MKL_SHARED_LIB_DIR=`ls -d ${DEPS_DIR}/miniconda/pkgs/*/lib | grep mkl-2 | tail -1`
-    OPENMP_SHARED_LIB_DIR=`ls -d ${DEPS_DIR}/miniconda/pkgs/*/lib | grep openmp | tail -1`
+    MKL_PARDISO_LIB_DIR=`python -c 'import numpy.distutils.system_info as sysinfo; print(sysinfo.get_info("mkl")["library_dirs"][0])'`
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-        export LD_LIBRARY_PATH=${MKL_SHARED_LIB_DIR}:${OPENMP_SHARED_LIB_DIR}:${LD_LIBRARY_PATH}
+        export LD_LIBRARY_PATH=${MKL_PARDISO_LIB_DIR}:${LD_LIBRARY_PATH}
     else if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        export DYLD_LIBRARY_PATH=${MKL_SHARED_LIB_DIR}:${OPENMP_SHARED_LIB_DIR}:${DYLD_LIBRARY_PATH}
+        export DYLD_LIBRARY_PATH=${MKL_PARDISO_LIB_DIR}:${DYLD_LIBRARY_PATH}
     fi
     fi
+
+script:
   # Build and test conda
   - conda build conda-recipe --python=$PYTHON_VERSION
+  - conda install --use-local osqp
+  - export OSQP_VERSION=`python -c 'import osqp; m = osqp.OSQP(); print(m.version())'`
 
-# deploy:
-#   # Deploy on tags
-#   - provider: script
-#     script:
-#       - conda install anaconda-client
-#       - anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force
-#     skip_cleanup: true
+  # Build and test manylinux
+  - $PIP install cibuildwheel==0.10.2
+  - cibuildwheel --output-dir wheelhouse
+
+
+deploy:
+  # Anaconda
+  - provider: script
+    script:
+      - |
+        # Different anaconda label for dev/release versions
+        if [[ ${OSQP_VERSION} == *"dev"* ]]; then
+            export ANACONDA_LABEL="dev"
+        else
+            export ANACONDA_LABEL="main"
+        fi
+      - anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
+        # TODO: Add wheel upload
+    skip_cleanup: true
+
+  # Pypi wheels
+  - provider: script
+    script:
+     # Upload to bintray
+      - for f in ${TRAVIS_BUILD_DIR}/wheelhouse/*.whl; do curl -T $f -ubstellato:$BINTRAY_API_KEY -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:${OSQP_VERSION}" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/; done
+       # Publish
+      - curl -X POST -ubstellato:$BINTRAY_API_KEY https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/publish
+        # TODO: Add wheel upload
+    skip_cleanup: true
+
+  # Source distribution
+  - provider: script
+    script:
+      # Create and upload source distribution
+      - |
+        if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$PYTHON_VERSION" == "3.7" ]; then
+          cd ${TRAVIS_BUILD_DIR}/osqp-python;
+          python setup.py sdist;
+          for f in dist/*; do
+            curl -T $f -ubstellato:$BINTRAY_API_KEY -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:${OSQP_VERSION}" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/;
+          done
+        fi
+    skip_cleanup: true
 
