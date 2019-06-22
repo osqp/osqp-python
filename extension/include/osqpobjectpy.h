@@ -312,7 +312,9 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     data = create_data(pydata);
 
     // Create Workspace object
-    exitflag = osqp_setup(&(self->workspace), data, settings);
+    exitflag = osqp_setup(&(self->workspace), data->P, data->q,
+                          data->A, data->l, data->u,
+                          data->m, data->n, settings);
 
     // Cleanup data and settings
     free_data(data, pydata);

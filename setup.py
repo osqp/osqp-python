@@ -101,6 +101,9 @@ cfiles = [os.path.join(osqp_dir, 'src', f)
           for f in os.listdir(os.path.join(osqp_dir, 'src'))
           if f.endswith('.c') and f not in ('cs.c', 'ctrlc.c', 'polish.c',
                                             'lin_sys.c')]
+cfiles += [os.path.join(osqp_dir, 'algebra', f)
+           for f in os.listdir(os.path.join(osqp_dir, 'algebra'))
+           if f.endswith('.c')]
 cfiles += [os.path.join(qdldl_dir, f)
            for f in os.listdir(qdldl_dir)
            if f.endswith('.c')]

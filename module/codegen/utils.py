@@ -37,6 +37,65 @@ def write_vec_extern(f, vec, name, vec_type):
     """
     f.write("extern %s %s[%d];\n" % (vec_type, name, len(vec)))
 
+        
+def write_OSQPVector(f, vec, name, vec_type):
+    """
+    Write vector to file
+    """
+
+    if vec_type == 'f':
+        val_type = 'c_float'
+    elif vec_type == 'i':
+        val_type = 'c_int'
+    else:
+        raise ValueError('Unexpected vec_type')
+
+    f.write('%s %s_val[%d] = {\n' % (val_type, name, len(vec)))
+
+    # Write vector values
+    for i in range(len(vec)):
+        if vec_type == 'f':
+            f.write('(c_float)%.20f,\n' % vec[i])
+        else:
+            f.write('%i,\n' % vec[i])
+    f.write('};\n')
+    
+    f.write('OSQPVector%s %s = {%s_val, %d};\n' %
+            (vec_type, name, name, len(vec)))
+
+
+def write_OSQPVector_empty(f, length, name, vec_type):
+    """
+    Write vector to file
+    """
+
+    if vec_type == 'f':
+        val_type = 'c_float'
+    elif vec_type == 'i':
+        val_type = 'c_int'
+    else:
+        raise ValueError('Unexpected vec_type')
+
+    f.write('%s %s_val[%d];\n' % (val_type, name, length))
+    f.write('OSQPVector%s %s = {%s_val, %d};\n' %
+            (vec_type, name, name, length))
+
+
+def write_OSQPVector_extern(f, length, name, vec_type):
+    """
+    Write vector prototype to file
+    """
+
+    if vec_type == 'f':
+        val_type = 'c_float'
+    elif vec_type == 'i':
+        val_type = 'c_int'
+    else:
+        raise ValueError('Unexpected vec_type')
+
+    f.write("extern %s %s_val[%d];\n" % (val_type, name, length))
+    f.write("extern OSQPVector%s *%s;\n" % (vec_type, name))
+
 
 def write_mat(f, mat, name):
     """
@@ -47,13 +106,13 @@ def write_mat(f, mat, name):
     write_vec(f, mat['x'], name + '_x', 'c_float')
 
     f.write("csc %s = {" % name)
-    f.write("%d, " % mat['nzmax'])
-    f.write("%d, " % mat['m'])
-    f.write("%d, " % mat['n'])
-    f.write("%s_p, " % name)
-    f.write("%s_i, " % name)
-    f.write("%s_x, " % name)
-    f.write("%d};\n" % mat['nz'])
+    f.write("%d, "       % mat['nzmax'])
+    f.write("%d, "       % mat['m'])
+    f.write("%d, "       % mat['n'])
+    f.write("%s_p, "     % name)
+    f.write("%s_i, "     % name)
+    f.write("%s_x, "     % name)
+    f.write("%d};\n\n"   % mat['nz'])
 
 
 def write_mat_extern(f, mat, name):
@@ -67,7 +126,7 @@ def write_data_src(f, data):
     """
     Write data structure to file
     """
-    f.write("// Define data structure\n")
+    f.write("/* Define data structure */\n")
 
     # Define matrix P
     write_mat(f, data['P'], 'Pdata')
@@ -76,15 +135,15 @@ def write_data_src(f, data):
     write_mat(f, data['A'], 'Adata')
 
     # Define other data vectors
-    write_vec(f, data['q'], 'qdata', 'c_float')
-    write_vec(f, data['l'], 'ldata', 'c_float')
-    write_vec(f, data['u'], 'udata', 'c_float')
+    write_OSQPVector(f, data['q'], 'qdata', 'f')
+    write_OSQPVector(f, data['l'], 'ldata', 'f')
+    write_OSQPVector(f, data['u'], 'udata', 'f')
 
     # Define data structure
-    f.write("OSQPData data = {")
+    f.write("\nOSQPData data = {")
     f.write("%d, " % data['n'])
     f.write("%d, " % data['m'])
-    f.write("&Pdata, &Adata, qdata, ldata, udata")
+    f.write("&Pdata, &Adata, &qdata, &ldata, &udata")
     f.write("};\n\n")
 
 
@@ -92,7 +151,7 @@ def write_data_inc(f, data):
     """
     Write data structure prototypes to file
     """
-    f.write("// Data structure prototypes\n")
+    f.write("/* Data structure prototypes */\n")
 
     # Define matrix P
     write_mat_extern(f, data['P'], 'Pdata')
@@ -113,7 +172,7 @@ def write_settings_src(f, settings, embedded_flag):
     """
     Write settings structure to file
     """
-    f.write("// Define settings structure\n")
+    f.write("/* Define settings structure */\n")
     f.write("OSQPSettings settings = {")
     f.write("(c_float)%.20f, " % settings['rho'])
     f.write("(c_float)%.20f, " % settings['sigma'])
@@ -143,7 +202,7 @@ def write_settings_inc(f, settings, embedded_flag):
     """
     Write prototype for settings structure to file
     """
-    f.write("// Settings structure prototype\n")
+    f.write("/* Settings structure prototype */\n")
     f.write("extern OSQPSettings settings;\n\n")
 
 
@@ -151,17 +210,17 @@ def write_scaling_src(f, scaling):
     """
     Write scaling structure to file
     """
-    f.write("// Define scaling structure\n")
+    f.write("/* Define scaling structure */\n")
     if scaling is not None:
-        write_vec(f, scaling['D'],    'Dscaling',    'c_float')
-        write_vec(f, scaling['Dinv'], 'Dinvscaling', 'c_float')
-        write_vec(f, scaling['E'],    'Escaling',    'c_float')
-        write_vec(f, scaling['Einv'], 'Einvscaling', 'c_float')
-        f.write("OSQPScaling scaling = {")
+        write_OSQPVector(f, scaling['D'],    'Dscaling',    'f')
+        write_OSQPVector(f, scaling['Dinv'], 'Dinvscaling', 'f')
+        write_OSQPVector(f, scaling['E'],    'Escaling',    'f')
+        write_OSQPVector(f, scaling['Einv'], 'Einvscaling', 'f')
+        f.write("\nOSQPScaling scaling = {")
         f.write("(c_float)%.20f, " % scaling['c'])
-        f.write("Dscaling, Escaling, ")
+        f.write("&Dscaling, &Escaling, ")
         f.write("(c_float)%.20f, " % scaling['cinv'])
-        f.write("Dinvscaling, Einvscaling};\n\n")
+        f.write("&Dinvscaling, &Einvscaling};\n\n")
     else:
         f.write("OSQPScaling scaling;\n\n")
 
@@ -170,13 +229,13 @@ def write_scaling_inc(f, scaling):
     """
     Write prototypes for the scaling structure to file
     """
-    f.write("// Scaling structure prototypes\n")
+    f.write("/* Scaling structure prototypes */\n")
 
     if scaling is not None:
-        write_vec_extern(f, scaling['D'],    'Dscaling',    'c_float')
-        write_vec_extern(f, scaling['Dinv'], 'Dinvscaling', 'c_float')
-        write_vec_extern(f, scaling['E'],    'Escaling',    'c_float')
-        write_vec_extern(f, scaling['Einv'], 'Einvscaling', 'c_float')
+        write_OSQPVector_extern(f, len(scaling['D']),    'Dscaling',    'f')
+        write_OSQPVector_extern(f, len(scaling['Dinv']), 'Dinvscaling', 'f')
+        write_OSQPVector_extern(f, len(scaling['E']),    'Escaling',    'f')
+        write_OSQPVector_extern(f, len(scaling['Einv']), 'Einvscaling', 'f')
 
     f.write("extern OSQPScaling scaling;\n\n")
 
@@ -186,7 +245,7 @@ def write_linsys_solver_src(f, linsys_solver, embedded_flag):
     Write linsys_solver structure to file
     """
 
-    f.write("// Define linsys_solver structure\n")
+    f.write("/* Define linsys_solver structure */\n")
     write_mat(f, linsys_solver['L'],            'linsys_solver_L')
     write_vec(f, linsys_solver['Dinv'],         'linsys_solver_Dinv',           'c_float')
     write_vec(f, linsys_solver['P'],            'linsys_solver_P',              'c_int')
@@ -232,7 +291,7 @@ def write_linsys_solver_inc(f, linsys_solver, embedded_flag):
     """
     Write prototypes for linsys_solver structure to file
     """
-    f.write("// Prototypes for linsys_solver structure\n")
+    f.write("/* Prototypes for linsys_solver structure */\n")
     write_mat_extern(f, linsys_solver['L'],    'linsys_solver_L')
     write_vec_extern(f, linsys_solver['Dinv'], 'linsys_solver_Dinv', 'c_float')
     write_vec_extern(f, linsys_solver['P'],    'linsys_solver_P',    'c_int')
@@ -260,7 +319,7 @@ def write_solution_src(f, data):
     """
     Preallocate solution vectors
     """
-    f.write("// Define solution\n")
+    f.write("/* Define solution */\n")
     f.write("c_float xsolution[%d];\n" % data['n'])
     f.write("c_float ysolution[%d];\n\n" % data['m'])
     f.write("OSQPSolution solution = {xsolution, ysolution};\n\n")
@@ -270,7 +329,7 @@ def write_solution_inc(f, data):
     """
     Prototypes for solution vectors
     """
-    f.write("// Prototypes for solution\n")
+    f.write("/* Prototypes for solution */\n")
     f.write("extern c_float xsolution[%d];\n" % data['n'])
     f.write("extern c_float ysolution[%d];\n\n" % data['m'])
     f.write("extern OSQPSolution solution;\n\n")
@@ -280,7 +339,7 @@ def write_info_src(f):
     """
     Preallocate info structure
     """
-    f.write("// Define info\n")
+    f.write("/* Define info */\n")
     f.write('OSQPInfo info = {0, "Unsolved", OSQP_UNSOLVED, 0.0, 0.0, 0.0};\n\n')
 
 
@@ -288,7 +347,7 @@ def write_info_inc(f):
     """
     Prototype for info structure
     """
-    f.write("// Prototype for info structure\n")
+    f.write("/* Prototype for info structure */\n")
     f.write("extern OSQPInfo info;\n\n")
 
 
@@ -297,43 +356,48 @@ def write_workspace_src(f, n, m, rho_vectors, embedded_flag):
     Preallocate workspace structure and populate rho vectors
     """
 
-    f.write("// Define workspace\n")
+    f.write("/* Define workspace */\n")
 
-    write_vec(f, rho_vectors['rho_vec'],     'work_rho_vec',     'c_float')
-    write_vec(f, rho_vectors['rho_inv_vec'], 'work_rho_inv_vec', 'c_float')
+    write_OSQPVector(f, rho_vectors['rho_vec'],     'work_rho_vec',     'f')
+    write_OSQPVector(f, rho_vectors['rho_inv_vec'], 'work_rho_inv_vec', 'f')
     if embedded_flag != 1:
-        write_vec(f, rho_vectors['constr_type'], 'work_constr_type', 'c_int')
+        write_OSQPVector(f, rho_vectors['constr_type'], 'work_constr_type', 'i')
 
-    f.write("c_float work_x[%d];\n" % n)
-    f.write("c_float work_y[%d];\n" % m)
-    f.write("c_float work_z[%d];\n" % m)
-    f.write("c_float work_xz_tilde[%d];\n" % (m + n))
-    f.write("c_float work_x_prev[%d];\n" % n)
-    f.write("c_float work_z_prev[%d];\n" % m)
-    f.write("c_float work_Ax[%d];\n" % m)
-    f.write("c_float work_Px[%d];\n" % n)
-    f.write("c_float work_Aty[%d];\n" % n)
-    f.write("c_float work_delta_y[%d];\n" % m)
-    f.write("c_float work_Atdelta_y[%d];\n" % n)
-    f.write("c_float work_delta_x[%d];\n" % n)
-    f.write("c_float work_Pdelta_x[%d];\n" % n)
-    f.write("c_float work_Adelta_x[%d];\n" % m)
-    f.write("c_float work_D_temp[%d];\n" % n)
-    f.write("c_float work_D_temp_A[%d];\n" % n)
-    f.write("c_float work_E_temp[%d];\n\n" % m)
+    write_OSQPVector_empty(f, n,   'work_x',        'f')
+    write_OSQPVector_empty(f, m,   'work_y',        'f')
+    write_OSQPVector_empty(f, m,   'work_z',        'f')
+    write_OSQPVector_empty(f, n+m, 'work_xz_tilde', 'f')
 
-    f.write("OSQPWorkspace workspace = {\n")
+    f.write('OSQPVectorf work_xtilde_view = {work_xz_tilde_val, %d};\n' % (n,))
+    f.write('OSQPVectorf work_ztilde_view = {work_xz_tilde_val + %d, %d};\n' % (n, m))
+
+    write_OSQPVector_empty(f, n, 'work_x_prev',    'f')
+    write_OSQPVector_empty(f, m, 'work_z_prev',    'f')
+    write_OSQPVector_empty(f, m, 'work_Ax',        'f')
+    write_OSQPVector_empty(f, n, 'work_Px',        'f')
+    write_OSQPVector_empty(f, n, 'work_Aty',       'f')
+    write_OSQPVector_empty(f, m, 'work_delta_y',   'f')
+    write_OSQPVector_empty(f, n, 'work_Atdelta_y', 'f')
+    write_OSQPVector_empty(f, n, 'work_delta_x',   'f')
+    write_OSQPVector_empty(f, n, 'work_Pdelta_x',  'f')
+    write_OSQPVector_empty(f, m, 'work_Adelta_x',  'f')
+    write_OSQPVector_empty(f, n, 'work_D_temp',    'f')
+    write_OSQPVector_empty(f, n, 'work_D_temp_A',  'f')
+    write_OSQPVector_empty(f, m, 'work_E_temp',    'f')
+
+    f.write("\nOSQPWorkspace workspace = {\n")
     f.write("&data, (LinSysSolver *)&linsys_solver,\n")
-    f.write("work_rho_vec, work_rho_inv_vec,\n")
+    f.write("&work_rho_vec, &work_rho_inv_vec,\n")
     if embedded_flag != 1:
-        f.write("work_constr_type,\n")
+        f.write("&work_constr_type,\n")
 
-    f.write("work_x, work_y, work_z, work_xz_tilde,\n")
-    f.write("work_x_prev, work_z_prev,\n")
-    f.write("work_Ax, work_Px, work_Aty,\n")
-    f.write("work_delta_y, work_Atdelta_y,\n")
-    f.write("work_delta_x, work_Pdelta_x, work_Adelta_x,\n")
-    f.write("work_D_temp, work_D_temp_A, work_E_temp,\n")
+    f.write("&work_x, &work_y, &work_z, &work_xz_tilde,\n")
+    f.write("&work_xtilde_view, &work_ztilde_view,\n")
+    f.write("&work_x_prev, &work_z_prev,\n")
+    f.write("&work_Ax, &work_Px, &work_Aty,\n")
+    f.write("&work_delta_y, &work_Atdelta_y,\n")
+    f.write("&work_delta_x, &work_Pdelta_x, &work_Adelta_x,\n")
+    f.write("&work_D_temp, &work_D_temp_A, &work_E_temp,\n")
     f.write("&settings, &scaling, &solution, &info};\n\n")
 
 
@@ -341,31 +405,35 @@ def write_workspace_inc(f, n, m, rho_vectors, embedded_flag):
     """
     Prototypes for the workspace structure and rho_vectors
     """
-    f.write("// Prototypes for the workspace\n")
-    write_vec_extern(f, rho_vectors['rho_vec'],     'work_rho_vec',     'c_float')
-    write_vec_extern(f, rho_vectors['rho_inv_vec'], 'work_rho_inv_vec', 'c_float')
+    f.write("/* Prototypes for the workspace */\n")
+    write_OSQPVector_extern(f, m, 'work_rho_vec',     'f')
+    write_OSQPVector_extern(f, m, 'work_rho_inv_vec', 'f')
     if embedded_flag != 1:
-        write_vec_extern(f, rho_vectors['constr_type'], 'work_constr_type', 'c_int')
+        write_OSQPVector_extern(f, m, 'work_constr_type', 'i')
 
-    f.write("extern c_float work_x[%d];\n" % n)
-    f.write("extern c_float work_y[%d];\n" % m)
-    f.write("extern c_float work_z[%d];\n" % m)
-    f.write("extern c_float work_xz_tilde[%d];\n" % (m + n))
-    f.write("extern c_float work_x_prev[%d];\n" % n)
-    f.write("extern c_float work_z_prev[%d];\n" % m)
-    f.write("extern c_float work_Ax[%d];\n" % m)
-    f.write("extern c_float work_Px[%d];\n" % n)
-    f.write("extern c_float work_Aty[%d];\n" % n)
-    f.write("extern c_float work_delta_y[%d];\n" % m)
-    f.write("extern c_float work_Atdelta_y[%d];\n" % n)
-    f.write("extern c_float work_delta_x[%d];\n" % n)
-    f.write("extern c_float work_Pdelta_x[%d];\n" % n)
-    f.write("extern c_float work_Adelta_x[%d];\n" % m)
-    f.write("extern c_float work_D_temp[%d];\n" % n)
-    f.write("extern c_float work_D_temp_A[%d];\n" % n)
-    f.write("extern c_float work_E_temp[%d];\n\n" % m)
+    write_OSQPVector_extern(f, n,   'work_x',        'f')
+    write_OSQPVector_extern(f, m,   'work_y',        'f')
+    write_OSQPVector_extern(f, m,   'work_z',        'f')
+    write_OSQPVector_extern(f, n+m, 'work_xz_tilde', 'f')
 
-    f.write("extern OSQPWorkspace workspace;\n\n")
+    f.write("extern OSQPVectorf work_xtilde_view;\n")
+    f.write("extern OSQPVectorf work_ztilde_view;\n")
+
+    write_OSQPVector_extern(f, n, 'work_x_prev',    'f')
+    write_OSQPVector_extern(f, m, 'work_z_prev',    'f')
+    write_OSQPVector_extern(f, m, 'work_Ax',        'f')
+    write_OSQPVector_extern(f, n, 'work_Px',        'f')
+    write_OSQPVector_extern(f, n, 'work_Aty',       'f')
+    write_OSQPVector_extern(f, m, 'work_delta_y',   'f')
+    write_OSQPVector_extern(f, n, 'work_Atdelta_y', 'f')
+    write_OSQPVector_extern(f, n, 'work_delta_x',   'f')
+    write_OSQPVector_extern(f, n, 'work_Pdelta_x',  'f')
+    write_OSQPVector_extern(f, m, 'work_Adelta_x',  'f')
+    write_OSQPVector_extern(f, n, 'work_D_temp',    'f')
+    write_OSQPVector_extern(f, n, 'work_D_temp_A',  'f')
+    write_OSQPVector_extern(f, m, 'work_E_temp',    'f')
+
+    f.write("\nextern OSQPWorkspace workspace;\n\n")
 
 
 def render_workspace(variables, hfname, cfname):
@@ -411,9 +479,11 @@ def render_workspace(variables, hfname, cfname):
 
     # Include types, constants and linsys_solver header
     incFile.write("#include \"types.h\"\n")
+    incFile.write("#include \"lin_alg.h\"\n")
     incFile.write("#include \"qdldl_interface.h\"\n\n")
 
     srcFile.write("#include \"types.h\"\n")
+    srcFile.write("#include \"lin_alg.h\"\n")
     srcFile.write("#include \"qdldl_interface.h\"\n\n")
 
     # Write data structure
@@ -445,7 +515,7 @@ def render_workspace(variables, hfname, cfname):
     write_workspace_inc(incFile, n, m, rho_vectors, embedded_flag)
 
     # The endif for the include-guard
-    incFile.write("#endif // ifndef %s\n" % incGuard)
+    incFile.write("#endif /* ifndef %s */\n" % incGuard)
 
     incFile.close()
     srcFile.close()

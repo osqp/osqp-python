@@ -17,9 +17,9 @@
      PyObject *return_dict;
 
      /* Build Arrays. */
-     PyObject *rho_vec     = PyArray_SimpleNewFromData(1, &m, float_type, self->workspace->rho_vec);
-     PyObject *rho_inv_vec = PyArray_SimpleNewFromData(1, &m, float_type, self->workspace->rho_inv_vec);
-     PyObject *constr_type = PyArray_SimpleNewFromData(1, &m, int_type,   self->workspace->constr_type);
+     PyObject *rho_vec     = PyArray_SimpleNewFromData(1, &m, float_type, self->workspace->rho_vec->values);
+     PyObject *rho_inv_vec = PyArray_SimpleNewFromData(1, &m, float_type, self->workspace->rho_inv_vec->values);
+     PyObject *constr_type = PyArray_SimpleNewFromData(1, &m, int_type,   self->workspace->constr_type->values);
 
      /* Change data ownership. */
      PyArray_ENABLEFLAGS((PyArrayObject *) rho_vec,     NPY_ARRAY_OWNDATA);
@@ -47,10 +47,10 @@
 
          /* Build Arrays. */
          OSQPScaling *scaling = self->workspace->scaling;
-         PyObject *D    = PyArray_SimpleNewFromData(1, &n, float_type, scaling->D);
-         PyObject *E    = PyArray_SimpleNewFromData(1, &m, float_type, scaling->E);
-         PyObject *Dinv = PyArray_SimpleNewFromData(1, &n, float_type, scaling->Dinv);
-         PyObject *Einv = PyArray_SimpleNewFromData(1, &m, float_type, scaling->Einv);
+         PyObject *D    = PyArray_SimpleNewFromData(1, &n, float_type, scaling->D->values);
+         PyObject *E    = PyArray_SimpleNewFromData(1, &m, float_type, scaling->E->values);
+         PyObject *Dinv = PyArray_SimpleNewFromData(1, &n, float_type, scaling->Dinv->values);
+         PyObject *Einv = PyArray_SimpleNewFromData(1, &m, float_type, scaling->Einv->values);
 
          /* Change data ownership. */
          PyArray_ENABLEFLAGS((PyArrayObject *) D, NPY_ARRAY_OWNDATA);
@@ -97,9 +97,9 @@
      PyObject *Ap   = PyArray_SimpleNewFromData(1, &n_plus_1, int_type, data->A->p);
      PyObject *Ai   = PyArray_SimpleNewFromData(1, &Anzmax, int_type, data->A->i);
      PyObject *Ax   = PyArray_SimpleNewFromData(1, &Anzmax, float_type, data->A->x);
-     PyObject *q    = PyArray_SimpleNewFromData(1, &n, float_type, data->q);
-     PyObject *l    = PyArray_SimpleNewFromData(1, &m, float_type, data->l);
-     PyObject *u    = PyArray_SimpleNewFromData(1, &m, float_type, data->u);
+     PyObject *q    = PyArray_SimpleNewFromData(1, &n, float_type, data->q->values);
+     PyObject *l    = PyArray_SimpleNewFromData(1, &m, float_type, data->l->values);
+     PyObject *u    = PyArray_SimpleNewFromData(1, &m, float_type, data->u->values);
 
      /* Change data ownership. */
      PyArray_ENABLEFLAGS((PyArrayObject *) Pp, NPY_ARRAY_OWNDATA);
