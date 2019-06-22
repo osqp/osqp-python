@@ -94,7 +94,7 @@ def write_OSQPVector_extern(f, length, name, vec_type):
         raise ValueError('Unexpected vec_type')
 
     f.write("extern %s %s_val[%d];\n" % (val_type, name, length))
-    f.write("extern OSQPVector%s *%s;\n" % (vec_type, name))
+    f.write("extern OSQPVector%s %s;\n" % (vec_type, name))
 
 
 def write_mat(f, mat, name):
