@@ -119,20 +119,25 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(
     osqp_src
     src/osqp/auxil.c
-    src/osqp/lin_alg.c
+    src/osqp/error.c
+    src/osqp/matrix.c
     src/osqp/osqp.c
     src/osqp/proj.c
     src/osqp/qdldl.c
     src/osqp/qdldl_interface.c
     src/osqp/scaling.c
     src/osqp/util.c
+    src/osqp/vector.c
     src/osqp/workspace.c
 )
 
 set(
     osqp_headers
+    include/algebra_matrix.h
+    include/algebra_vector.h
     include/auxil.h
     include/constants.h
+    include/error.h
     include/glob_opts.h
     include/osqp_configure.h
     include/lin_alg.h

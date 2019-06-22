@@ -95,7 +95,7 @@ static PyObject * OSQP_solve(OSQP *self) {
         y = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
         // Primal infeasibility certificate
-        prim_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_y, md);
+        prim_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_y->values, md);
 
         // Dual infeasibility certificate -> None values
         dual_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
@@ -114,7 +114,7 @@ static PyObject * OSQP_solve(OSQP *self) {
         prim_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
 
         // Dual infeasibility certificate
-        dual_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_x, nd);
+        dual_inf_cert = (PyObject *)PyArrayFromCArray(self->workspace->delta_x->values, nd);
 
         // Set objective value to -infinity
         self->workspace->info->obj_val = -NPY_INFINITY;
@@ -312,7 +312,9 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     data = create_data(pydata);
 
     // Create Workspace object
-    exitflag = osqp_setup(&(self->workspace), data, settings);
+    exitflag = osqp_setup(&(self->workspace), data->P, data->q,
+                          data->A, data->l, data->u,
+                          data->m, data->n, settings);
 
     // Cleanup data and settings
     free_data(data, pydata);
