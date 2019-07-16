@@ -54,8 +54,8 @@ test_script:
   - call conda install --use-local osqp
   - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
 
-  # Wheels
-  - cibuildwheel --output-dir %REPO_DIR%/wheelhouse
+  # Wheels (only for one python verson. cibuildwheel builds all the version internally)
+  - IF "%PYTHON_VERSION%"=="3.7" (cibuildwheel --output-dir %REPO_DIR%/wheelhouse)
 
 deploy_script:
   - cmd: >-
