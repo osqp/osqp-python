@@ -12,6 +12,11 @@ environment:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
   BINTRAY_API_KEY:
     secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
+      # For wheels building
+   - CIBW_TEST_REQUIRES: 'pytest'
+   - CIBW_BEFORE_BUILD: 'pip install "pytest>=4.3" && pip install cmake'
+   - CIBW_TEST_COMMAND: 'python -m pytest {project}/tests'
+
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
@@ -37,7 +42,7 @@ install:
   # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
   - call %MINICONDA%\Scripts\setup_x64.bat
   # Install cibuildwheel
-  - pip install cibuildwheel==0.10.2
+  - pip install cibuildwheel==0.11.1
 
 test_script:
   - call @setlocal enabledelayedexpansion
@@ -53,18 +58,17 @@ test_script:
   - cibuildwheel --output-dir %REPO_DIR%/wheelhouse
 
 deploy_script:
-  - @setlocal enabledelayedexpansion
-
-  - |
-    set OSQP_PACKAGE_NAME="OSQP"
-    IF NOT "!OSQP_VERSION!"=="!OSQP_VERSION:dev=!" (
-        REM We are using a development version
-        set ANACONDA_LABLEL="dev"
-    )
-    ELSE (
-        REM We are using a standard version
-        set ANACONDA_LABLEL="main"
-    )
+  - cmd: >-
+      @setlocal enabledelayedexpansion
+      set OSQP_PACKAGE_NAME="OSQP"
+      IF NOT "!OSQP_VERSION!"=="!OSQP_VERSION:dev=!" (
+          REM We are using a development version
+          set ANACONDA_LABLEL="dev"
+      )
+      ELSE (
+          REM We are using a standard version
+          set ANACONDA_LABLEL="main"
+      )
   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
   # Upload all wheels to bintray
   - for %%f in (%REPO_DIR%\wheelhouse\*.whl) do (curl -T %%f -ubstellato:%BINTRAY_API_KEY% -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:%OSQP_VERSION%" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/%OSQP_VERSION%/)
