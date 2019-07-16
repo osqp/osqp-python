@@ -13,9 +13,9 @@ environment:
   BINTRAY_API_KEY:
     secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
       # For wheels building
-   - CIBW_TEST_REQUIRES: 'pytest'
-   - CIBW_BEFORE_BUILD: 'pip install "pytest>=4.3" && pip install cmake'
-   - CIBW_TEST_COMMAND: 'python -m pytest {project}/tests'
+  CIBW_TEST_REQUIRES: 'pytest'
+  CIBW_BEFORE_BUILD: 'pip install "pytest>=4.3" && pip install cmake'
+  CIBW_TEST_COMMAND: 'python -m pytest {project}/tests'
 
   matrix:
     - PYTHON_VERSION: 2.7
