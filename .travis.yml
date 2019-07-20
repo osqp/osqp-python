@@ -36,6 +36,8 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
+  - conda create -n testenv python=$PYTHON_VERSION anaconda
+  - conda activate testenv
   - conda install conda conda-verify conda-build anaconda-client
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
