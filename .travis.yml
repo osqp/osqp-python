@@ -55,7 +55,7 @@ script:
   - conda build conda-recipe --python=$PYTHON_VERSION
 
   # Get OSQP version (for later packaging)
-  - conda install --use-local osqp
+  - conda install -c ${CONDA_PREFIX}/conda-bld/ osqp
   - export OSQP_VERSION=`python -c 'import osqp; m = osqp.OSQP(); print(m.version())'`
 
   # Build and test pip manylinux wheels (only one version of python (it uses multiple versions internally))
