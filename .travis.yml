@@ -17,7 +17,7 @@ env:
     - secure: "OCZgmIHJT0D34ncR052qReGXrs52PXNe2RiPVk5SUZwgyCXcaQCyd9kcYQDkJwzY4Ere+ePTN1wJtBwT0maKJ6vSCQ3vDfqrJunWD6anACUG2FsRoPpYoxTK+SfPzJqyCnirWR1q2jS558woHyfTAjpxKZ33DiBkuyjgiTdL4caCtZktM+2L2Yl9HB+NCtnO64DTPjaPxXKHWBYRc9FACnknBKrEJtq4gFNpG5y0vJt2o/mvzMR50mQqbhTIof1kBf5B19ADhQjdcYJWndvdSI9XmMYpxh+36wWZIMfxlbGwNB0HLt0S0HB9m1dWv0QTPbBjHg89Rg5pLQzsCj+aJw3vj7nF9Fs1QdLOcspFV7AIH22PeTJ/qhlne7oI93oxr/RkpLUKXiPVKMKhd8qjZHFjltS6jgo2ePR+3TxPutzin41L7LjOkObX9+Z1JLkY6E3trEWf5uRAw0RSqnWu/wM1EdjQHshWuZpW4z4looRj45ROqjPwaUag9Swsa4xBvfi7J8YFu9BVCHIaiNY0DE16yh00cUEcv8OQQTI+tS0pODjT/bky4SPeVIzJeEirCyTtsS/E5c8oF28fUb8vI3/RGBHxAiHuDumlgSvFkEDxheTCSeJi3AsVNRzS3Lnb253YecQ2SexIh55+H3cSExbDn15TOzeqmHOVibCTR6k="
     # For wheels building
     - CIBW_TEST_REQUIRES='pytest'
-    - CIBW_BEFORE_BUILD='pip install "pytest>=4.3" && pip install cmake'
+    - CIBW_BEFORE_BUILD='pip install "pytest" && pip install cmake'
     - CIBW_TEST_COMMAND='python -m pytest {project}/tests'
 
   matrix:
