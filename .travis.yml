@@ -54,7 +54,7 @@ install:
 
 script:
   # Build and test conda
-  - conda build conda-recipe --python=$PYTHON_VERSION --output-folder conda-bld
+  - conda build conda-recipe --python=$PYTHON_VERSION
 
   # Get OSQP version (for later packaging)
   - conda install -c ${CONDA_PREFIX}/conda-bld/ osqp
