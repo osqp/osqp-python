@@ -17,12 +17,13 @@ env:
     - secure: "OCZgmIHJT0D34ncR052qReGXrs52PXNe2RiPVk5SUZwgyCXcaQCyd9kcYQDkJwzY4Ere+ePTN1wJtBwT0maKJ6vSCQ3vDfqrJunWD6anACUG2FsRoPpYoxTK+SfPzJqyCnirWR1q2jS558woHyfTAjpxKZ33DiBkuyjgiTdL4caCtZktM+2L2Yl9HB+NCtnO64DTPjaPxXKHWBYRc9FACnknBKrEJtq4gFNpG5y0vJt2o/mvzMR50mQqbhTIof1kBf5B19ADhQjdcYJWndvdSI9XmMYpxh+36wWZIMfxlbGwNB0HLt0S0HB9m1dWv0QTPbBjHg89Rg5pLQzsCj+aJw3vj7nF9Fs1QdLOcspFV7AIH22PeTJ/qhlne7oI93oxr/RkpLUKXiPVKMKhd8qjZHFjltS6jgo2ePR+3TxPutzin41L7LjOkObX9+Z1JLkY6E3trEWf5uRAw0RSqnWu/wM1EdjQHshWuZpW4z4looRj45ROqjPwaUag9Swsa4xBvfi7J8YFu9BVCHIaiNY0DE16yh00cUEcv8OQQTI+tS0pODjT/bky4SPeVIzJeEirCyTtsS/E5c8oF28fUb8vI3/RGBHxAiHuDumlgSvFkEDxheTCSeJi3AsVNRzS3Lnb253YecQ2SexIh55+H3cSExbDn15TOzeqmHOVibCTR6k="
     # For wheels building
     - CIBW_TEST_REQUIRES='pytest'
-    - CIBW_BEFORE_BUILD='pip install "pytest" && pip install cmake'
+    - CIBW_BEFORE_BUILD='pip install cmake'
+    - CIBW_TEST_REQUIRES='pytest'
     - CIBW_TEST_COMMAND='python -m pytest {project}/tests'
+    - CIBW_SKIP="cp27-* cp33-* cp34-*"
 
   matrix:
     # Python versions to try with conda
-    - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.5
     - PYTHON_VERSION=3.6
     - PYTHON_VERSION=3.7
@@ -88,10 +89,12 @@ deploy:
     script:
      # Upload to bintray
       - |
-        for f in ${TRAVIS_BUILD_DIR}/wheelhouse/*.whl; do
-          curl -T $f -ubstellato:$BINTRAY_API_KEY -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:${OSQP_VERSION}" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/;
-        done
-        curl -X POST -ubstellato:$BINTRAY_API_KEY https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/publish
+        if [ -d "${TRAVIS_BUILD_DIR}/wheelhouse/" ]; then
+            for f in ${TRAVIS_BUILD_DIR}/wheelhouse/*.whl; do
+              curl -T $f -ubstellato:$BINTRAY_API_KEY -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:${OSQP_VERSION}" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/;
+            done
+            curl -X POST -ubstellato:$BINTRAY_API_KEY https://api.bintray.com/content/bstellato/generic/osqp-wheels/${OSQP_VERSION}/publish
+        fi
     skip_cleanup: true
     on:
       all_branches: true
@@ -103,7 +106,7 @@ deploy:
       # Create and upload source distribution
       - |
         if [ "$TRAVIS_OS_NAME" == "linux" ] && [ "$PYTHON_VERSION" == "3.7" ]; then
-          cd ${TRAVIS_BUILD_DIR}/osqp-python;
+          cd ${TRAVIS_BUILD_DIR};
           rm -rf dist/;
           python setup.py sdist;
           for f in dist/*; do

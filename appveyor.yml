@@ -14,11 +14,11 @@ environment:
     secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
       # For wheels building
   CIBW_TEST_REQUIRES: 'pytest'
-  CIBW_BEFORE_BUILD: 'pip install "pytest>=4.3" && pip install cmake'
+  CIBW_BEFORE_BUILD: 'pip install cmake'
   CIBW_TEST_COMMAND: 'python -m pytest {project}/tests'
+  CIBW_SKIP: 'cp27-* cp33-* cp34-*'
 
   matrix:
-    - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
@@ -36,11 +36,10 @@ install:
     # Setup 32 bit
   - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
+  - ECHO %MINICONDA%
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
-  - conda.exe install conda conda-verify conda-build anaconda-client vs2008_express_vc_python_patch --yes
-  # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
-  - call %MINICONDA%\Scripts\setup_x64.bat
+  - conda.exe install conda conda-verify conda-build anaconda-client --yes
   # Install cibuildwheel
   - pip install cibuildwheel==0.11.1
 
@@ -51,7 +50,7 @@ test_script:
   - call conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
 
   # Get OSQP version from local package
-  - call conda.exe install -c %MINICONDA%\conda-bld osqp
+  - call conda.exe install --use-local osqp
   - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
 
   # Wheels (only for one python verson. cibuildwheel builds all the version internally)
