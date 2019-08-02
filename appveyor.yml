@@ -47,7 +47,7 @@ test_script:
   - call @setlocal enabledelayedexpansion
 
   # Recipes
-  - call conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
+  - call conda.exe build --python %PYTHON_VERSION% conda-recipe
 
   # Get OSQP version from local package
   - call conda.exe install --use-local osqp
