@@ -18,8 +18,7 @@ env:
     # For wheels building
     - CIBW_TEST_REQUIRES='pytest'
     - CIBW_BEFORE_BUILD_MACOS='brew install cmake'
-    - CIBW_BEFORE_BUILD_LINUX='curl -OL https://cmake.org/files/v3.14/cmake-3.14.6-Linux-x86_64.sh && bash cmake-3.14.6-Linux-x86_64.sh --skip-license --prefix=/usr
-'
+    - CIBW_BEFORE_BUILD_LINUX='curl -OL https://cmake.org/files/v3.14/cmake-3.14.6-Linux-x86_64.sh && bash cmake-3.14.6-Linux-x86_64.sh --skip-license --prefix=/usr'
     - CIBW_TEST_REQUIRES='pytest'
     - CIBW_TEST_COMMAND='python -m pytest {project}/module/tests'
     - CIBW_SKIP="cp27-* cp33-* cp34-*"
