@@ -54,10 +54,10 @@ install:
 
 script:
   # Build and test conda
-  - conda build conda-recipe --python=$PYTHON_VERSION
+  - conda build conda-recipe --python=$PYTHON_VERSION --output-folder conda-bld
 
   # Get OSQP version (for later packaging)
-  - conda install -c ${CONDA_PREFIX}/conda-bld/ osqp
+  - conda install -c conda-bld/ osqp
   - export OSQP_VERSION=`python -c 'import osqp; m = osqp.OSQP(); print(m.version())'`
   # Different anaconda label for dev/release versions
   - if [[ ${OSQP_VERSION} == *"dev"* ]]; then
