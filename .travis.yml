@@ -40,7 +40,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=$PYTHON_VERSION anaconda
   - conda activate testenv
-  - conda install conda conda-verify conda-build=3.18.8 anaconda-client
+  - conda install conda=4.6 conda-verify conda-build=3.17.8 anaconda-client
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
@@ -59,7 +59,12 @@ script:
   # Get OSQP version (for later packaging)
   - conda install -c ${CONDA_PREFIX}/conda-bld/ osqp
   - export OSQP_VERSION=`python -c 'import osqp; m = osqp.OSQP(); print(m.version())'`
-
+  # Different anaconda label for dev/release versions
+  - if [[ ${OSQP_VERSION} == *"dev"* ]]; then
+      export ANACONDA_LABEL="dev";
+    else
+      export ANACONDA_LABEL="main";
+    fi
   # Build and test pip manylinux wheels (only one version of python (it uses multiple versions internally))
   # - |
   #   if [ "$PYTHON_VERSION" == "3.7" ]; then
@@ -71,17 +76,7 @@ script:
 deploy:
   # Anaconda
   - provider: script
-    script:
-      - |
-        # Different anaconda label for dev/release versions
-        if [[ ${OSQP_VERSION} == *"dev"* ]]; then
-            export ANACONDA_LABEL="dev"
-        else
-            export ANACONDA_LABEL="main"
-        fi
-        echo "Deploying to Anaconda with label ${ANACONDA_LABEL}"
-        anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
-        echo "Done"
+    script: anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
     skip_cleanup: true
     on:
       all_branches: true
