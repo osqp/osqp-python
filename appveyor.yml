@@ -50,7 +50,7 @@ test_script:
   - call conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
 
   # Get OSQP version from local package
-  - call conda.exe install -c conda-bld/ osqp
+  - call conda.exe install -c %APPVEYOR_BUILD_FOLDER%/conda-bld/ osqp
   - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
   - cmd: >-
       @setlocal enabledelayedexpansion

@@ -3,6 +3,7 @@ language: C
 os:
   - linux
   - osx
+osx_image: xcode10.2
 
 sudo: required
 services:
@@ -57,7 +58,7 @@ script:
   - conda build conda-recipe --python=$PYTHON_VERSION --output-folder conda-bld
 
   # Get OSQP version (for later packaging)
-  - conda install -c conda-bld/ osqp
+  - conda install -c file://${TRAVIS_BUILD_DIR}/conda-bld/ osqp
   - export OSQP_VERSION=`python -c 'import osqp; m = osqp.OSQP(); print(m.version())'`
   # Different anaconda label for dev/release versions
   - if [[ ${OSQP_VERSION} == *"dev"* ]]; then
@@ -76,7 +77,7 @@ script:
 deploy:
   # Anaconda
   - provider: script
-    script: anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
+    script: anaconda -t $ANACONDA_TOKEN upload ${TRAVIS_BUILD_DIR}/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
     skip_cleanup: true
     on:
       all_branches: true
