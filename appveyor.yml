@@ -39,7 +39,7 @@ install:
   - ECHO %MINICONDA%
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
-  - conda.exe install conda=4.6 conda-verify conda-build=3.17.8 anaconda-client --yes
+  - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client --yes
   # Install cibuildwheel
   # - pip install cibuildwheel==0.11.1
 
