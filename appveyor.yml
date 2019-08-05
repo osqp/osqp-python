@@ -53,17 +53,17 @@ test_script:
   - call conda.exe install --use-local osqp
   - FOR /F "tokens=*" %%g IN ('python -c \"import osqp; m = osqp.OSQP(); print(m.version())\"') do (SET OSQP_VERSION=%g)
   - cmd: >-
-    @setlocal enabledelayedexpansion
-    set OSQP_PACKAGE_NAME="OSQP"
-    IF NOT "!OSQP_VERSION!"=="!OSQP_VERSION:dev=!" (
-        REM We are using a development version
-        set ANACONDA_LABLEL="dev"
-    )
-    ELSE (
-        REM We are using a standard version
-        set ANACONDA_LABLEL="main"
-    )
-    ECHO %ANACONDA_LABEL%
+      @setlocal enabledelayedexpansion
+      set OSQP_PACKAGE_NAME="OSQP"
+      IF NOT "!OSQP_VERSION!"=="!OSQP_VERSION:dev=!" (
+          REM We are using a development version
+          set ANACONDA_LABLEL="dev"
+      )
+      ELSE (
+          REM We are using a standard version
+          set ANACONDA_LABLEL="main"
+      )
+      ECHO %ANACONDA_LABEL%
   # Wheels (only for one python verson. cibuildwheel builds all the version internally)
   # - IF "%PYTHON_VERSION%"=="3.7" (cibuildwheel --output-dir %REPO_DIR%/wheelhouse)
 
