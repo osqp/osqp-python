@@ -36,7 +36,7 @@ test_script:
 
   # Get OSQP version from local package
   - cmd: FOR /F "tokens=*" %%g IN ('python setup.py --version') do (SET OSQP_VERSION=%g)
-  - cmd: IF NOT x%OSQP_VERSION%==x%OSQP_VERSION:dev=% (set ANACONDA_LABLEL="dev") ELSE (set ANACONDA_LABLEL="main")
+  - cmd: IF NOT x%OSQP_VERSION%==x%OSQP_VERSION:dev=% (set ANACONDA_LABEL="dev") ELSE (set ANACONDA_LABEL="main")
 
 deploy_script:
   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
