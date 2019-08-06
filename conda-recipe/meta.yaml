@@ -36,6 +36,9 @@ test:
   requires:
     - pytest
     - cmake
+  imports:
+    - osqp
+    - osqppurepy
   commands:
     - python -m pytest --pyargs osqp.tests
 
