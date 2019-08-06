@@ -1,8 +1,3 @@
-# branches:
-#   only:
-#     - master
-#     - /v\d+\.\d+.*/
-
 platform:
   - x64
   - x86
@@ -10,16 +5,8 @@ platform:
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
-  # BINTRAY_API_KEY:
-  #   secure: ng7NUNQat2LczU5XjKKyDLITkZbZsJeAdPGDjuTdQDHDiaL03JJF6Usab+miNVsO
-      # For wheels building
-  # CIBW_TEST_REQUIRES: 'pytest'
-  # CIBW_BEFORE_BUILD: 'pip install cmake'
-  # CIBW_TEST_COMMAND: 'python -m pytest {project}/tests'
-  # CIBW_SKIP: 'cp27-* cp33-* cp34-*'
-
   matrix:
-    - PYTHON_VERSION: 3.5
+    - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
 
@@ -40,8 +27,7 @@ install:
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
   - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client --yes
-  # Install cibuildwheel
-  # - pip install cibuildwheel==0.11.1
+  - conda.exe info -a
 
 test_script:
   - call @setlocal enabledelayedexpansion
@@ -64,14 +50,9 @@ test_script:
           set ANACONDA_LABLEL="main"
       )
       ECHO %ANACONDA_LABEL%
-  # Wheels (only for one python verson. cibuildwheel builds all the version internally)
-  # - IF "%PYTHON_VERSION%"=="3.7" (cibuildwheel --output-dir %REPO_DIR%/wheelhouse)
 
 deploy_script:
   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
-  # Upload all wheels to bintray
-  # - for %%f in (%REPO_DIR%\wheelhouse\*.whl) do (curl -T %%f -ubstellato:%BINTRAY_API_KEY% -H "X-Bintray-Package:osqp-wheels" -H "X-Bintray-Version:%OSQP_VERSION%" -H "X-Bintray-Override:1" https://api.bintray.com/content/bstellato/generic/osqp-wheels/%OSQP_VERSION%/)
-  # - curl -X POST -ubstellato:%BINTRAY_API_KEY% https://api.bintray.com/content/bstellato/generic/osqp-wheels/%OSQP_VERSION%/publish
 
 # on_finish:
 #   # Uncomment for remote desktop debug
