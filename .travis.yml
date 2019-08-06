@@ -24,7 +24,7 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda install conda conda-verify conda-build=3.17.8 anaconda-client
+  - conda install conda conda-verify conda-build=3.17.8 anaconda-client numpy
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |

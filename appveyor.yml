@@ -26,7 +26,9 @@ install:
   - ECHO %MINICONDA%
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
-  - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client --yes
+  - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client vs2008_express_vc_python_patch --yes
+    # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
+  - call %MINICONDA%\Scripts\setup_x64.bat
   - conda.exe info -a
 
 test_script:
