@@ -26,6 +26,9 @@ install:
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda install conda conda-verify conda-build anaconda-client numpy
+  # Install conda compilers
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then conda install gcc_linux-64 gxx_linux-64; fi
+  - if [ "$TRAVIS_OS_NAME" == "osx" ]; then conda install clang_osx-64 clangxx_osx-64; fi
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
