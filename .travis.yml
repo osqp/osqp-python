@@ -26,7 +26,7 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda install conda conda-verify conda-build
+  - conda install conda conda-verify conda-build numpy
   - conda info -a
 
 script:
@@ -39,4 +39,3 @@ script:
 #       - conda install anaconda-client
 #       - anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force
 #     skip_cleanup: true
-

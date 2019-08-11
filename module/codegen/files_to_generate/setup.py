@@ -1,20 +1,11 @@
-import distutils.sysconfig as sysconfig
-from setuptools import setup, Extension
-from setuptools.command.build_ext import build_ext
-from platform import system
-from glob import glob
 import os
 import shutil as sh
+from glob import glob
+from platform import system
 from subprocess import call
 
-
-class build_ext_osqp(build_ext):
-    def finalize_options(self):
-        build_ext.finalize_options(self)
-        # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
+import numpy
+from setuptools import setup, Extension
 
 
 '''
@@ -56,7 +47,7 @@ if system() == 'Linux':
 '''
 Include directory
 '''
-include_dirs = [os.path.join('..', 'include')]  # OSQP includes
+include_dirs = [os.path.join('..', 'include'), numpy.get_include()]  # OSQP includes
 
 '''
 Source files
@@ -82,5 +73,4 @@ setup(name='PYTHON_EXT_NAME',
       setup_requires=["numpy >= 1.7"],
       install_requires=["numpy >= 1.7", "future"],
       license='Apache 2.0',
-      cmdclass={'build_ext': build_ext_osqp},
       ext_modules=[PYTHON_EXT_NAME])
