@@ -3,7 +3,6 @@ language: C
 os:
   - linux
   - osx
-osx_image: xcode8.3
 
 sudo: required
 
@@ -25,17 +24,23 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda install conda=4.6 conda-verify conda-build anaconda-client numpy
+  - conda install conda-verify conda-build anaconda-client numpy
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
     MKL_PARDISO_LIB_DIR=`python -c 'import numpy.distutils.system_info as sysinfo; print(sysinfo.get_info("mkl")["library_dirs"][0])'`
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
         export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}$:{MKL_PARDISO_LIB_DIR}
-    # else if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    #     # export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${MKL_PARDISO_LIB_DIR}
-    # fi
+    else if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${MKL_PARDISO_LIB_DIR}
     fi
+    fi
+  - |
+    # Install MacOSX SDK (needed for conda compiler)
+    cd /var/tmp; mkdir MacOSX-SDKs; cd MacOSX-SDKs;
+    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.9.sdk.tar.xz
+    tar -xf ./MacOSX10.9.sdk.tar.xz
+    rm MacOSX10.9.sdk.tar.xz; cd ${TRAVIS_BUILD_DIR}
 
 script:
   # Build and test conda
