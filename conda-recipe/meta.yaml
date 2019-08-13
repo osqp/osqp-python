@@ -22,7 +22,7 @@ requirements:
   host:
     - python {{ python }}
     - numpy {{ numpy }}
-    - setuptools
+    - pip
   build:
     - {{ compiler('c') }}
     - cmake
@@ -31,12 +31,10 @@ requirements:
     - {{ pin_compatible('numpy') }}
     - scipy >=0.13.2
     - future
-    - cmake
 
 test:
   requires:
     - pytest
-    - cmake
   imports:
     - osqp
     - osqppurepy
