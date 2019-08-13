@@ -39,7 +39,7 @@ test:
     - osqp
     - osqppurepy
   commands:
-    - py.test -s --pyargs osqp
+    - python -m pytest --pyargs osqp
 
 about:
   home: https://osqp.org
