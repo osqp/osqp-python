@@ -38,12 +38,14 @@ if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.7" ]]; then
 fi
 
 
-echo "Deploying to Pypi..."
-if [[ "$TEST_PYPI" == "true" ]]; then
-    twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD --skip-existing dist/*     # Test pypi repo
-elif [[ -n "$TRAVIS_TAG" ]]; then
-    # Upload to main pypi repo if it is not dev and it is a tag
-    twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*
+if [ -n "$(ls -A dist)" ]; then
+    echo "Deploying to Pypi..."
+    if [[ "$TEST_PYPI" == "true" ]]; then
+	twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD --skip-existing dist/*     # Test pypi repo
+    elif [[ -n "$TRAVIS_TAG" ]]; then
+	# Upload to main pypi repo if it is not dev and it is a tag
+	twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*
+    fi
+    echo "Successfully deployed to Pypi"
 fi
 
-echo "Successfully deployed to Pypi"

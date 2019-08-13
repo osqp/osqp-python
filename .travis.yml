@@ -18,7 +18,7 @@ env:
   matrix:
     - PYTHON_VERSION=2.7
     - PYTHON_VERSION=3.6
-    - PYTHON_VERSION=3.7
+    - PYTHON_VERSION=3.7.3
 
 install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
