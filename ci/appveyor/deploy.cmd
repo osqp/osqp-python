@@ -15,7 +15,7 @@ set ANACONDA_LABEL="main"
 REM Anaconda deploy
 cd %APPVEYOR_BUILD_FOLDER%\conda_recipe
 
-call conda build --python %PYTHON_VERSION% osqp --output-folder conda-bld\
+call conda build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld\
 if errorlevel 1 exit /b 1
 
 call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
@@ -31,7 +31,7 @@ IF "%TEST_PYPI%" == "true" (
 twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% --skip-existing dist/*
 if errorlevel 1 exit /b 1
 
-) ELSE "%APPVEYOR_REPO_TAG%" == "true" (
+) ELSE IF "%APPVEYOR_REPO_TAG%" == "true" (
 
 twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
 if errorlevel 1 exit /b 1

@@ -43,6 +43,5 @@ elif [[ -n "$TRAVIS_TAG" ]]; then
     # Upload to main pypi repo if it is not dev and it is a tag
     twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*
 fi
-fi
 
 echo "Successfully deployed to Pypi"
