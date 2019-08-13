@@ -16,13 +16,14 @@ source:
 
 build:
   number: 0
-  script: python setup.py install --single-version-externally-managed --record record.txt
+  script: {{ PYTHON }} setup.py install --single-version-externally-managed --record record.txt
 
 requirements:
   host:
-    - python
+    - python {{ python }}
+    - numpy {{ numpy }}
+    - setuptools
   build:
-    - {{ pin_compatible('numpy') }}
     - {{ compiler('c') }}
     - cmake
   run:
@@ -35,11 +36,12 @@ requirements:
 test:
   requires:
     - pytest
+    - cmake
   imports:
     - osqp
     - osqppurepy
   commands:
-    - python -m pytest --pyargs osqp.tests
+    - {{ PYTHON }} -m pytest --pyargs osqp.tests
 
 about:
   home: https://osqp.org
