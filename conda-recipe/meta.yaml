@@ -41,7 +41,7 @@ test:
     - osqp
     - osqppurepy
   commands:
-    - {{ PYTHON }} -m pytest --pyargs osqp.tests
+    - py.test --pyargs osqp
 
 about:
   home: https://osqp.org
