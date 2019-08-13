@@ -1,11 +1,15 @@
 #!/bin/bash
 set -e -x
 
+# Install cmake
+/opt/python/cp36-cp36m/bin/pip install cmake
+ln -s /opt/python/cp36-cp36m/bin/cmake /usr/bin/cmake
+cmake --version
+
+
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
-    "${PYBIN}/pip" install cmake
-    ln -s -f "${PYBIN}/cmake" /usr/bin/cmake
-    cmake --version
+    "${PYBIN}/pip" install --upgrade pip
     "${PYBIN}/pip" install pytest
     "${PYBIN}/pip" wheel /io/ -w dist/
 done
