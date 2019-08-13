@@ -24,7 +24,6 @@ cd ${TRAVIS_BUILD_DIR}
 if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     echo "Creating pip binary package..."
     python setup.py bdist_wheel
-else 
 fi
 
 
@@ -36,7 +35,6 @@ if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.7" ]]; then
 
         echo "Creating pip manylinux wheels package..."
         docker run --rm -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/ci/travis/build-wheels.sh
-    
 fi
 
 
