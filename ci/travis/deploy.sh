@@ -28,7 +28,7 @@ fi
 
 
 # Source distribution
-if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.7" ]]; then
+if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.6" ]]; then
 	# Choose one python version to upload source distribution
 	echo "Creating pip source package..."
 	python setup.py sdist
