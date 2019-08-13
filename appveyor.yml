@@ -27,6 +27,7 @@ install:
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
   - ECHO %MINICONDA%
   - set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%
+  - conda init
   - conda config --append channels conda-forge
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=%PYTHON_VERSION% pytest numpy
