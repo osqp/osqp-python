@@ -11,6 +11,7 @@ set ANACONDA_LABEL="dev"
 ) ELSE (
 set ANACONDA_LABEL="main"
 )
+ECHO %ANACONDA_LABEL%
 
 REM Anaconda deploy
 cd %APPVEYOR_BUILD_FOLDER%\conda_recipe

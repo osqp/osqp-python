@@ -1,14 +1,16 @@
 from __future__ import print_function
 import distutils.sysconfig as sysconfig
+import os
+import shutil as sh
+import sys
+from glob import glob
+from platform import system
+from shutil import copyfile, copy
+from subprocess import call, check_output
+
+import numpy
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
-from shutil import copyfile, copy
-from glob import glob
-import shutil as sh
-from subprocess import call, check_output
-from platform import system
-import os
-import sys
 
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
@@ -62,7 +64,8 @@ include_dirs = [
                                             # extract workspace for codegen
     os.path.join(qdldl_dir, "qdldl_sources",
                             "include"),     # qdldl includes for file types
-    os.path.join('extension', 'include')]   # auxiliary .h files
+    os.path.join('extension', 'include'),   # auxiliary .h files
+    numpy.get_include()]                    # numpy header files
 
 sources_files = glob(os.path.join('extension', 'src', '*.c'))
 
@@ -144,13 +147,6 @@ for f in configure_files:  # Copy configure files
 
 
 class build_ext_osqp(build_ext):
-    def finalize_options(self):
-        build_ext.finalize_options(self)
-        # Prevent numpy from thinking it is still in its setup process:
-        __builtins__.__NUMPY_SETUP__ = False
-        import numpy
-        self.include_dirs.append(numpy.get_include())
-
     def build_extensions(self):
         # Compile OSQP using CMake
 

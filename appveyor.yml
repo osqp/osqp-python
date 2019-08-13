@@ -5,6 +5,8 @@ platform:
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
+  PYPI_PASSWORD:
+    secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
     - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.6
@@ -26,15 +28,16 @@ install:
   - ECHO %MINICONDA%
   - call %MINICONDA%\Scripts\activate
   - conda.exe config --append channels conda-forge
-  - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client vs2008_express_vc_python_patch --yes
+  - conda.exe config --set always_yes yes --set changeps1 no --set auto_update_conda no
+  - conda.exe create -n testenv python=%PYTHON_VERSION% pytest numpy
+  - conda.exe activate testenv
+  - conda.exe install conda conda-verify conda-build=3.17.8 anaconda-client vs2008_express_vc_python_patch twine
     # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
   - call %MINICONDA%\Scripts\setup_x64.bat
-  - conda.exe install -c conda-forge twine
   - conda.exe info -a
 
 test_script:
   - call conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
-
 
 deploy_script:
   - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\deploy.cmd"

@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e -x
+
 # Deploy packages
 
 # Get OSQP version
@@ -22,9 +25,6 @@ if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
     echo "Creating pip binary package..."
     python setup.py bdist_wheel
 else 
-    # Create 
-    echo "Creating pip manylinux wheels package..."
-    docker run --rm -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/ci/travis/build-wheels.sh
 fi
 
 
@@ -33,6 +33,10 @@ if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.7" ]]; then
 	# Choose one python version to upload source distribution
 	echo "Creating pip source package..."
 	python setup.py sdist
+
+        echo "Creating pip manylinux wheels package..."
+        docker run --rm -e PLAT=manylinux1_x86_64 -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/ci/travis/build-wheels.sh
+    
 fi
 
 
