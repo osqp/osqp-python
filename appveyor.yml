@@ -16,20 +16,23 @@ init:
   # Uncomment for remote desktop debug
   # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - ECHO %PYTHON_VERSION% %MINICONDA%
-  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
-  - git submodule update --init --recursive
-  # Setup 32 bit
-  - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
-  - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
-  - conda init
-  - conda config --append channels conda-forge
-  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
 
 
 # Not a .NET project. We build it in the install script
 build: false
 
 install:
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
+  - git submodule update --init --recursive
+  # Setup 32 bit
+  - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
+  - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
+  # Load the conda root environment, configure and install some packages
+  - '"%MINICONDA%\Scripts\activate.bat"'
+  # Fix error with juntion points, see https://github.com/appveyor/ci/issues/2270
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - conda config --append channels conda-forge
+  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=%PYTHON_VERSION% pytest numpy
   - conda activate testenv
   - conda install conda conda-verify conda-build=3.17.8 anaconda-client vs2008_express_vc_python_patch twine
