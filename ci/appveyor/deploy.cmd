@@ -1,30 +1,31 @@
 @echo on
 
+cd %APPVEYOR_BUILD_FOLDER%
+
 REM Get OSQP version from local package
 FOR /F "tokens=*" %%g IN ('python setup.py --version') do (SET OSQP_VERSION=%g)
 IF NOT x%OSQP_VERSION%==x%OSQP_VERSION:dev=% (
 set ANACONDA_LABEL="dev"
+set TEST_PYPI="true"
 ) ELSE (
 set ANACONDA_LABEL="main"
+set TEST_PIPI="false"
 )
 ECHO %ANACONDA_LABEL%
 
 REM Needed to enable to define OSQP_DEPLOY_DIR within the file
+
 @setlocal enabledelayedexpansion
 
+IF "%DISTRIB%"=="conda" (
+
 REM Anaconda deploy
-cd %APPVEYOR_BUILD_FOLDER%\conda_recipe
-
-call conda build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld\
-if errorlevel 1 exit /b 1
-
 call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
-
 if errorlevel 1 exit /b 1
+
+) ELSE IF "%DISTRIB%"=="pip" (
 
 REM pypi deploy
-cd %APPVEYOR_BUILD_FOLDER%
-python setup.py bdist_wheel
 
 IF "%TEST_PYPI%" == "true" (
 
@@ -38,4 +39,5 @@ if errorlevel 1 exit /b 1
 
 )
 
+)
 @echo off

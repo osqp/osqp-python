@@ -9,8 +9,18 @@ environment:
     secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
     - PYTHON_VERSION: 2.7
+      DISTRIB: conda
+    - PYTHON_VERSION: 2.7
+      DISTRIB: pip
     - PYTHON_VERSION: 3.6
+      DISTRIB: conda
+    - PYTHON_VERSION: 3.6
+      DISTRIB: pip
     - PYTHON_VERSION: 3.7
+      DISTRIB: conda
+    - PYTHON_VERSION: 3.7
+      DISTRIB: pip
+
 
 init:
   # Uncomment for remote desktop debug
@@ -39,7 +49,7 @@ install:
   - conda info -a
 
 test_script:
-  - call conda build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
+  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\script.cmd"
 
 deploy_script:
   - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\deploy.cmd"

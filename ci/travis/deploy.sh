@@ -13,32 +13,15 @@ else
     export ANACONDA_LABEL="main";
 fi
 
+if [[ "${DISTRIB}" == "conda" ]]; then
+    
 # Anaconda
 echo "Deploying to Anaconda..."
 anaconda -t $ANACONDA_TOKEN upload ${TRAVIS_BUILD_DIR}/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
 
+elif [[ "${DISTRIB}" == "pip" ]]; then
 
 # Pypi
-cd ${TRAVIS_BUILD_DIR}
-
-if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-    echo "Creating pip binary package..."
-    python setup.py bdist_wheel
-fi
-
-
-# Source distribution
-if [[ "$TRAVIS_OS_NAME" == "linux" && "$PYTHON_VERSION" == "3.6" ]]; then
-	# Choose one python version to upload source distribution
-	echo "Creating pip source package..."
-	python setup.py sdist
-
-        echo "Creating pip manylinux wheels package..."
-        docker run --rm -e PLAT=$WHEELS_PLATFORM -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/ci/travis/build-wheels.sh
-        mkdir dist/; cp wheelhouse/*.whl dist/
-fi
-
-
 if [[ -d "dist" && -n "$(ls -A dist)" ]]; then
     echo "Deploying to Pypi..."
     if [[ "$TEST_PYPI" == "true" ]]; then
@@ -50,3 +33,4 @@ if [[ -d "dist" && -n "$(ls -A dist)" ]]; then
     echo "Successfully deployed to Pypi"
 fi
 
+fi
