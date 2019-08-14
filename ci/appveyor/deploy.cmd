@@ -17,32 +17,22 @@ ECHO %ANACONDA_LABEL%
 @setlocal enabledelayedexpansion
 
 IF "%DISTRIB%"=="conda" (
-
 call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force -l %ANACONDA_LABEL%
 if errorlevel 1 exit /b 1
-
 ) 
 
 
 
 
 IF "%DISTRIB%"=="pip" (
-
-IF %TEST_PYPI% == "true" (
-
+IF "%TEST_PYPI%" == "true" (
 twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% --skip-existing dist/osqp-*
 if errorlevel 1 exit /b 1
-
-)
-ELSE
-(
-IF %APPVEYOR_REPO_TAG% == "true" (
-
+) ELSE (
+IF "%APPVEYOR_REPO_TAG%" == "true" (
 twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/osqp-*
 if errorlevel 1 exit /b 1
-
 )
 )
-
 )
 @echo off
