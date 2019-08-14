@@ -1,5 +1,7 @@
 @echo on
 
+@setlocal enabledelayedexpansion
+
 IF "%DISTRIB%"=="conda" (
 
 REM Build and test conda recipe
