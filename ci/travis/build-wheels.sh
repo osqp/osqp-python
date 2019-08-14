@@ -13,7 +13,7 @@ ln -snf "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
 cmake --version
 
 # Compile wheels
-for PYBIN in /opt/python/cp37*/bin; do
+for PYBIN in /opt/python/*/bin; do
     if [[ $PYBIN == *"35"* ]]; then
     	# Fix with cmake and same python version
         ln -snf "${CMAKE_PIP_BIN_ALT}/cmake" /usr/bin/cmake
@@ -36,7 +36,7 @@ for whl in dist/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
 
-for PYBIN in /opt/python/cp37*/bin/; do
+for PYBIN in /opt/python/*/bin/; do
     "${PYBIN}/pip" install osqp --no-index -f /io/dist
     # Disable MKL tests since MKL is not in the docker image
     (cd "$HOME"; "${PYBIN}/python" -m pytest --pyargs osqp -k 'not mkl_')
