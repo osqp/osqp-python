@@ -5,11 +5,11 @@ cd %APPVEYOR_BUILD_FOLDER%
 REM Get OSQP version from local package
 FOR /F "tokens=*" %%g IN ('python setup.py --version') do (SET OSQP_VERSION=%%g)
 IF NOT x%OSQP_VERSION%==x%OSQP_VERSION:dev=% (
-set ANACONDA_LABEL="dev"
-set TEST_PYPI="true"
+set ANACONDA_LABEL=dev
+set TEST_PYPI=true
 ) ELSE (
-set ANACONDA_LABEL="main"
-set TEST_PIPI="false"
+set ANACONDA_LABEL=main
+set TEST_PIPI=false
 )
 ECHO %ANACONDA_LABEL%
 
