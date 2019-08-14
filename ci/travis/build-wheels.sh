@@ -1,6 +1,9 @@
 #!/bin/bash
 set -e -x
 
+# Remove version 34 (not supported)
+rm -rf /opt/python/cp34*
+
 # Install cmake
 # Use version 35 for cmake. The pip version
 # of cmake is not compatible if we build the wheels
@@ -12,6 +15,7 @@ CMAKE_PIP_BIN_ALT=/opt/python/cp36-cp36m/bin
 ln -snf "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
 cmake --version
 
+
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if [[ $PYBIN == *"35"* ]]; then
@@ -20,7 +24,7 @@ for PYBIN in /opt/python/*/bin; do
         cmake --version
     fi
 
-    "${PYBIN}/pip" install --upgrade pip
+    "${PYBIN}/pip" install --upgrade pip wheel
     "${PYBIN}/pip" install -r /io/requirements.txt
     "${PYBIN}/pip" install pytest
     "${PYBIN}/pip" wheel /io/ -w dist/
