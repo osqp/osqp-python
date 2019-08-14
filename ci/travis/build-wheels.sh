@@ -22,6 +22,15 @@ for PYBIN in /opt/python/*/bin; do
     
     "${PYBIN}/pip" install pytest
     "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+
+    
+    if [[ $PYBIN == *"35"* ]]; then
+	# Fix with cmake and same python version
+        ln -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
+        
+    fi
+
+
 done
 
 
