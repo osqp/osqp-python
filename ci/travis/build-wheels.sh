@@ -9,7 +9,7 @@ CMAKE_PIP_BIN=/opt/python/cp35-cp35m/bin
 CMAKE_PIP_BIN_ALT=/opt/python/cp36-cp36m/bin
 "${CMAKE_PIP_BIN}/pip" install cmake
 "${CMAKE_PIP_BIN_ALT}/pip" install cmake
-ln -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
+ln -snf "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
 cmake --version
 
 # Compile wheels
