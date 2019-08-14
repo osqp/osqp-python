@@ -3,10 +3,6 @@ language: C
 services:
   - docker
 
-os:
-  - linux
-  - osx
-
 addons:
   homebrew:
     packages:
