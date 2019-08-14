@@ -2,7 +2,7 @@ platform:
   - x64
   - x86
 
-image: Visual Studio 2017
+image: Visual Studio 2015
 
 environment:
   ANACONDA_TOKEN:
@@ -48,9 +48,9 @@ install:
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake conda conda-verify conda-build anaconda-client twine
   - activate testenv
-  # - conda install vs2008_express_vc_python_patch
-  #   # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
-  # - call setup_x64
+  - conda install vs2008_express_vc_python_patch
+    # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
+  - call setup_x64
   - conda info -a
 
 test_script:
