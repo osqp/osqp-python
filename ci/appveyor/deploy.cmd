@@ -1,9 +1,5 @@
 @echo on
 
-REM Needed to enable to define OSQP_DEPLOY_DIR within the file
-@setlocal enabledelayedexpansion
-
-
 REM Get OSQP version from local package
 FOR /F "tokens=*" %%g IN ('python setup.py --version') do (SET OSQP_VERSION=%g)
 IF NOT x%OSQP_VERSION%==x%OSQP_VERSION:dev=% (
@@ -12,6 +8,9 @@ set ANACONDA_LABEL="dev"
 set ANACONDA_LABEL="main"
 )
 ECHO %ANACONDA_LABEL%
+
+REM Needed to enable to define OSQP_DEPLOY_DIR within the file
+@setlocal enabledelayedexpansion
 
 REM Anaconda deploy
 cd %APPVEYOR_BUILD_FOLDER%\conda_recipe
