@@ -34,8 +34,6 @@ for whl in dist/osqp-*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
 
-ls /io/dist
-
 for PYBIN in /opt/python/*/bin/; do
     "${PYBIN}/pip" install osqp --no-index -f /io/dist/
     (cd "$HOME"; "${PYBIN}/python" -m pytest --pyargs osqp)
