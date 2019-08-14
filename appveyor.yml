@@ -2,6 +2,8 @@ platform:
   - x64
   - x86
 
+image: Visual Studio 2017
+
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
