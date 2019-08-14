@@ -13,28 +13,31 @@ ln -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
 cmake --version
 
 # Compile wheels
-for PYBIN in /opt/python/*/bin; do
+for PYBIN in /opt/python/cp37*/bin; do
     if [[ $PYBIN == *"35"* ]]; then
     	# Fix with cmake and same python version
         ln -snf "${CMAKE_PIP_BIN_ALT}/cmake" /usr/bin/cmake
         cmake --version
     fi
-    
+
+    "${PYBIN}/pip" install --upgrade pip wheel
+    "${PYBIN}/pip" install -r /io/requirements.txt
     "${PYBIN}/pip" install pytest
     "${PYBIN}/pip" wheel /io/ -w dist/
     
-    if [[ $PYBIN == *"35"* ]]; then
+    if [[ ${PYBIN} == *"35"* ]]; then
     	# Fix symbolic link back
         ln -snf "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
     fi
 
 done
 
-for whl in dist/osqp-*.whl; do
+for whl in dist/*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
 
-for PYBIN in /opt/python/*/bin/; do
-    "${PYBIN}/pip" install osqp --no-index -f /io/dist/
-    (cd "$HOME"; "${PYBIN}/python" -m pytest --pyargs osqp)
+for PYBIN in /opt/python/cp37*/bin/; do
+    "${PYBIN}/pip" install osqp --no-index -f /io/dist
+    # Disable MKL tests since MKL is not in the docker image
+    (cd "$HOME"; "${PYBIN}/python" -m pytest --pyargs osqp -k 'not mkl_')
 done

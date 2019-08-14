@@ -198,6 +198,8 @@ def readme():
     with open('README.rst') as f:
         return f.read()
 
+with open('requirements.txt') as f:
+    requirements = f.read().splitlines()
 
 setup(name='osqp',
       version='0.6.0.dev17',
@@ -209,7 +211,7 @@ setup(name='osqp',
                    'osqppurepy': 'modulepurepy'},
       include_package_data=True,  # Include package data from MANIFEST.in
       setup_requires=["numpy >= 1.7"],
-      install_requires=["numpy >= 1.7", "scipy >= 0.13.2", "future"],
+      install_requires=requirements,
       license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': build_ext_osqp},

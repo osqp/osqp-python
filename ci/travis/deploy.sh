@@ -26,10 +26,10 @@ elif [[ "${DISTRIB}" == "pip" ]]; then
 	ls dist
 	echo "Deploying to Pypi..."
 	if [[ "$TEST_PYPI" == "true" ]]; then
-	    twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD --skip-existing dist/*     # Test pypi repo
+	    twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD --skip-existing dist/osqp-*     # Test pypi repo
 	elif [[ -n "$TRAVIS_TAG" ]]; then
 	    # Upload to main pypi repo if it is not dev and it is a tag
-	    twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/*
+	    twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/osqp-*
 	fi
 	echo "Successfully deployed to Pypi"
 fi
