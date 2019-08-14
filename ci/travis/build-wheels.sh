@@ -15,31 +15,28 @@ cmake --version
 # Compile wheels
 for PYBIN in /opt/python/*/bin; do
     if [[ $PYBIN == *"35"* ]]; then
-	# Fix with cmake and same python version
+    	# Fix with cmake and same python version
         ln -f -s "${CMAKE_PIP_BIN_ALT}/cmake" /usr/bin/cmake
         cmake --version
     fi
     
     "${PYBIN}/pip" install pytest
-    "${PYBIN}/pip" wheel --no-deps /io/ -w wheelhouse/
-
+    "${PYBIN}/pip" wheel --no-dependencies /io/ -w dist/
     
     if [[ $PYBIN == *"35"* ]]; then
-	# Fix with cmake and same python version
+    	# Fix with cmake and same python version
         ln -f -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
     fi
 
-
 done
 
-
 # Bundle external shared libraries into the wheels
-for whl in wheelhouse/osqp-*.whl; do
-    auditwheel repair "$whl" --plat $PLAT -w /io/wheelhouse/
+for whl in dist/osqp-*.whl; do
+    auditwheel repair "$whl" --plat $PLAT -w /io/dist/
 done
 
 # Install packages and test
 for PYBIN in /opt/python/*/bin/; do
-    "${PYBIN}/pip" install osqp --no-index -f /io/wheelhouse/
+    "${PYBIN}/pip" install osqp -f /io/dist/
     (cd "$HOME"; "${PYBIN}/python" -m pytest osqp)
 done

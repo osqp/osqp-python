@@ -24,8 +24,7 @@ elif [[ "${DISTRIB}" == "pip" ]]; then
 	python setup.py sdist
 
         echo "Creating pip manylinux wheels package..."
-        docker run --rm -e PLAT=$WHEELS_PLATFORM -v `pwd`:/io quay.io/pypa/manylinux1_x86_64 /io/ci/travis/build-wheels.sh
-        mkdir dist/; cp wheelhouse/osqp-*.whl dist/
-     fi
+        docker run --rm -e PLAT=$WHEELS_PLATFORM -v `pwd`:/io quay.io/pypa/$WHEELS_PLATFORM /io/ci/travis/build-wheels.sh
+    fi
 
 fi
