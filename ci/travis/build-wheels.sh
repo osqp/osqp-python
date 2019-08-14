@@ -26,7 +26,7 @@ for PYBIN in /opt/python/*/bin; do
     
     if [[ $PYBIN == *"35"* ]]; then
 	# Fix with cmake and same python version
-        ln -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
+        ln -f -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
         
     fi
 
