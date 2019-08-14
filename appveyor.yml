@@ -41,9 +41,9 @@ install:
   - '"%MINICONDA%\Scripts\activate.bat"'
   - conda config --append channels conda-forge
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake
+  - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake conda conda-verify conda-build=3.17.8 anaconda-client twine
   - activate testenv
-  - conda install conda conda-verify conda-build anaconda-client vs2008_express_vc_python_patch twine
+  - conda install vs2008_express_vc_python_patch
     # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
   - call setup_x64
   - conda info -a
