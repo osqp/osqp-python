@@ -21,13 +21,12 @@ for PYBIN in /opt/python/*/bin; do
     fi
     
     "${PYBIN}/pip" install pytest
-    "${PYBIN}/pip" wheel /io/ -w wheelhouse/
+    "${PYBIN}/pip" wheel --no-deps /io/ -w wheelhouse/
 
     
     if [[ $PYBIN == *"35"* ]]; then
 	# Fix with cmake and same python version
         ln -f -s "${CMAKE_PIP_BIN}/cmake" /usr/bin/cmake
-        
     fi
 
 
@@ -35,7 +34,7 @@ done
 
 
 # Bundle external shared libraries into the wheels
-for whl in wheelhouse/*.whl; do
+for whl in wheelhouse/osqp-*.whl; do
     auditwheel repair "$whl" --plat $PLAT -w /io/wheelhouse/
 done
 

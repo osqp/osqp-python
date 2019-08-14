@@ -27,12 +27,12 @@ if errorlevel 1 exit /b 1
 
 REM pypi deploy
 
-IF "%TEST_PYPI%" == "true" (
+IF %TEST_PYPI% == "true" (
 
 twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% --skip-existing dist/*
 if errorlevel 1 exit /b 1
 
-) ELSE IF "%APPVEYOR_REPO_TAG%" == "true" (
+) ELSE IF %APPVEYOR_REPO_TAG% == "true" (
 
 twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/*
 if errorlevel 1 exit /b 1
