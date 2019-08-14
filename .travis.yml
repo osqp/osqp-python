@@ -1,21 +1,63 @@
 language: C
 
-os:
-  - linux
-  - osx
-osx_image: xcode8.3
+services:
+  - docker
+
+addons:
+  homebrew:
+    packages:
+    - cmake
+  apt:
+    packages:
+    - cmake
 
 sudo: required
 
 env:
   global:
-    # # ANACONDA_TOKEN
-    # - secure: "bOFayXqJGwh8PxiKdQ3oVO+7YPYwPhxHssoe7gGoCHmpIQa8hgx8mv4Vop68rpZaDufDvB6JA59L4ZXHw+lwuW4tX64uH5a/YOxZBG+I1B5+e1PzcO0wrYpOkRV+2h9zLLKkxerNAMSgR4YUagt6I7w4WbFyT/PujXjJOhicO5PmjFb7rjb9gDGFQSXIXno1CK1k4/pumYge9QFMsW9Tv9pZORxmUCwyKHpkWFpl/4O4tUBqiQ5k55Vq936pcd5nT5SjaKPJ49pWxzQhead/Hq5TnAdLvOHXgRSKB5iMMix9e+6/8zl4hlVwP85Ivpszjzrxa5IsIiYXJkPbZHCoTMAS/UnNNfb141mmQ40Ojmvchg+vs9oCeNPbexu5ZR0a06RGzHU9Z37OmW2bpctUHAdWp69wChjRAO77dIQQypkYkTsWvFeCqT+I4NzaLhyMizdu3KKHG9rjgPbeNQyJACPkubSyjcYRdii58tNXfTN/PD4B+MDPFFTGUzeW0Xs2T7ToFPq5FCBEtZRyiHplKpUCdf2MrDCCICXjOfZMBZsMChWZtY9Lh0+BYE6a6efc4O4gHsVhCkgoM7Y6iB9r0GWdWB7TYPH4BljRSp3OuIOhMJpAaM3KFnSqYS5Mbpe58finZ03f6+CEpzvsBakvZvZGIgFs37oh8F+3PbRszH8="
-  matrix:
-    - PYTHON_VERSION=2.7
-    - PYTHON_VERSION=3.5
-    - PYTHON_VERSION=3.6
-    - PYTHON_VERSION=3.7
+    # ANACONDA_TOKEN
+    - secure: "doZox+m92r02SdGWU1+Oy7LOc9c/4fRqqoffDDcDC7yAMZZPfx1PIVxxZTyIo8tzLzKQn3VOjIAhC/0HfisI51oKbBbIaJMpLnENgAgCOM43Zg1BLl1rgBFPLabSKWuGgHYZHwUAexLlaiPH5bjUfkCBcLN9MSK8n6yo1kHoY5F0jXLu0Rl5IN4CzwZPLJLY59oVollpC1kYQLntDvzvtvCqXzmxIfQ7fTGCIFGur6ZyBQVisOmOMAAYxnNQ4D3qu0A2bSV6o64cXRl2Uosek8xcscuZjhAlXVwONJHQLSPNLQt9wfRvu7qiZTW0oS0PmYtcy0XcNVh4KuwTjYJGP5f0Knh0LAmnUN6L944XsMShbrbXKIff3T2MPG9Nvi6rtJLE/EmLmyuvY8PbPskHOt6yIH9UhrWAuRQBVjnZIAAE3WSHuf9/abutm7ML5y23vbFnu5VG2KJjCvxKAFm3fbedS4VbkbYKACGFo+f4PbDXbJXMalM0E78j4GQMdSgapRyAbSKLInBIOwNO8+mlktyLBsbphnWJBdXSdU6W31ExObLktg8ApZqrT5U/OvJuXWOWJOYsYTI3j2mx12N4rhA9sT+EWfJklv+TgzUqNQA+feMkK2s97sz3dmzPhJ3xno7y77FzQNBs83x9WHAXDdrPxFbcXNGiep/oRiK6s9w="
+    # PYPI password
+    - secure: "vZJaqioDHch3a9aM0B9BLBO4WByW+iFeGeOgG5r9Rl7bPNI0ZQCw/Y8M31VPLqejU56YUV6oq5EtNYkP+DDo8yVNM57EWVlKjGtF0MIDkUtj4XpJiNPD2K7Sem4h3mMvX5ifSnx2WJq9IyqC0lAsK2wI6rWMPQdijikzBxmDEPFTSAp9EA6KXxXYioB+Ezr/wTv8jGp2+WvYLcv7TRTN3TrQHCsfKhjj5TQ0aAs1TGuPXQ7uV1yLBg4FgztY9NCndCMxzP7RK/AyzIfo67O9cBE3IUgNvnxNbnWn6K+DqbCovR2uDrWvLH7zbfketf/9d06tjrt1KK2aVLNj/81Ul7aYYoLMNOc+EnbTJ5VgWh4+xbXvHWSk38jAm8FwPp2ZPwyKFSgmMxbZm5mTbe14DBos26QqHVEHEskY7cJ9tcZ2POX2DzI8GIxGDU57k6JWU1j2sknuCdCcN9cusDnw4cuVxWCpCB+18LlqYR7bkz5tz78ATBjHRfnzfsSHWDQggiry1Ba5x8KIjwDxJTKjcxhAWsu2rzzmtnTaiTZK82WWdwJhRZjCZK6zQbs1JoD7n01cEgT2Gr4MkFeY9D+BNdYHULq1ygMSEnS7PmISapmueYAepIpgXvW3E0u/DURHG1UuK0/y3KFm1CCcUNyRu6STE6VgD4zFpRkkp+Xl4Dc="
+
+
+matrix:
+    include:
+      - os: linux
+        env:
+          - DISTRIB="pip"
+          - WHEELS_PLATFORM="manylinux1_x86_64"
+      - os: linux
+        env:
+          - DISTRIB="pip"
+          - WHEELS_PLATFORM="manylinux2010_x86_64"
+      - os: linux
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=2.7
+      - os: linux
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=3.6
+      - os: linux
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=3.7
+      - os: osx
+        env:
+          - DISTRIB="pip"
+      - os: osx
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=2.7
+      - os: osx
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=3.6
+      - os: osx
+        env:
+          - DISTRIB="conda"
+          - PYTHON_VERSION=3.7
 
 install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then
@@ -26,28 +68,34 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
-  - conda install conda conda-verify conda-build
+  - conda create -n testenv python=$PYTHON_VERSION pytest numpy
+  - source activate testenv
+  - conda install conda conda-verify conda-build anaconda-client twine
   - conda info -a
-
-script:
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
-    MKL_SHARED_LIB_DIR=`ls -d ${DEPS_DIR}/miniconda/pkgs/*/lib | grep mkl-2 | tail -1`
-    OPENMP_SHARED_LIB_DIR=`ls -d ${DEPS_DIR}/miniconda/pkgs/*/lib | grep openmp | tail -1`
+    MKL_PARDISO_LIB_DIR=`python -c 'import numpy.distutils.system_info as sysinfo; print(sysinfo.get_info("mkl")["library_dirs"][0])'`
     if [[ "${TRAVIS_OS_NAME}" == "linux" ]]; then
-        export LD_LIBRARY_PATH=${MKL_SHARED_LIB_DIR}:${OPENMP_SHARED_LIB_DIR}:${LD_LIBRARY_PATH}
-    else if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
-        export DYLD_LIBRARY_PATH=${MKL_SHARED_LIB_DIR}:${OPENMP_SHARED_LIB_DIR}:${DYLD_LIBRARY_PATH}
+        export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}$:{MKL_PARDISO_LIB_DIR}
+    # else if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    #     export DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}:${MKL_PARDISO_LIB_DIR}
+    # fi
     fi
-    fi
-  # Build and test conda
-  - conda build conda-recipe --python=$PYTHON_VERSION
+  - |
+    # Install MacOSX SDK (needed for conda compiler)
+    cd /var/tmp; mkdir MacOSX-SDKs; cd MacOSX-SDKs;
+    wget https://github.com/phracker/MacOSX-SDKs/releases/download/10.13/MacOSX10.9.sdk.tar.xz
+    tar -xf ./MacOSX10.9.sdk.tar.xz
+    rm MacOSX10.9.sdk.tar.xz; cd ${TRAVIS_BUILD_DIR}
 
-# deploy:
-#   # Deploy on tags
-#   - provider: script
-#     script:
-#       - conda install anaconda-client
-#       - anaconda -t $ANACONDA_TOKEN upload $HOME/miniconda/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force
-#     skip_cleanup: true
+script:
+  - bash ${TRAVIS_BUILD_DIR}/ci/travis/script.sh
 
+deploy:
+  # Anaconda
+  - provider: script
+    script: bash $TRAVIS_BUILD_DIR/ci/travis/deploy.sh 
+    skip_cleanup: true
+    on:
+      all_branches: true
+    #   tags: true

@@ -22,7 +22,7 @@ requirements:
   host:
     - python {{ python }}
     - numpy {{ numpy }}
-    - setuptools
+    - pip
   build:
     - {{ compiler('c') }}
     - cmake
@@ -36,8 +36,11 @@ test:
   requires:
     - pytest
     - cmake
+  imports:
+    - osqp
+    - osqppurepy
   commands:
-    - python -m pytest --pyargs osqp.tests
+    - python -m pytest --pyargs osqp
 
 about:
   home: https://osqp.org

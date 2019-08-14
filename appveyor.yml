@@ -1,51 +1,64 @@
-# branches:
-#   only:
-#     - master
-#     - /v\d+\.\d+.*/
-
 platform:
   - x64
   - x86
 
+image: Visual Studio 2015
+
 environment:
   ANACONDA_TOKEN:
     secure: H1vdxUBNWGzvvbIyuuVByqh4zHV/VO2GI090QaQgG8En49Jks4N6yOGe6+m7cZEH
+  PYPI_PASSWORD:
+    secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
     - PYTHON_VERSION: 2.7
-    - PYTHON_VERSION: 3.5
+      DISTRIB: conda
+    - PYTHON_VERSION: 2.7
+      DISTRIB: pip
     - PYTHON_VERSION: 3.6
+      DISTRIB: conda
+    - PYTHON_VERSION: 3.6
+      DISTRIB: pip
     - PYTHON_VERSION: 3.7
+      DISTRIB: conda
+    - PYTHON_VERSION: 3.7
+      DISTRIB: pip
+
 
 init:
   # Uncomment for remote desktop debug
   # - ps: iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
   - ECHO %PYTHON_VERSION% %MINICONDA%
 
+
 # Not a .NET project. We build it in the install script
 build: false
 
 install:
+  # Setup visual studio
+  - if "%PLATFORM%"=="x86" call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
+  - if "%PLATFORM%"=="x64" call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64 & call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%MINICONDA%\\Library\\bin;%PATH%"
   - git submodule update --init --recursive
-    # Setup 32 bit
+  # Setup 32 bit
   - if "%PLATFORM%"=="x86" set MINICONDA=C:\Miniconda3
-  # - if "%PLATFORM%"=="x86"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86
-    # Setup 64 bit
-  # - if "%PLATFORM%"=="x64" call "C:\Program Files\Microsoft SDKs\Windows\v7.1\Bin\SetEnv.cmd" /x64
-  # - if "%PLATFORM%"=="x64"   call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x86_amd64
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
-  - call %MINICONDA%\Scripts\activate
-  - conda.exe config --append channels conda-forge
-  - conda.exe install conda conda-verify conda-build vs2008_express_vc_python_patch --yes
-  # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
-  - call %MINICONDA%\Scripts\setup_x64.bat
+  # Load the conda root environment, configure and install some packages
+  - '"%MINICONDA%\Scripts\activate.bat"'
+  - conda config --append channels conda-forge
+  - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
+  - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake conda conda-verify conda-build anaconda-client twine
+  - activate testenv
+  - conda install vs2008_express_vc_python_patch
+    # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
+  - call setup_x64
+  - conda info -a
 
 test_script:
-  - conda.exe build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
+  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\script.cmd"
 
-# deploy_script:
-#   - conda.exe install anaconda-client --yes
-#   - call anaconda -t %ANACONDA_TOKEN% upload conda-bld/**/osqp-*.tar.bz2 --user oxfordcontrol --force
-
+deploy_script:
+  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\deploy.cmd"
+  
 # on_finish:
 #   # Uncomment for remote desktop debug
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
