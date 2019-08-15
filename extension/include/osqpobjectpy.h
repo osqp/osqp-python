@@ -35,7 +35,8 @@ static c_int OSQP_dealloc(OSQP *self) {
 
 // Solve Optimization Problem
 static PyObject * OSQP_solve(OSQP *self) {
-
+    c_int exitflag;
+    
     // Create status object
     PyObject * status;
 
@@ -70,7 +71,11 @@ static PyObject * OSQP_solve(OSQP *self) {
     /**
      *  Solve QP Problem
      */
-    osqp_solve(self->workspace);
+    exitflag = osqp_solve(self->workspace);
+    if(exitflag){
+        PyErr_SetString(PyExc_ValueError, "OSQP solve error!");
+        return (PyObject *) NULL;
+    }
 
     // If problem is not primal or dual infeasible store it
     if ((self->workspace->info->status_val != OSQP_PRIMAL_INFEASIBLE) &&
@@ -350,85 +355,6 @@ static PyObject *OSQP_dimensions(OSQP *self){
 }
 
 
-static PyObject *OSQP_constant(OSQP *self, PyObject *args) {
-
-    char * constant_name;  // String less than 32 chars
-
-    // Parse arguments
-    if( !PyArg_ParseTuple(args, "s", &(constant_name))) {
-        return (PyObject *) NULL;
-    }
-
-
-    if(!strcmp(constant_name, "OSQP_INFTY")){
-#ifdef DFLOAT
-        return Py_BuildValue("f", OSQP_INFTY);
-#else
-        return Py_BuildValue("d", OSQP_INFTY);
-#endif
-    }
-
-    if(!strcmp(constant_name, "OSQP_NAN")){
-#ifdef DFLOAT
-        return Py_BuildValue("f", Py_NAN);
-#else
-        return Py_BuildValue("d", Py_NAN);
-#endif
-    }
-
-    if(!strcmp(constant_name, "OSQP_SOLVED")){
-        return Py_BuildValue("i", OSQP_SOLVED);
-    }
-
-	if(!strcmp(constant_name, "OSQP_SOLVED_INACCURATE")){
-        return Py_BuildValue("i", OSQP_SOLVED_INACCURATE);
-    }
-
-    if(!strcmp(constant_name, "OSQP_UNSOLVED")){
-        return Py_BuildValue("i", OSQP_UNSOLVED);
-    }
-
-    if(!strcmp(constant_name, "OSQP_PRIMAL_INFEASIBLE")){
-        return Py_BuildValue("i", OSQP_PRIMAL_INFEASIBLE);
-    }
-
-	if(!strcmp(constant_name, "OSQP_PRIMAL_INFEASIBLE_INACCURATE")){
-		return Py_BuildValue("i", OSQP_PRIMAL_INFEASIBLE_INACCURATE);
-	}
-
-    if(!strcmp(constant_name, "OSQP_DUAL_INFEASIBLE")){
-        return Py_BuildValue("i", OSQP_DUAL_INFEASIBLE);
-    }
-
-	if(!strcmp(constant_name, "OSQP_DUAL_INFEASIBLE_INACCURATE")){
-		return Py_BuildValue("i", OSQP_DUAL_INFEASIBLE_INACCURATE);
-	}
-
-    if(!strcmp(constant_name, "OSQP_MAX_ITER_REACHED")){
-        return Py_BuildValue("i", OSQP_MAX_ITER_REACHED);
-    }
-
-    if(!strcmp(constant_name, "OSQP_NON_CVX")){
-        return Py_BuildValue("i", OSQP_NON_CVX);
-    }
-
-    if(!strcmp(constant_name, "OSQP_TIME_LIMIT_REACHED")){
-        return Py_BuildValue("i", OSQP_TIME_LIMIT_REACHED);
-    }
-
-	// Linear system solvers
-	if(!strcmp(constant_name, "QDLDL_SOLVER")){
-		return Py_BuildValue("i", QDLDL_SOLVER);
-	}
-
-	if(!strcmp(constant_name, "MKL_PARDISO_SOLVER")){
-		return Py_BuildValue("i", MKL_PARDISO_SOLVER);
-	}
-
-    // If reached here error
-    PyErr_SetString(PyExc_ValueError, "Constant not recognized");
-    return (PyObject *) NULL;
-}
 
 
 static PyObject *OSQP_update_lin_cost(OSQP *self, PyObject *args) {
@@ -1400,7 +1326,6 @@ static PyMethodDef OSQP_methods[] = {
     {"setup", (PyCFunction)OSQP_setup,METH_VARARGS|METH_KEYWORDS, PyDoc_STR("Setup OSQP problem")},
     {"solve", (PyCFunction)OSQP_solve, METH_VARARGS, PyDoc_STR("Solve OSQP problem")},
     {"version",	(PyCFunction)OSQP_version, METH_NOARGS, PyDoc_STR("OSQP version")},
-    {"constant", (PyCFunction)OSQP_constant, METH_VARARGS, PyDoc_STR("Return internal OSQP constant")},
     {"dimensions", (PyCFunction)OSQP_dimensions, METH_NOARGS, PyDoc_STR("Return problem dimensions (n, m)")},
     {"update_lin_cost",	(PyCFunction)OSQP_update_lin_cost, METH_VARARGS, PyDoc_STR("Update OSQP problem linear cost")},
     {"update_lower_bound", (PyCFunction)OSQP_update_lower_bound, METH_VARARGS, PyDoc_STR("Update OSQP problem lower bound")},

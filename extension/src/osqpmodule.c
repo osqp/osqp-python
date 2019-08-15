@@ -29,6 +29,7 @@ static PyTypeObject OSQP_Type;
 #include "osqpresultspy.h"      // Results object
 #include "osqpworkspacepy.h"    // OSQP workspace
 #include "osqpobjectpy.h"       // OSQP object
+#include "osqpmodulemethods.h"  // OSQP module methods independently from any OSQP object
 
 
 /************************
@@ -41,7 +42,7 @@ static PyTypeObject OSQP_Type;
      PyModuleDef_HEAD_INIT, "_osqp",       /* m_name */
      NULL,                                 /* m_doc */
      -1,                                   /* m_size */
-     NULL,                                 /* m_methods */
+     OSQP_module_methods,                  /* m_methods */
      NULL,                                 /* m_reload */
      NULL,                                 /* m_traverse */
      NULL,                                 /* m_clear */
