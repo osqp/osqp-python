@@ -60,7 +60,7 @@ static PyObject * moduleinit(void){
 #if PY_MAJOR_VERSION >= 3
     m = PyModule_Create(&moduledef);
 #else
-    m = Py_InitModule3("_osqp", NULL, NULL);
+    m = Py_InitModule3("_osqp", OSQP_module_methods, NULL);
 #endif
 
     if (m == NULL) return NULL;
