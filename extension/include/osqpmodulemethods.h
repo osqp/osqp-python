@@ -218,7 +218,7 @@ static PyObject * OSQP_module_solve(OSQP *self, PyObject *args, PyObject *kwargs
   argparse_string_info = "iOiiOdddddddid";
 #endif
 
-#endif
+#endif /* DLONG */
 
   info_list = Py_BuildValue(argparse_string_info,
 			    workspace->info->iter,
@@ -236,7 +236,7 @@ static PyObject * OSQP_module_solve(OSQP *self, PyObject *args, PyObject *kwargs
 			    workspace->info->rho_updates,
 			    workspace->info->rho_estimate
 			    );
-#else
+#else /* PROFILING */
 
 #ifdef DLONG
 
@@ -254,7 +254,7 @@ static PyObject * OSQP_module_solve(OSQP *self, PyObject *args, PyObject *kwargs
   argparse_string = "iOiiOddid";
 #endif
 
-#endif
+#endif /* DLONG */
 
   info_list = Py_BuildValue(argparse_string_info,
 			    workspace->info->iter,
@@ -267,7 +267,7 @@ static PyObject * OSQP_module_solve(OSQP *self, PyObject *args, PyObject *kwargs
 			    workspace->info->rho_updates,
 			    workspace->info->rho_estimate,
 			    );
-#endif
+#endif /* PROFILING */
 
   info = PyObject_CallObject((PyObject *) &OSQP_info_Type, info_list);
 
