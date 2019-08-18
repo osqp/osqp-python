@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp._osqp import constant
 # import osqppurepy as osqp
 from scipy import sparse
 import scipy as sp
@@ -56,7 +57,7 @@ class primal_infeeasibility_tests(unittest.TestCase):
 
         # Assert close
         self.assertEqual(res.info.status_val,
-                         self.model.constant('OSQP_PRIMAL_INFEASIBLE'))
+                         constant('OSQP_PRIMAL_INFEASIBLE'))
 
     def test_primal_and_dual_infeasible_problem(self):
 
@@ -75,5 +76,5 @@ class primal_infeeasibility_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        self.assertIn(res.info.status_val, [self.model.constant('OSQP_PRIMAL_INFEASIBLE'),
-                                            self.model.constant('OSQP_DUAL_INFEASIBLE')])
+        self.assertIn(res.info.status_val, [constant('OSQP_PRIMAL_INFEASIBLE'),
+                                            constant('OSQP_DUAL_INFEASIBLE')])

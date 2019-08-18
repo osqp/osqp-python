@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp._osqp import constant
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -43,8 +44,8 @@ class non_convex_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        self.assertEqual(res.info.status_val, self.model.constant('OSQP_NON_CVX'))
+        self.assertEqual(res.info.status_val, constant('OSQP_NON_CVX'))
         nptest.assert_approx_equal(res.info.obj_val, np.nan)
 
     def test_nan(self):
-        nptest.assert_approx_equal(self.model.constant('OSQP_NAN'), np.nan)
+        nptest.assert_approx_equal(constant('OSQP_NAN'), np.nan)

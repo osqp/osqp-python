@@ -17,7 +17,7 @@ if [[ "${DISTRIB}" == "conda" ]]; then
     
 # Anaconda
 echo "Deploying to Anaconda..."
-anaconda -t $ANACONDA_TOKEN upload ${TRAVIS_BUILD_DIR}/conda-bld/**/*.tar.bz2 --user oxfordcontrol --force -l ${ANACONDA_LABEL}
+anaconda -t $ANACONDA_TOKEN upload ${TRAVIS_BUILD_DIR}/conda-bld/**/*.tar.bz2 --skip-existing --user oxfordcontrol -l ${ANACONDA_LABEL}
 
 elif [[ "${DISTRIB}" == "pip" ]]; then
 

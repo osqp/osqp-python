@@ -43,5 +43,6 @@ done
 for PYBIN in /opt/python/*/bin/; do
     "${PYBIN}/pip" install osqp --no-index -f /io/dist
     # Disable MKL tests since MKL is not in the docker image
-    (cd "$HOME"; "${PYBIN}/python" -m pytest --pyargs osqp -k 'not mkl_')
+    cd "$HOME"
+    "${PYBIN}/python" -m pytest --pyargs osqp -k 'not mkl_'
 done

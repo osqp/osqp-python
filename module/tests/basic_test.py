@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp._osqp import constant
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -101,7 +102,7 @@ class basic_tests(unittest.TestCase):
 
         # Assert max iter reached
         self.assertEqual(res.info.status_val,
-                         self.model.constant('OSQP_MAX_ITER_REACHED'))
+                         constant('OSQP_MAX_ITER_REACHED'))
 
     def test_update_check_termination(self):
         self.model.update_settings(check_termination=0)
@@ -128,7 +129,7 @@ class basic_tests(unittest.TestCase):
     def test_update_time_limit(self):
         res = self.model.solve()
         self.assertEqual(res.info.status_val,
-                         self.model.constant('OSQP_SOLVED'))
+                         constant('OSQP_SOLVED'))
 
         # Ensure the solver will time out
         self.model.update_settings(time_limit=1e-6, max_iter=2000000000,
@@ -136,7 +137,7 @@ class basic_tests(unittest.TestCase):
 
         res = self.model.solve()
         self.assertEqual(res.info.status_val,
-                         self.model.constant('OSQP_TIME_LIMIT_REACHED'))
+                         constant('OSQP_TIME_LIMIT_REACHED'))
 
     def test_upper_triangular_P(self):
         res_default = self.model.solve()
@@ -155,3 +156,18 @@ class basic_tests(unittest.TestCase):
         nptest.assert_array_almost_equal(res_default.y, res_triu.y)
         nptest.assert_array_almost_equal(res_default.info.obj_val, 
                                          res_triu.info.obj_val)
+
+
+    def test_solve_full_vs_object(self):
+
+        # Solve problem with object
+        res = self.model.solve()
+
+        # Solve problem with module function
+        res_module = osqp.solve(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
+                                **self.opts)
+
+        # Assert close
+        nptest.assert_array_almost_equal(res.x, res_module.x)
+        nptest.assert_array_almost_equal(res.y, res_module.y)
+        nptest.assert_array_almost_equal(res.info.obj_val, res_module.info.obj_val)
