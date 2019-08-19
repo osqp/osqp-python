@@ -289,6 +289,3 @@ def solve(P=None, q=None, A=None, l=None, u=None, **settings):
 
         unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
         return _osqp.solve(*unpacked_data, **settings)
-        
-        
-
