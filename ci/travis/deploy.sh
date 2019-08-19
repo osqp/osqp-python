@@ -19,15 +19,14 @@ if [[ "${DISTRIB}" == "conda" ]]; then
 echo "Deploying to Anaconda..."
 anaconda -t $ANACONDA_TOKEN upload ${TRAVIS_BUILD_DIR}/conda-bld/**/*.tar.bz2 --skip-existing --user oxfordcontrol -l ${ANACONDA_LABEL}
 
-elif [[ "${DISTRIB}" == "pip" ]]; then
+fi
 
-# Pypi
+if [[ "${DISTRIB}" == "pip" ]]; then
     if [[ -d "dist" && -n "$(ls -A dist)" ]]; then
-	ls dist
 	echo "Deploying to Pypi..."
 	if [[ "$TEST_PYPI" == "true" ]]; then
 	    twine upload --repository testpypi --config-file ci/pypirc -p $PYPI_PASSWORD --skip-existing dist/osqp-*     # Test pypi repo
-	elif [[ -n "$TRAVIS_TAG" ]]; then
+	else
 	    # Upload to main pypi repo if it is not dev and it is a tag
 	    twine upload --repository pypi --config-file ci/pypirc -p $PYPI_PASSWORD dist/osqp-*
 	fi

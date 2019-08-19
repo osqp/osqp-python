@@ -1,4 +1,5 @@
 @echo on
+IF "%APPVEYOR_REPO_TAG%" == "true" (
 
 cd %APPVEYOR_BUILD_FOLDER%
 
@@ -22,17 +23,17 @@ if errorlevel 1 exit /b 1
 ) 
 
 
-
-
 IF "%DISTRIB%"=="pip" (
 IF "%TEST_PYPI%" == "true" (
 twine upload --repository testpypi --config-file ci\pypirc -p %PYPI_PASSWORD% --skip-existing dist/osqp-*
 if errorlevel 1 exit /b 1
 ) ELSE (
-IF "%APPVEYOR_REPO_TAG%" == "true" (
 twine upload --repository pypi --config-file ci\pypirc -p %PYPI_PASSWORD% dist/osqp-*
 if errorlevel 1 exit /b 1
 )
 )
-)
+
+
+rem Deploy only on tags
+)  
 @echo off
