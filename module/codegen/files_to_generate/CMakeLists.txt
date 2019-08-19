@@ -127,6 +127,7 @@ set(
     src/osqp/scaling.c
     src/osqp/util.c
     src/osqp/workspace.c
+    src/osqp/error.c
 )
 
 set(
@@ -145,6 +146,7 @@ set(
     include/types.h
     include/util.h
     include/workspace.h
+    include/error.h
 )
 
 if (NOT(EMBEDDED EQUAL 1))
