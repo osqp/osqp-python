@@ -132,7 +132,8 @@ class basic_tests(unittest.TestCase):
                          constant('OSQP_SOLVED'))
 
         # Ensure the solver will time out
-        self.model.update_settings(time_limit=1e-6, max_iter=2000000000,
+        self.model.update_settings(time_limit=1e-6, verbose=True, max_iter=2000000000,
+                                   eps_abs=1e-20, eps_rel=1e-20,
                                    check_termination=0)
 
         res = self.model.solve()
