@@ -10,7 +10,7 @@ import numpy as np
 import unittest
 
 
-class primal_infeeasibility_tests(unittest.TestCase):
+class primal_infeasibility_tests(unittest.TestCase):
 
     def setUp(self):
         sp.random.seed(6)

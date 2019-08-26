@@ -136,9 +136,15 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
                               os.path.join(target_src_dir,
                                            '%smodule.c' % python_ext_name))
 
-    # Copy CMakelists.txt
+    # Render CMakelists.txt
     utils.render_cmakelists(template_vars,
                             os.path.join(target_dir, 'CMakeLists.txt'))
+
+    # Copy cmake files
+    sh.copy(os.path.join(osqp_path, 'codegen', 'sources', 'src', 'CMakeLists.txt'),
+            os.path.join(target_src_dir, 'osqp'))
+    sh.copy(os.path.join(osqp_path, 'codegen', 'sources', 'include', 'CMakeLists.txt'),
+            os.path.join(target_include_dir, 'osqp'))
 
     # Copy example.c
     sh.copy(os.path.join(files_to_generate_path, 'example.c'), target_src_dir)

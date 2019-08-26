@@ -145,6 +145,10 @@ os.makedirs(osqp_codegen_sources_configure_dir)
 for f in configure_files:  # Copy configure files
     copy(f, osqp_codegen_sources_configure_dir)
 
+# Copy cmake files
+copy(os.path.join(osqp_dir, 'src',     'CMakeLists.txt'), osqp_codegen_sources_c_dir)
+copy(os.path.join(osqp_dir, 'include', 'CMakeLists.txt'), osqp_codegen_sources_h_dir)
+
 
 class build_ext_osqp(build_ext):
     def build_extensions(self):

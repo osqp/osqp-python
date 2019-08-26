@@ -116,43 +116,24 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 # Set sources
 # ----------------------------------------------
-set(
-    osqp_src
-    src/osqp/auxil.c
-    src/osqp/lin_alg.c
-    src/osqp/osqp.c
-    src/osqp/proj.c
-    src/osqp/qdldl.c
-    src/osqp/qdldl_interface.c
-    src/osqp/scaling.c
-    src/osqp/util.c
-    src/osqp/workspace.c
-    src/osqp/error.c
+add_subdirectory (src/osqp)
+add_subdirectory (include)
+
+# Append the generated workspace files and qdldl files
+list (APPEND
+      osqp_src
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/osqp/workspace.c
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/osqp/qdldl.c
+      ${CMAKE_CURRENT_SOURCE_DIR}/src/osqp/qdldl_interface.c
 )
 
-set(
-    osqp_headers
-    include/auxil.h
-    include/constants.h
-    include/glob_opts.h
-    include/osqp_configure.h
-    include/lin_alg.h
-    include/osqp.h
-    include/proj.h
-    include/qdldl.h
-    include/qdldl_interface.h
-    include/qdldl_types.h
-    include/scaling.h
-    include/types.h
-    include/util.h
-    include/workspace.h
-    include/error.h
+list (APPEND
+      osqp_headers
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/workspace.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/qdldl.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/qdldl_types.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/include/qdldl_interface.h
 )
-
-if (NOT(EMBEDDED EQUAL 1))
-	set (osqp_src ${osqp_src} src/osqp/kkt.c)
-	set (osqp_headers ${osqp_headers} include/kkt.h)
-endif()
 
 # Create static library for embedded solver
 add_library (emosqpstatic STATIC ${osqp_src} ${osqp_headers})
