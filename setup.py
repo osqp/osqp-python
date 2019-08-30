@@ -206,7 +206,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='osqp',
-      version='0.6.0.dev19',
+      version='0.6.0.dev20',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
