@@ -33,7 +33,7 @@ RHO_TOL = 1e-04
 PRINT_INTERVAL = 200
 
 # OSQP Infinity
-OSQP_INFTY = 1e+20
+OSQP_INFTY = 1e+30
 
 # OSQP Nan
 OSQP_NAN = np.nan
@@ -859,10 +859,10 @@ class OSQP(object):
                     for i in range(self.work.data.m):
                         # De Morgan's Law applied to negate
                         # conditions on A * delta_x
-                        if ((self.work.data.u[i] < OSQP_INFTY*1e-06) and
+                        if ((self.work.data.u[i] < OSQP_INFTY*MIN_SCALING) and
                             (self.work.Adelta_x[i] >
                              eps_dual_inf * norm_delta_x)) or \
-                            ((self.work.data.l[i] > -OSQP_INFTY*1e-06) and
+                            ((self.work.data.l[i] > -OSQP_INFTY*MIN_SCALING) and
                              (self.work.Adelta_x[i] <
                               -eps_dual_inf * norm_delta_x)):
 
@@ -1012,7 +1012,7 @@ class OSQP(object):
             eps_dual_inf *= 10
 
         # If residuals are too large, the problem is probably non convex
-        if (self.work.info.pri_res > 2*OSQP_INFTY) or (self.work.info.dua_res > 2*OSQP_INFTY):
+        if (self.work.info.pri_res > OSQP_INFTY) or (self.work.info.dua_res > OSQP_INFTY):
             self.work.info.status_val = OSQP_NON_CVX
             self.work.info.obj_val = OSQP_NAN
             return 1
