@@ -46,6 +46,15 @@ matrix:
       - os: osx
         env:
           - DISTRIB="pip"
+          - PYTHON_VERSION=2.7
+      - os: osx
+        env:
+          - DISTRIB="pip"
+          - PYTHON_VERSION=3.6
+      - os: osx
+        env:
+          - DISTRIB="pip"
+          - PYTHON_VERSION=3.7
       - os: osx
         env:
           - DISTRIB="conda"
@@ -94,7 +103,8 @@ script:
 deploy:
   # Anaconda
   - provider: script
-    script: bash $TRAVIS_BUILD_DIR/ci/travis/deploy.sh 
+    script: bash $TRAVIS_BUILD_DIR/ci/travis/deploy.sh
     skip_cleanup: true
     on:
-      tags: true
+      # tags: false
+      branch: release-0.6.0
