@@ -2,7 +2,7 @@
 
 @setlocal enabledelayedexpansion
 
-REM  IF "%APPVEYOR_REPO_TAG%" == "true" (
+IF "%APPVEYOR_REPO_TAG%" == "true" (
 
 cd %APPVEYOR_BUILD_FOLDER%
 
@@ -34,6 +34,6 @@ if errorlevel 1 exit /b 1
 )
 
 
-REM  rem Deploy only on tags
-REM  )
+rem Deploy only on tags
+)
 @echo off

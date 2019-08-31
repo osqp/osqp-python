@@ -106,5 +106,4 @@ deploy:
     script: bash $TRAVIS_BUILD_DIR/ci/travis/deploy.sh
     skip_cleanup: true
     on:
-      # tags: false
-      branch: release-0.6.0
+      tags: true
