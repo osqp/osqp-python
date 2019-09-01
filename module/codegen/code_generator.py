@@ -144,7 +144,7 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
     sh.copy(os.path.join(osqp_path, 'codegen', 'sources', 'src', 'CMakeLists.txt'),
             os.path.join(target_src_dir, 'osqp'))
     sh.copy(os.path.join(osqp_path, 'codegen', 'sources', 'include', 'CMakeLists.txt'),
-            os.path.join(target_include_dir, 'osqp'))
+            os.path.join(target_include_dir))
 
     # Copy example.c
     sh.copy(os.path.join(files_to_generate_path, 'example.c'), target_src_dir)
