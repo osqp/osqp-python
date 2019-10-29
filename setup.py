@@ -70,8 +70,12 @@ cmake_args += ['-DPYTHON=ON']
 # Remove long integers for numpy compatibility (default args.long == False)
 # https://github.com/numpy/numpy/issues/5906
 # https://github.com/ContinuumIO/anaconda-issues/issues/3823
-if args.long:
-    print("Disabling LONG")
+if not args.long:
+    print("Disabling LONG\n" +
+          "Remove long integers for numpy compatibility. See:\n" +
+          " - https://github.com/numpy/numpy/issues/5906\n" +
+          " - https://github.com/ContinuumIO/anaconda-issues/issues/3823\n" +
+          "You can reenable long integers by passing: --osqp --long argument.\n")
     cmake_args += ['-DDLONG=OFF']
 
 # Pass python to compiler launched from setup.py
