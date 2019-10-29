@@ -1,4 +1,5 @@
 """Common utility functions"""
+from warnings import warn
 import numpy as np
 import scipy.sparse as sparse
 import osqp._osqp as _osqp

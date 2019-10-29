@@ -11,17 +11,9 @@ environment:
     secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
     - PYTHON_VERSION: 2.7
-      DISTRIB: conda
-    - PYTHON_VERSION: 2.7
-      DISTRIB: pip
+    - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
-      DISTRIB: conda
-    - PYTHON_VERSION: 3.6
-      DISTRIB: pip
     - PYTHON_VERSION: 3.7
-      DISTRIB: conda
-    - PYTHON_VERSION: 3.7
-      DISTRIB: pip
 
 
 init:
@@ -54,11 +46,9 @@ install:
   - conda info -a
 
 test_script:
-  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\script.cmd"
+  - conda build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
 
-deploy_script:
-  - "%APPVEYOR_BUILD_FOLDER%\\ci\\appveyor\\deploy.cmd"
-  
+
 # on_finish:
 #   # Uncomment for remote desktop debug
 #   - ps: $blockRdp = $true; iex ((new-object net.webclient).DownloadString('https://raw.githubusercontent.com/appveyor/ci/master/scripts/enable-rdp.ps1'))
