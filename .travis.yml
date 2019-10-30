@@ -57,7 +57,7 @@ install:
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=$PYTHON_VERSION pytest numpy
   - source activate testenv
-  - conda install conda conda-verify conda-build=3.18.9 anaconda-client twine
+  - conda install conda conda-verify conda-build anaconda-client twine
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
