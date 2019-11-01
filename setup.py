@@ -12,6 +12,35 @@ import numpy
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
+import argparse
+
+OSQP_ARG_MARK = '--osqp'
+
+parser = argparse.ArgumentParser(description='OSQP Setup script arguments.')
+parser.add_argument(
+    OSQP_ARG_MARK,
+    dest='osqp',
+    action='store_true',
+    default=False,
+    help='Put this first to ensure following arguments are parsed correctly')
+parser.add_argument(
+    '--long',
+    dest='long',
+    action='store_true',
+    default=False,
+    help='Use long integers')
+parser.add_argument(
+    '--debug',
+    dest='debug',
+    action='store_true',
+    default=False,
+    help='Compile extension in debug mode')
+args, unknown = parser.parse_known_args()
+
+# necessary to remove OSQP args before passing to setup:
+if OSQP_ARG_MARK in sys.argv:
+  sys.argv = sys.argv[0:sys.argv.index(OSQP_ARG_MARK)]
+
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
 cmake_build_flags = []
@@ -38,10 +67,16 @@ else:  # Linux or Mac
 # Pass Python option to CMake and Python interface compilation
 cmake_args += ['-DPYTHON=ON']
 
-# Remove long integers for numpy compatibility
+# Remove long integers for numpy compatibility (default args.long == False)
 # https://github.com/numpy/numpy/issues/5906
 # https://github.com/ContinuumIO/anaconda-issues/issues/3823
-cmake_args += ['-DDLONG=OFF']
+if not args.long:
+    print("Disabling LONG\n" +
+          "Remove long integers for numpy compatibility. See:\n" +
+          " - https://github.com/numpy/numpy/issues/5906\n" +
+          " - https://github.com/ContinuumIO/anaconda-issues/issues/3823\n" +
+          "You can reenable long integers by passing: --osqp --long argument.\n")
+    cmake_args += ['-DDLONG=OFF']
 
 # Pass python to compiler launched from setup.py
 define_macros += [('PYTHON', None)]
@@ -75,6 +110,12 @@ if system() != 'Windows':
     compile_args = ["-O3"]
 else:
     compile_args = []
+
+# If in debug mode
+if args.debug:
+    print("Debug mode")
+    compile_args += ["-g"]
+    cmake_args += ["-DCMAKE_BUILD_TYPE=Debug"]
 
 # External libraries
 library_dirs = []
