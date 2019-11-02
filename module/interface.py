@@ -5,11 +5,12 @@ from __future__ import print_function
 from builtins import object
 import osqp._osqp as _osqp  # Internal low level module
 import numpy as np
+import scipy.sparse as spa
+import scipy.sparse.linalg as sla
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
 import sys
-
 
 class OSQP(object):
     def __init__(self):
@@ -276,16 +277,87 @@ class OSQP(object):
 
 
 def solve(P=None, q=None, A=None, l=None, u=None, **settings):
-        """
-        Solve problem of the form 
+    """
+    Solve problem of the form
 
-        minimize     1/2 x' * P * x + q' * x
-        subject to   l <= A * x <= u
+    minimize     1/2 x' * P * x + q' * x
+    subject to   l <= A * x <= u
 
-        solver settings can be specified as additional keyword arguments. 
-        This function disables the GIL because it internally performs 
-        setup solve and cleanup.
-        """
+    solver settings can be specified as additional keyword arguments.
+    This function disables the GIL because it internally performs
+    setup solve and cleanup.
+    """
 
-        unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
-        return _osqp.solve(*unpacked_data, **settings)
+    unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
+    return _osqp.solve(*unpacked_data, **settings)
+
+
+def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
+    unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
+    result = _osqp.solve(*unpacked_data, **settings)
+
+    m, n = A.shape
+    x = result.x
+    y = result.y
+    z = A.dot(x)
+
+    def adjoint_derivative(dx=None, dy=None, dz=None,
+                           P_idx=None, A_idx=None, diff_mode='full'):
+        if A_idx is None:
+            A_idx = A.nonzero()
+
+        if P_idx is None:
+            P_idx = P.nonzero()
+
+        if dy is not None or dz is not None:
+            raise NotImplementedError
+
+        if diff_mode == 'active':
+            # Taken from https://github.com/oxfordcontrol/osqp-python/blob/0363d028b2321017049360d2eb3c0cf206028c43/modulepurepy/_osqp.py#L1717
+            # Guess which linear constraints are lower-active, upper-active, free
+            ind_low = np.where(z - l < - y)[0]
+            ind_upp = np.where(u - z < y)[0]
+            n_low = len(ind_low)
+            n_upp = len(ind_upp)
+
+            # Form A_red from the assumed active constraints
+            A_red = spa.vstack([A[ind_low], A[ind_upp]])
+
+            # Form KKT linear system
+            KKT = spa.vstack([spa.hstack([P, A_red.T]),
+                            spa.hstack([A_red, spa.csc_matrix((n_low + n_upp, n_low + n_upp))])])
+            rhs = np.hstack([dx, np.zeros(n_low + n_upp)])
+
+            # Get solution
+            r_sol = sla.spsolve(KKT, rhs)
+            # r_sol = sla.lsqr(KKT, rhs)[0]
+
+            r_x =  r_sol[:n]
+            r_yl = r_sol[n:n + n_low]
+            r_yu = r_sol[n + n_low:]
+            r_y = np.zeros(m)
+            r_y[ind_low] = r_yl
+            r_y[ind_upp] = r_yu
+
+            dl = np.hstack([r_yl[np.where(ind_low == j)[0]] if j in ind_low else 0
+                for j in range(m)])
+            du = np.hstack([r_yu[np.where(ind_upp == j)[0]] if j in ind_upp else 0
+                for j in range(m)])
+        elif diff_mode == 'full':
+            # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
+            # but use slack variables too
+            raise NotImplementedError
+        else:
+            raise RuntimeError(f"Unrecognized differentiation mode: {diff_mode}")
+
+        # Extract derivatives
+        rows, cols = P_idx
+        dP = -.5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
+
+        rows, cols = A_idx
+        dA = -(y[rows] * r_x[cols] + r_y[rows] * x[cols])
+        dq = -r_x
+        return (dP, dq, dA, dl, du)
+
+    return result, adjoint_derivative
+
