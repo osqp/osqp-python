@@ -348,7 +348,7 @@ def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
             # but use slack variables too
             raise NotImplementedError
         else:
-            raise RuntimeError(f"Unrecognized differentiation mode: {diff_mode}")
+            raise RuntimeError("Unrecognized differentiation mode: {}".format(diff_mode))
 
         # Extract derivatives
         rows, cols = P_idx
