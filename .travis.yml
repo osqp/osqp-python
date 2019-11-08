@@ -23,9 +23,6 @@ matrix:
     include:
       - os: linux
         env:
-          - PYTHON_VERSION=2.7
-      - os: linux
-        env:
           - PYTHON_VERSION=3.5
       - os: linux
         env:
@@ -35,9 +32,6 @@ matrix:
           - PYTHON_VERSION=3.7
       - os: osx
         env:
-          - PYTHON_VERSION=2.7
-      - os: osx
-        env:
           - PYTHON_VERSION=3.5
       - os: osx
         env:
@@ -45,14 +39,6 @@ matrix:
       - os: osx
         env:
           - PYTHON_VERSION=3.7
-    allow_failures:
-      - os: linux
-        env:
-          - PYTHON_VERSION=2.7
-      - os: osx
-        env:
-          - PYTHON_VERSION=2.7
-
 
 install:
   - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then

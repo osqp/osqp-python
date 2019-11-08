@@ -10,7 +10,6 @@ environment:
   PYPI_PASSWORD:
     secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
-    - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7

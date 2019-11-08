@@ -49,10 +49,7 @@ lib_subdir = []
 
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
-    if sys.version_info.major == 3:
-        cmake_args += ['-G', 'Visual Studio 14 2015']
-    else:
-        cmake_args += ['-G', 'Visual Studio 9 2008']
+    cmake_args += ['-G', 'Visual Studio 14 2015']
     # Differentiate between 32-bit and 64-bit
     if sys.maxsize // 2 ** 32 > 0:
         cmake_args[-1] += ' Win64'
@@ -81,8 +78,7 @@ if not args.long:
 # Pass python to compiler launched from setup.py
 define_macros += [('PYTHON', None)]
 
-# Pass python version to cmake
-py_version = "%i.%i" % sys.version_info[:2]
+# Pass python include dirs to cmake
 cmake_args += ['-DPYTHON_INCLUDE_DIRS=%s' % sysconfig.get_python_inc()]
 
 
@@ -122,7 +118,7 @@ library_dirs = []
 libraries = []
 if system() == 'Linux':
     libraries += ['rt']
-if system() == 'Windows' and sys.version_info[0] == 3:
+if system() == 'Windows':
     # They moved the stdio library to another place.
     # We need to include this to fix the dependency
     libraries += ['legacy_stdio_definitions']

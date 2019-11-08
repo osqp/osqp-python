@@ -12,6 +12,7 @@ import osqp.codegen as cg
 import osqp.utils as utils
 import sys
 
+
 class OSQP(object):
     def __init__(self):
         self._model = _osqp.OSQP()
@@ -28,6 +29,8 @@ class OSQP(object):
 
         solver settings can be specified as additional keyword arguments
         """
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        self._derivative_cache = {'P': P, 'q': q, 'A': A, 'l': l, 'u': u}
 
         unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
         self._model.setup(*unpacked_data, **settings)
@@ -199,7 +202,12 @@ class OSQP(object):
         Solve QP Problem
         """
         # Solve QP
-        return self._model.solve()
+        results = self._model.solve()
+
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        self._derivative_cache['results'] = results
+
+        return results
 
     def warm_start(self, x=None, y=None):
         """
@@ -275,34 +283,23 @@ class OSQP(object):
         cg.codegen(work, folder, python_ext_name, project_type,
                    embedded, force_rewrite, float_flag, long_flag)
 
+    def adjoint_derivative(self, dx=None, dy=None, dz=None,
+            P_idx=None, A_idx=None, diff_mode='full'):
 
-def solve(P=None, q=None, A=None, l=None, u=None, **settings):
-    """
-    Solve problem of the form
+        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        A = self._derivative_cache['A']
+        l, u = self._derivative_cache['l'], self._derivative_cache['u']
 
-    minimize     1/2 x' * P * x + q' * x
-    subject to   l <= A * x <= u
+        results = self._derivative_cache['results']
 
-    solver settings can be specified as additional keyword arguments.
-    This function disables the GIL because it internally performs
-    setup solve and cleanup.
-    """
+        if results.info.status != "solved":
+            raise ValueError("Problem has not been solved to optimality. You cannot take derivatives")
 
-    unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
-    return _osqp.solve(*unpacked_data, **settings)
+        m, n = A.shape
+        x = results.x
+        y = results.y
+        z = A.dot(x)
 
-
-def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
-    unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
-    result = _osqp.solve(*unpacked_data, **settings)
-
-    m, n = A.shape
-    x = result.x
-    y = result.y
-    z = A.dot(x)
-
-    def adjoint_derivative(dx=None, dy=None, dz=None,
-                           P_idx=None, A_idx=None, diff_mode='full'):
         if A_idx is None:
             A_idx = A.nonzero()
 
@@ -312,7 +309,7 @@ def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
         if dy is not None or dz is not None:
             raise NotImplementedError
 
-        if diff_mode == 'active':
+        if diff_mode == 'qr_active':
             # Taken from https://github.com/oxfordcontrol/osqp-python/blob/0363d028b2321017049360d2eb3c0cf206028c43/modulepurepy/_osqp.py#L1717
             # Guess which linear constraints are lower-active, upper-active, free
             ind_low = np.where(z - l < - y)[0]
@@ -325,7 +322,7 @@ def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
 
             # Form KKT linear system
             KKT = spa.vstack([spa.hstack([P, A_red.T]),
-                            spa.hstack([A_red, spa.csc_matrix((n_low + n_upp, n_low + n_upp))])])
+                            spa.hstack([A_red, spa.csc_matrix((n_low + n_upp, n_low + n_upp))])], format='csc')
             rhs = np.hstack([dx, np.zeros(n_low + n_upp)])
 
             # Get solution
@@ -343,7 +340,11 @@ def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
                 for j in range(m)])
             du = np.hstack([r_yu[np.where(ind_upp == j)[0]] if j in ind_upp else 0
                 for j in range(m)])
-        elif diff_mode == 'full':
+        elif diff_mode == 'qr':
+            # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
+            # but use slack variables too
+            raise NotImplementedError
+        elif diff_mode == 'lsqr':
             # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
             # but use slack variables too
             raise NotImplementedError
@@ -358,6 +359,3 @@ def solve_and_derivative(P=None, q=None, A=None, l=None, u=None, **settings):
         dA = -(y[rows] * r_x[cols] + r_y[rows] * x[cols])
         dq = -r_x
         return (dP, dq, dA, dl, du)
-
-    return result, adjoint_derivative
-
