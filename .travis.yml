@@ -52,7 +52,6 @@ install:
   - conda create -n testenv python=$PYTHON_VERSION pytest numpy
   - source activate testenv
   - conda install conda conda-verify conda-build anaconda-client twine
-  - conda install -c conda-forge numdifftools  # TODO: Delete this test dependency
   - conda info -a
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |

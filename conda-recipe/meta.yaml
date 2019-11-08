@@ -36,6 +36,7 @@ test:
   requires:
     - pytest
     - cmake
+    - numdifftools
   imports:
     - osqp
     - osqppurepy
