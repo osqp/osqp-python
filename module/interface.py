@@ -40,8 +40,6 @@ class OSQP(object):
         """
         Update OSQP problem arguments
         """
-        # TODO(bart): this will be unnecessary when the derivative will be in C
-        self._derivative_cache = None
 
         # get problem dimensions
         (n, m) = self._model.dimensions()
@@ -107,6 +105,36 @@ class OSQP(object):
         # update matrices P and A
         if Px is not None and Ax is not None:
             self._model.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
+
+
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        # update problem data in self._derivative_cache
+        if q is not None:
+            self._derivative_cache["q"] = q
+
+        if l is not None:
+            self._derivative_cache["l"] = l
+
+        if u is not None:
+            self._derivative_cache["u"] = u
+
+        if Px is not None:
+            if Px_idx.size == 0:
+                self._derivative_cache["P"].data = Px
+            else:
+                self._derivative_cache["P"].data[Px_idx] = Px
+
+        if Ax is not None:
+            if Ax_idx.size == 0:
+                self._derivative_cache["A"].data = Ax
+            else:
+                self._derivative_cache["A"].data[Ax_idx] = Ax
+
+        # delete results from self._derivative_cache to prohibit
+        # taking the derivative of unsolved problems
+        if "results" in self._derivative_cache.keys():
+            del self._derivative_cache["results"]
+
 
     def update_settings(self, **kwargs):
         """
@@ -295,7 +323,10 @@ class OSQP(object):
         A = self._derivative_cache['A']
         l, u = self._derivative_cache['l'], self._derivative_cache['u']
 
-        results = self._derivative_cache['results']
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError("Problem has not been solved. You cannot take derivatives. Please call the solve function.")
 
         if results.info.status != "solved":
             raise ValueError("Problem has not been solved to optimality. You cannot take derivatives")
