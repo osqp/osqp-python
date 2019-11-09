@@ -378,9 +378,8 @@ class OSQP(object):
 
             # Extract derivatives for the constraints
             rows, cols = A_idx
-            dA_vals = \
-                y_u[rows] * r_x[cols] + y_u[rows] * (r_yu[rows] * x[cols]) - \
-                (y_l[rows] * r_x[cols] + y_l[rows] * (r_yl[rows] * x[cols]))
+            dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
+                (y_u[rows] * r_yu[rows] - y_l[rows] * r_yl[rows]) * x[cols]
             dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
             du = - y_u * r_yu
             dl = y_l * r_yl

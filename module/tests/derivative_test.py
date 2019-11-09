@@ -52,7 +52,7 @@ class derivative_tests(unittest.TestCase):
 
         return grads
 
-    def test_dl_dq(self, verbose=False):
+    def test_dl_dq(self, verbose=True):
         n, m = 5, 5
         for diff_mode in diff_modes:
 
