@@ -364,9 +364,9 @@ class OSQP(object):
             d_sol = np.concatenate([dx, dy_u, dy_l])
 
             if diff_mode == 'lsqr':
-
                 r_sol = - sla.lsqr(self._derivative_cache['M'].T, d_sol)[0]
-
+            elif diff_mode == 'lu':
+                r_sol = - sla.spsolve(self._derivative_cache['M'].T, d_sol)
             elif diff_mode == 'qr':
                 # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
                 # but use slack variables too
