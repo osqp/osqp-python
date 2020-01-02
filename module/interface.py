@@ -10,6 +10,7 @@ import scipy.sparse.linalg as sla
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
+from sksparse.cholmod import cholesky
 import sys
 
 
@@ -354,19 +355,28 @@ class OSQP(object):
             if 'M' not in self._derivative_cache:
 
                     M = spa.bmat([
-                        [P, A.T, -A.T],
+                        [P, A.T @ spa.diags(y_u), -A.T @ spa.diags(y_l)],
                         [spa.diags(y_u) @ A, spa.diags(A @ x - u), None],
                         [-spa.diags(y_l) @ A, None, spa.diags(l - A @ x)]
-                    ])
+                    ]).tocsc()
                     self._derivative_cache['M'] = M
 
             # Prepare rhs
             d_sol = np.concatenate([dx, dy_u, dy_l])
 
+            # Normalized version
+            d_sol = np.concatenate([dx,
+                                    spa.diags(y_u) @ dy_u,
+                                    spa.diags(y_l) @ dy_l])
+
+
             if diff_mode == 'lsqr':
                 r_sol = - sla.lsqr(self._derivative_cache['M'].T, d_sol)[0]
             elif diff_mode == 'lu':
                 r_sol = - sla.spsolve(self._derivative_cache['M'].T, d_sol)
+            elif diff_mode == 'ldl':
+                factor = cholesky(self._derivative_cache['M'].T.tocsc())
+                r_sol = - factor(d_sol)
             elif diff_mode == 'qr':
                 # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
                 # but use slack variables too
@@ -375,6 +385,13 @@ class OSQP(object):
                 raise RuntimeError("Unrecognized differentiation mode: {}".format(diff_mode))
 
             r_x, r_yu, r_yl = np.split(r_sol, [n, n+m])
+
+            #  print("r_yu = ", r_yu)
+            #  print("r_yl = ", r_yl)
+
+            #  # Restore normalization
+            #  r_yu = spa.diags(y_u) @ r_yu
+            #  r_yl = spa.diags(y_l) @ r_yl
 
             # Extract derivatives for the constraints
             rows, cols = A_idx

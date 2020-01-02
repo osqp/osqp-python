@@ -13,7 +13,9 @@ import unittest
 
 diff_modes = [
               'lsqr',
-              'lu_active'
+              'lu_active',
+              'lu',
+              'ldl'
               ]
 
 ATOL = 1e-3
