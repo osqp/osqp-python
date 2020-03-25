@@ -121,3 +121,4 @@ ENV/
 
 .gdb_history
 .cquery_cached_index/
+pip-wheel-metadata/

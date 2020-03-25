@@ -53,6 +53,7 @@ install:
   - source activate testenv
   - conda install conda conda-verify conda-build anaconda-client twine
   - conda info -a
+  - pip install qdldl
   # Add MKL shared libraries (for MKL pardiso) to the path
   - |
     MKL_PARDISO_LIB_DIR=`python -c 'import numpy.distutils.system_info as sysinfo; print(sysinfo.get_info("mkl")["library_dirs"][0])'`

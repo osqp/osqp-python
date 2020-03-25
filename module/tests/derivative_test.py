@@ -11,17 +11,12 @@ import numpy.testing as npt
 import unittest
 
 
-diff_modes = [
-              'lsqr',
-              'lu_active',
-              'lu',
-              'ldl'
-              ]
+npr.seed(1)
 
 ATOL = 1e-3
 RTOL = 1e-3
-eps_abs = 1e-08
-eps_rel = 1e-08
+eps_abs = 1e-10
+eps_rel = 1e-10
 max_iter = 10000
 grad_precision = 1e-05
 
@@ -29,7 +24,6 @@ grad_precision = 1e-05
 class derivative_tests(unittest.TestCase):
 
     def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
-        npr.seed(1)
         L = np.random.randn(n, n)
         P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
         x_0 = npr.randn(n)
