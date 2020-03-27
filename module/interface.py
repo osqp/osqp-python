@@ -10,7 +10,6 @@ import scipy.sparse.linalg as sla
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
-from sksparse.cholmod import cholesky
 import sys
 import qdldl
 
