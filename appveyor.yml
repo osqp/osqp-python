@@ -40,7 +40,6 @@ install:
   - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake conda conda-verify conda-build anaconda-client twine
   - activate testenv
   - conda info -a
-  - pip install qdldl
 
 test_script:
   - conda build --python %PYTHON_VERSION% conda-recipe --output-folder conda-bld
