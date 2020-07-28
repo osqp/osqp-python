@@ -23,6 +23,7 @@ requirements:
     - python {{ python }}
     - numpy {{ numpy }}
     - pip
+    - qdldl
   build:
     - {{ compiler('c') }}
     - cmake
@@ -30,7 +31,7 @@ requirements:
     - python
     - {{ pin_compatible('numpy') }}
     - scipy >=0.13.2
-    - future
+    - qdldl
 
 test:
   requires:

@@ -315,7 +315,7 @@ class OSQP(object):
                    embedded, force_rewrite, float_flag, long_flag)
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-            P_idx=None, A_idx=None):
+                           P_idx=None, A_idx=None):
         """
         Compute adjoint derivative after solve.
         """
@@ -327,15 +327,17 @@ class OSQP(object):
         try:
             results = self._derivative_cache['results']
         except KeyError:
-            raise ValueError("Problem has not been solved. You cannot take derivatives. Please call the solve function.")
+            raise ValueError("Problem has not been solved. "
+                             "You cannot take derivatives. "
+                             "Please call the solve function.")
 
         if results.info.status != "solved":
-            raise ValueError("Problem has not been solved to optimality. You cannot take derivatives")
+            raise ValueError("Problem has not been solved to optimality. "
+                             "You cannot take derivatives")
 
         m, n = A.shape
         x = results.x
         y = results.y
-        z = A.dot(x)
         y_u = np.maximum(y, 0)
         y_l = -np.minimum(y, 0)
 
@@ -361,10 +363,7 @@ class OSQP(object):
             ]).tocsc()
             self._derivative_cache['M'] = M
 
-        # Prepare rhs
-        d_sol = np.concatenate([dx, dy_u, dy_l])
-
-        # Normalized version to compensate for diag(y_u) and diag(y_l) above
+        # Normalized rhs to compensate for diag(y_u) and diag(y_l) above
         d_sol = np.concatenate([dx,
                                 spa.diags(y_u) @ dy_u,
                                 spa.diags(y_l) @ dy_l])
