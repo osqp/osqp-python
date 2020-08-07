@@ -18,7 +18,7 @@ RTOL = 1e-3
 eps_abs = 1e-10
 eps_rel = 1e-10
 max_iter = 10000
-grad_precision = 1e-08
+grad_precision = 1e-10
 
 
 class derivative_tests(unittest.TestCase):
