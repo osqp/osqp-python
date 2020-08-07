@@ -6,7 +6,7 @@ from builtins import object
 import osqp._osqp as _osqp  # Internal low level module
 import numpy as np
 import scipy.sparse as spa
-import scipy.sparse.linalg as sla
+from warnings import warn
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
@@ -135,7 +135,6 @@ class OSQP(object):
         # taking the derivative of unsolved problems
         if "results" in self._derivative_cache.keys():
             del self._derivative_cache["results"]
-
 
     def update_settings(self, **kwargs):
         """
@@ -314,6 +313,25 @@ class OSQP(object):
         cg.codegen(work, folder, python_ext_name, project_type,
                    embedded, force_rewrite, float_flag, long_flag)
 
+    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+        M = self._derivative_cache['M']
+
+        # Prefactor
+        solver = self._derivative_cache['solver']
+
+        sol = solver.solve(rhs)
+        for k in range(max_iter):
+            delta_sol = solver.solve(rhs - M @ sol)
+            sol = sol + delta_sol
+
+            if np.linalg.norm(M @ sol - rhs) < tol:
+                break
+
+        if k == max_iter - 1:
+            warn("max_iter iterative refinement reached.")
+
+        return sol
+
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
                            P_idx=None, A_idx=None):
         """
@@ -354,31 +372,33 @@ class OSQP(object):
 
         # Make sure M matrix exists
         if 'M' not in self._derivative_cache:
-            # Multiply second-third column by diag(y_u) and diag(y_l)
+            # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
             # to make the matrix symmetric
+            inv_dia_y_u = spa.diags(np.reciprocal(y_u + 1e-20))
+            inv_dia_y_l = spa.diags(np.reciprocal(y_l + 1e-20))
             M = spa.bmat([
-                [P, A.T @ spa.diags(y_u), -A.T @ spa.diags(y_l)],
-                [spa.diags(y_u) @ A, spa.diags(A @ x - u), None],
-                [-spa.diags(y_l) @ A, None, spa.diags(l - A @ x)]
-            ]).tocsc()
+                [P,            A.T,                  -A.T],
+                [A, spa.diags(A @ x - u) @ inv_dia_y_u, None],
+                [-A, None, spa.diags(l - A @ x) @ inv_dia_y_l]
+            ], format='csc')
+            delta = spa.bmat([[0.001 * spa.eye(n), None],
+                              [None, -0.001 * spa.eye(2 * m)]], format='csc')
             self._derivative_cache['M'] = M
+            self._derivative_cache['solver'] = qdldl.Solver(M + delta)
 
-        # Normalized rhs to compensate for diag(y_u) and diag(y_l) above
-        d_sol = np.concatenate([dx,
-                                spa.diags(y_u) @ dy_u,
-                                spa.diags(y_l) @ dy_l])
+        rhs = - np.concatenate([dx, dy_u, dy_l])
 
-        r_sol = - qdldl.Solver(self._derivative_cache['M']).solve(d_sol)
+        r_sol = self.derivative_iterative_refinement(rhs)
 
         r_x, r_yu, r_yl = np.split(r_sol, [n, n+m])
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
         dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
-            (y_u[rows] * r_yu[rows] - y_l[rows] * r_yl[rows]) * x[cols]
+            (r_yu[rows] - r_yl[rows]) * x[cols]
         dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
-        du = - y_u * r_yu
-        dl = y_l * r_yl
+        du = - r_yu
+        dl = r_yl
 
         # Extract derivatives for the cost (P, q)
         rows, cols = P_idx
@@ -387,106 +407,3 @@ class OSQP(object):
         dq = r_x
 
         return (dP, dq, dA, dl, du)
-
-        #  if 'active' not in diff_mode:
-        #      # Make sure M matrix exists
-        #      if 'M' not in self._derivative_cache:
-        #
-        #          # Multiply second-third column by diag(y_u) and diag(y_l)
-        #          # to make the matrix symmetric
-        #          M = spa.bmat([
-        #              [P, A.T @ spa.diags(y_u), -A.T @ spa.diags(y_l)],
-        #              [spa.diags(y_u) @ A, spa.diags(A @ x - u), None],
-        #              [-spa.diags(y_l) @ A, None, spa.diags(l - A @ x)]
-        #          ]).tocsc()
-        #          self._derivative_cache['M'] = M
-        #
-        #      # Prepare rhs
-        #      d_sol = np.concatenate([dx, dy_u, dy_l])
-        #
-        #      # Normalized version to compensate for diag(y_u) and diag(y_l) above
-        #      d_sol = np.concatenate([dx,
-        #                              spa.diags(y_u) @ dy_u,
-        #                              spa.diags(y_l) @ dy_l])
-        #
-        #
-        #      if diff_mode == 'qdldl':
-        #          r_sol = - qdldl.Solver(self._derivative_cache['M']).solve(d_sol)
-        #      elif diff_mode == 'lsqr':
-        #          r_sol = - sla.lsqr(self._derivative_cache['M'].T, d_sol)[0]
-        #      elif diff_mode == 'lu':
-        #          r_sol = - sla.spsolve(self._derivative_cache['M'].T, d_sol)
-        #      elif diff_mode == 'ldl':
-        #          factor = cholesky(self._derivative_cache['M'].T.tocsc())
-        #          r_sol = - factor(d_sol)
-        #      elif diff_mode == 'qr':
-        #          # TODO: Add something like https://github.com/oxfordcontrol/osqpth/pull/5
-        #          # but use slack variables too
-        #          raise NotImplementedError
-        #      else:
-        #          raise RuntimeError("Unrecognized differentiation mode: {}".format(diff_mode))
-        #
-        #      r_x, r_yu, r_yl = np.split(r_sol, [n, n+m])
-        #
-        #      #  print("r_yu = ", r_yu)
-        #      #  print("r_yl = ", r_yl)
-        #
-        #      #  # Restore normalization
-        #      #  r_yu = spa.diags(y_u) @ r_yu
-        #      #  r_yl = spa.diags(y_l) @ r_yl
-        #
-        #      # Extract derivatives for the constraints
-        #      rows, cols = A_idx
-        #      dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
-        #          (y_u[rows] * r_yu[rows] - y_l[rows] * r_yl[rows]) * x[cols]
-        #      dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
-        #      du = - y_u * r_yu
-        #      dl = y_l * r_yl
-        #
-        #  elif diff_mode == 'lu_active':
-        #      # Taken from https://github.com/oxfordcontrol/osqp-python/blob/0363d028b2321017049360d2eb3c0cf206028c43/modulepurepy/_osqp.py#L1717
-        #      # Guess which linear constraints are lower-active, upper-active, free
-        #      ind_low = np.where(z - l < - y)[0]
-        #      ind_upp = np.where(u - z < y)[0]
-        #      n_low = len(ind_low)
-        #      n_upp = len(ind_upp)
-        #
-        #      # Form A_red from the assumed active constraints
-        #      A_red = spa.vstack([A[ind_low], A[ind_upp]])
-        #
-        #      # Form reduced dy
-        #      dy_red = np.concatenate([dy_l, dy_u])[np.concatenate([ind_low, ind_upp])]
-        #
-        #      # Form KKT linear system
-        #      KKT = spa.vstack([spa.hstack([P, A_red.T]),
-        #                      spa.hstack([A_red, spa.csc_matrix((n_low + n_upp, n_low + n_upp))])], format='csc')
-        #      rhs = - np.hstack([dx, dy_red])
-        #
-        #      # Get solution
-        #      r_sol = sla.spsolve(KKT, rhs)
-        #      r_x, r_yl, r_yu =  np.split(r_sol, [n, n + n_low])
-        #
-        #      r_y = np.zeros(m)
-        #      r_y[ind_low] = r_yl
-        #      r_y[ind_upp] = r_yu
-        #
-        #
-        #      # Extract derivatives for the constraints A, l, u
-        #      dl = - np.hstack([r_yl[np.where(ind_low == j)[0]] if j in ind_low else 0
-        #          for j in range(m)])
-        #      du = - np.hstack([r_yu[np.where(ind_upp == j)[0]] if j in ind_upp else 0
-        #          for j in range(m)])
-        #      rows, cols = A_idx
-        #      dA_vals = y[rows] * r_x[cols] + r_y[rows] * x[cols]
-        #      dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
-        #
-        #  else:
-        #      raise RuntimeError("Unrecognized differentiation mode: {}".format(diff_mode))
-        #
-        #  # Extract derivatives for the cost (P, q)
-        #  rows, cols = P_idx
-        #  dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
-        #  dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
-        #  dq = r_x
-        #
-        #  return (dP, dq, dA, dl, du)
