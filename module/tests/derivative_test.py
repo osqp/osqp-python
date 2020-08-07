@@ -39,7 +39,8 @@ class derivative_tests(unittest.TestCase):
     def get_grads(self, P, q, A, l, u, true_x):
         # Get gradients by solving with osqp
         m = osqp.OSQP()
-        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
+                max_iter=max_iter, verbose=False)
         results = m.solve()
         if results.info.status != "solved":
             raise ValueError("Problem not solved!")
@@ -60,7 +61,8 @@ class derivative_tests(unittest.TestCase):
 
         def f(q):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
+                    max_iter=max_iter, verbose=False)
             res = m.solve()
             if res.info.status != "solved":
                 raise ValueError("Problem not solved!")
@@ -92,7 +94,8 @@ class derivative_tests(unittest.TestCase):
         def f(P_val):
             P_qp = sparse.csc_matrix((P_val, P_idx), shape=P.shape)
             m = osqp.OSQP()
-            m.setup(P_qp, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P_qp, q, A, l, u, eps_abs=eps_abs,
+                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
             if res.info.status != "solved":
                 raise ValueError("Problem not solved!")
@@ -109,8 +112,8 @@ class derivative_tests(unittest.TestCase):
             print('dP_fd: ', np.round(dP_fd.data, decimals=4))
             print('dA: ', np.round(dP.data, decimals=4))
 
-        npt.assert_allclose(dP.todense(), dP_fd.todense(), rtol=RTOL, atol=ATOL)
-
+        npt.assert_allclose(dP.todense(), dP_fd.todense(),
+                            rtol=RTOL, atol=ATOL)
 
     def test_dl_dA(self, verbose=True):
         n, m = 3, 3
@@ -127,7 +130,8 @@ class derivative_tests(unittest.TestCase):
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
             m = osqp.OSQP()
-            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs,
+                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
             if res.info.status != "solved":
                 raise ValueError("Problem not solved!")
@@ -143,7 +147,8 @@ class derivative_tests(unittest.TestCase):
             print('dA_fd: ', np.round(dA_fd.data, decimals=4))
             print('dA: ', np.round(dA.data, decimals=4))
 
-        npt.assert_allclose(dA.todense(), dA_fd.todense(), rtol=RTOL, atol=ATOL)
+        npt.assert_allclose(dA.todense(), dA_fd.todense(),
+                            rtol=RTOL, atol=ATOL)
 
     def test_dl_dl(self, verbose=True):
         n, m = 10, 10
@@ -157,7 +162,8 @@ class derivative_tests(unittest.TestCase):
 
         def f(l):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
+                    max_iter=max_iter, verbose=False)
             res = m.solve()
             if res.info.status != "solved":
                 raise ValueError("Problem not solved!")
@@ -186,7 +192,8 @@ class derivative_tests(unittest.TestCase):
 
         def f(u):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
+                    max_iter=max_iter, verbose=False)
             res = m.solve()
             if res.info.status != "solved":
                 raise ValueError("Problem not solved!")
@@ -202,4 +209,3 @@ class derivative_tests(unittest.TestCase):
             print('du: ', np.round(du, decimals=4))
 
         npt.assert_allclose(du_fd, du, rtol=RTOL, atol=ATOL)
-

@@ -5,7 +5,6 @@ from multiprocessing.pool import ThreadPool
 import time
 import numpy as np
 from scipy import sparse
-import scipy as sp
 
 # Unit Test
 import unittest
@@ -25,11 +24,12 @@ class multithread_tests(unittest.TestCase):
             b = np.random.randn(m)
 
             # OSQP data
-            P = sparse.block_diag([sparse.csc_matrix((n, n)), sparse.eye(m)], format='csc')
+            P = sparse.block_diag(
+                [sparse.csc_matrix((n, n)), sparse.eye(m)], format='csc')
             q = np.zeros(n+m)
             A = sparse.vstack([
-                    sparse.hstack([Ad, -sparse.eye(m)]),
-                    sparse.hstack([sparse.eye(n), sparse.csc_matrix((n, m))])], format='csc')
+                sparse.hstack([Ad, -sparse.eye(m)]),
+                sparse.hstack([sparse.eye(n), sparse.csc_matrix((n, m))])], format='csc')
             l = np.hstack([b, np.zeros(n)])
             u = np.hstack([b, np.ones(n)])
 
@@ -53,14 +53,3 @@ class multithread_tests(unittest.TestCase):
         t_parallel = time.time() - tic
 
         self.assertLess(t_parallel, t_serial)
-
-
-
-
-
-
-
-
-
-
-
