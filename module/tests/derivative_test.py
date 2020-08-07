@@ -13,12 +13,15 @@ import unittest
 
 npr.seed(1)
 
-ATOL = 1e-3
-RTOL = 1e-3
+# Tests settings
+grad_precision = 1e-10
+rel_tol = 1e-3
+abs_tol = 1e-3
+
+# OSQP settings
 eps_abs = 1e-10
 eps_rel = 1e-10
 max_iter = 10000
-grad_precision = 1e-10
 
 
 class derivative_tests(unittest.TestCase):
@@ -77,7 +80,7 @@ class derivative_tests(unittest.TestCase):
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq: ', np.round(dq, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq, rtol=RTOL, atol=ATOL)
+        npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dP(self, verbose=True):
         n, m = 3, 3
@@ -113,7 +116,7 @@ class derivative_tests(unittest.TestCase):
             print('dA: ', np.round(dP.data, decimals=4))
 
         npt.assert_allclose(dP.todense(), dP_fd.todense(),
-                            rtol=RTOL, atol=ATOL)
+                            rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA(self, verbose=True):
         n, m = 3, 3
@@ -148,7 +151,7 @@ class derivative_tests(unittest.TestCase):
             print('dA: ', np.round(dA.data, decimals=4))
 
         npt.assert_allclose(dA.todense(), dA_fd.todense(),
-                            rtol=RTOL, atol=ATOL)
+                            rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dl(self, verbose=True):
         n, m = 10, 10
@@ -178,7 +181,8 @@ class derivative_tests(unittest.TestCase):
             print('dl_fd: ', np.round(dl_fd, decimals=4))
             print('dl: ', np.round(dl, decimals=4))
 
-        npt.assert_allclose(dl_fd, dl, rtol=RTOL, atol=ATOL)
+        npt.assert_allclose(dl_fd, dl,
+                            rtol=rel_tol, atol=abs_tol)
 
     def test_dl_du(self, verbose=True):
         n, m = 5, 5
@@ -208,4 +212,5 @@ class derivative_tests(unittest.TestCase):
             print('du_fd: ', np.round(du_fd, decimals=4))
             print('du: ', np.round(du, decimals=4))
 
-        npt.assert_allclose(du_fd, du, rtol=RTOL, atol=ATOL)
+        npt.assert_allclose(du_fd, du,
+                            rtol=rel_tol, atol=abs_tol)
