@@ -155,20 +155,5 @@ class basic_tests(unittest.TestCase):
         # Assert equal
         nptest.assert_array_almost_equal(res_default.x, res_triu.x)
         nptest.assert_array_almost_equal(res_default.y, res_triu.y)
-        nptest.assert_array_almost_equal(res_default.info.obj_val, 
+        nptest.assert_array_almost_equal(res_default.info.obj_val,
                                          res_triu.info.obj_val)
-
-
-    def test_solve_full_vs_object(self):
-
-        # Solve problem with object
-        res = self.model.solve()
-
-        # Solve problem with module function
-        res_module = osqp.solve(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                                **self.opts)
-
-        # Assert close
-        nptest.assert_array_almost_equal(res.x, res_module.x)
-        nptest.assert_array_almost_equal(res.y, res_module.y)
-        nptest.assert_array_almost_equal(res.info.obj_val, res_module.info.obj_val)

@@ -1,6 +1,5 @@
 platform:
   - x64
-  - x86
 
 image: Visual Studio 2015
 
@@ -10,7 +9,6 @@ environment:
   PYPI_PASSWORD:
     secure: 3gQtEWf4jXJLJKP8oM22oCShTJ3VI+BtRYczfzO3RSQ=
   matrix:
-    - PYTHON_VERSION: 2.7
     - PYTHON_VERSION: 3.5
     - PYTHON_VERSION: 3.6
     - PYTHON_VERSION: 3.7
@@ -36,13 +34,11 @@ install:
   - if "%PLATFORM%"=="x64" set MINICONDA=C:\Miniconda3-x64
   # Load the conda root environment, configure and install some packages
   - '"%MINICONDA%\Scripts\activate.bat"'
-  - conda config --append channels conda-forge
+  - conda config --add channels conda-forge
+  - conda config --set channel_priority strict
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
   - conda create -n testenv python=%PYTHON_VERSION% pytest numpy cmake conda conda-verify conda-build anaconda-client twine
   - activate testenv
-  - conda install vs2008_express_vc_python_patch
-    # Fix for 64-bit Python 2.7 builds, courtesy vs2008_express_vc_python_patch
-  - call setup_x64
   - conda info -a
 
 test_script:
