@@ -14,7 +14,7 @@ import unittest
 npr.seed(1)
 
 # Tests settings
-grad_precision = 1e-15
+grad_precision = 1e-5
 rel_tol = 1e-3
 abs_tol = 1e-3
 
