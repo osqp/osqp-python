@@ -333,7 +333,7 @@ class OSQP(object):
         return sol
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-                           P_idx=None, A_idx=None):
+                           P_idx=None, A_idx=None, eps_iter_ref=1e-04):
         """
         Compute adjoint derivative after solve.
         """
@@ -381,8 +381,9 @@ class OSQP(object):
                 [A, spa.diags(A @ x - u) @ inv_dia_y_u, None],
                 [-A, None, spa.diags(l - A @ x) @ inv_dia_y_l]
             ], format='csc')
-            delta = spa.bmat([[0.001 * spa.eye(n), None],
-                              [None, -0.001 * spa.eye(2 * m)]], format='csc')
+            delta = spa.bmat([[eps_iter_ref * spa.eye(n), None],
+                              [None, -eps_iter_ref * spa.eye(2 * m)]],
+                             format='csc')
             self._derivative_cache['M'] = M
             self._derivative_cache['solver'] = qdldl.Solver(M + delta)
 
