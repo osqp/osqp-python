@@ -136,6 +136,9 @@ def prepare_data(P=None, q=None, A=None, l=None, u=None, **settings):
         # Convert linsys_solver string to integer
         settings = linsys_solver_str_to_int(settings)
 
+        # Derivative cache
+        derivative_cache = {'P': P, 'q': q, 'A': A, 'l': l, 'u': u}
+
         return ((n, m), P.data, P.indices, P.indptr, q,
                 A.data, A.indices, A.indptr,
-                l, u), settings
+                l, u), settings, derivative_cache

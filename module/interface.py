@@ -30,10 +30,11 @@ class OSQP(object):
 
         solver settings can be specified as additional keyword arguments
         """
-        # TODO(bart): this will be unnecessary when the derivative will be in C
-        self._derivative_cache = {'P': P, 'q': q, 'A': A, 'l': l, 'u': u}
+        # TODO(bart): storing the cache will be unnecessary when
+        # the derivative will be in C
+        unpacked_data, settings, self._derivative_cache = \
+            utils.prepare_data(P, q, A, l, u, **settings)
 
-        unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
         self._model.setup(*unpacked_data, **settings)
 
     def update(self, q=None, l=None, u=None,
@@ -107,17 +108,19 @@ class OSQP(object):
         if Px is not None and Ax is not None:
             self._model.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
 
-
         # TODO(bart): this will be unnecessary when the derivative will be in C
         # update problem data in self._derivative_cache
         if q is not None:
             self._derivative_cache["q"] = q
 
         if l is not None:
-            self._derivative_cache["l"] = l
+            # Convert infinity values to OSQP Infinity
+            self._derivative_cache["l"] = \
+                np.maximum(l, -_osqp.constant('OSQP_INFTY'))
 
         if u is not None:
-            self._derivative_cache["u"] = u
+            self._derivative_cache["u"] = \
+                np.minimum(u, _osqp.constant('OSQP_INFTY'))
 
         if Px is not None:
             if Px_idx.size == 0:
@@ -135,6 +138,8 @@ class OSQP(object):
         # taking the derivative of unsolved problems
         if "results" in self._derivative_cache.keys():
             del self._derivative_cache["results"]
+            del self._derivative_cache["M"]
+            del self._derivative_cache["solver"]
 
     def update_settings(self, **kwargs):
         """
@@ -320,10 +325,12 @@ class OSQP(object):
         solver = self._derivative_cache['solver']
 
         sol = solver.solve(rhs)
+
         for k in range(max_iter):
             delta_sol = solver.solve(rhs - M @ sol)
             sol = sol + delta_sol
 
+            #  print("norm_iter_ref = %.4e\n" % np.linalg.norm(M @ sol - rhs))
             if np.linalg.norm(M @ sol - rhs) < tol:
                 break
 
@@ -338,7 +345,7 @@ class OSQP(object):
         Compute adjoint derivative after solve.
         """
 
-        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        P = self._derivative_cache['P']
         A = self._derivative_cache['A']
         l, u = self._derivative_cache['l'], self._derivative_cache['u']
 
