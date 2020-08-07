@@ -49,6 +49,8 @@ install:
   - bash miniconda.sh -b -p $HOME/miniconda
   - source $HOME/miniconda/bin/activate
   - conda config --set always_yes yes --set changeps1 no --set auto_update_conda no
+  - conda config --add channels conda-forge
+  - conda config --set channel_priority strict
   - conda create -n testenv python=$PYTHON_VERSION pytest numpy
   - source activate testenv
   - conda install conda conda-verify conda-build anaconda-client twine
