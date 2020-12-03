@@ -26,9 +26,11 @@ class non_convex_tests(unittest.TestCase):
     def test_non_convex_small_sigma(self):
         opts = {'verbose': False, 'sigma': 1e-6}
         try:
-            # Setup should fail due to (P + sigma I) having a negative eigenvalue
+            # Setup should fail due to (P + sigma I) having a negative
+            # eigenvalue
             test_setup = 1
-            self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
+            self.model.setup(P=self.P, q=self.q, A=self.A,
+                             l=self.l, u=self.u, **opts)
         except ValueError:
             test_setup = 0
 
@@ -38,7 +40,8 @@ class non_convex_tests(unittest.TestCase):
     def test_non_convex_big_sigma(self):
         # Setup workspace with new sigma
         opts = {'verbose': False, 'sigma': 5}
-        self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
+        self.model.setup(P=self.P, q=self.q, A=self.A,
+                         l=self.l, u=self.u, **opts)
 
         # Solve problem
         res = self.model.solve()

@@ -126,10 +126,10 @@ c_float toc(PyTimer* t) {
 
 /* The PyInt variable is a PyLong in Python3.x.
  */
-#if PY_MAJOR_VERSION >= 3
-#define PyInt_AsLong PyLong_AsLong
-#define PyInt_Check PyLong_Check
-#endif
+// #if PY_MAJOR_VERSION >= 3
+// #define PyInt_AsLong PyLong_AsLong
+// #define PyInt_Check PyLong_Check
+// #endif
 
 
 // Get float type from OSQP setup
@@ -664,23 +664,22 @@ static PyObject * OSQP_update_P_A(PyObject *self, PyObject *args) {
 
 
 static PyMethodDef PYTHON_EXT_NAME_methods[] = {
-    {"solve", (PyCFunction)OSQP_solve, METH_NOARGS, "Solve QP"},
-    {"update_lin_cost", (PyCFunction)OSQP_update_lin_cost, METH_VARARGS, "Update linear cost"},
-    {"update_lower_bound", (PyCFunction)OSQP_update_lower_bound, METH_VARARGS, "Update lower bound"},
-    {"update_upper_bound", (PyCFunction)OSQP_update_upper_bound, METH_VARARGS, "Update upper bound"},
-		{"update_bounds", (PyCFunction)OSQP_update_bounds, METH_VARARGS, "Update bounds"},
-		#if EMBEDDED != 1
-		{"update_P", (PyCFunction)OSQP_update_P, METH_VARARGS, "Update matrix P"},
-		{"update_A", (PyCFunction)OSQP_update_A, METH_VARARGS, "Update matrix A"},
-		{"update_P_A", (PyCFunction)OSQP_update_P_A, METH_VARARGS, "Update matrices P and A"},
-		#endif
-		{NULL, NULL, 0, NULL}
+	{"solve", (PyCFunction)OSQP_solve, METH_NOARGS, "Solve QP"},
+	{"update_lin_cost", (PyCFunction)OSQP_update_lin_cost, METH_VARARGS, "Update linear cost"},
+	{"update_lower_bound", (PyCFunction)OSQP_update_lower_bound, METH_VARARGS, "Update lower bound"},
+	{"update_upper_bound", (PyCFunction)OSQP_update_upper_bound, METH_VARARGS, "Update upper bound"},
+	{"update_bounds", (PyCFunction)OSQP_update_bounds, METH_VARARGS, "Update bounds"},
+#if EMBEDDED != 1
+	{"update_P", (PyCFunction)OSQP_update_P, METH_VARARGS, "Update matrix P"},
+	{"update_A", (PyCFunction)OSQP_update_A, METH_VARARGS, "Update matrix A"},
+	{"update_P_A", (PyCFunction)OSQP_update_P_A, METH_VARARGS, "Update matrices P and A"},
+#endif
+	{NULL, NULL, 0, NULL}
 };
 
 
 
 /* Module initialization for Python 3*/
- #if PY_MAJOR_VERSION >= 3
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT, "PYTHON_EXT_NAME",    /* m_name */
     "Embedded OSQP solver",             /* m_doc */
@@ -691,7 +690,6 @@ static struct PyModuleDef moduledef = {
     NULL,                               /* m_clear */
     NULL,                               /* m_free */
 };
- #endif
 
 
 
@@ -699,12 +697,9 @@ static PyObject * moduleinit(void){
 
 		PyObject *m;
 
-    // Initialize module (no methods. all inside OSQP object)
-    #if PY_MAJOR_VERSION >= 3
+    // Initialize module
     m = PyModule_Create(&moduledef);
-    #else
-    m = Py_InitModule3("PYTHON_EXT_NAME", PYTHON_EXT_NAME_methods, "Embedded OSQP solver");
-    #endif
+
     if (m == NULL)
     		return NULL;
 
@@ -715,19 +710,9 @@ static PyObject * moduleinit(void){
 
 
 // Init Osqp Internal module
-#if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit_PYTHON_EXT_NAME(void)
-#else
-PyMODINIT_FUNC initPYTHON_EXT_NAME(void)
-#endif
 {
     import_array(); /* for numpy arrays */
 
-    // Module initialization is not a global variable in
-    // Python 3
-    #if PY_MAJOR_VERSION >= 3
     return moduleinit();
-    #else
-    moduleinit();
-    #endif
 }

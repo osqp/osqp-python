@@ -36,7 +36,7 @@ static c_int OSQP_dealloc(OSQP *self) {
 // Solve Optimization Problem
 static PyObject * OSQP_solve(OSQP *self) {
     c_int exitflag;
-    
+
     // Create status object
     PyObject * status;
 
@@ -71,7 +71,12 @@ static PyObject * OSQP_solve(OSQP *self) {
     /**
      *  Solve QP Problem
      */
+
+    // Release the GIL
+    Py_BEGIN_ALLOW_THREADS;
     exitflag = osqp_solve(self->workspace);
+    Py_END_ALLOW_THREADS;
+
     if(exitflag){
         PyErr_SetString(PyExc_ValueError, "OSQP solve error!");
         return (PyObject *) NULL;
@@ -317,7 +322,11 @@ static PyObject * OSQP_setup(OSQP *self, PyObject *args, PyObject *kwargs) {
     data = create_data(pydata);
 
     // Create Workspace object
+    // Release the GIL
+    Py_BEGIN_ALLOW_THREADS;
     exitflag = osqp_setup(&(self->workspace), data, settings);
+    Py_END_ALLOW_THREADS;
+
 
     // Cleanup data and settings
     free_data(data, pydata);

@@ -35,10 +35,10 @@ class primal_infeasibility_tests(unittest.TestCase):
         # Generate random Matrices
         Pt = sparse.random(self.n, self.n)
         self.P = sparse.triu(Pt.T.dot(Pt), format='csc')
-        self.q = sp.randn(self.n)
+        self.q = np.random.randn(self.n)
         self.A = sparse.random(self.m, self.n).tolil()  # Lil for efficiency
-        self.u = 3 + sp.randn(self.m)
-        self.l = -3 + sp.randn(self.m)
+        self.u = 3 + np.random.randn(self.m)
+        self.l = -3 + np.random.randn(self.m)
 
         # Make random problem primal infeasible
         self.A[int(self.n/2), :] = self.A[int(self.n/2)+1, :]

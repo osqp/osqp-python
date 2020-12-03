@@ -16,7 +16,8 @@ class codegen_vectors_tests(unittest.TestCase):
         # Simple QP problem
         self.P = sparse.diags([11., 0.], format='csc')
         self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix([[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
+        self.A = sparse.csc_matrix(
+            [[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
         self.u = np.array([0, 0, -15, 100, 80])
         self.l = -np.inf * np.ones(len(self.u))
         self.n = self.P.shape[0]

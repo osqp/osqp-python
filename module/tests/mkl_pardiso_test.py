@@ -4,7 +4,6 @@ from scipy import sparse
 
 # Unit Test
 import unittest
-import numpy.testing as nptest
 
 
 class mkl_pardiso_tests(unittest.TestCase):
@@ -29,4 +28,3 @@ class mkl_pardiso_tests(unittest.TestCase):
 
         #  # Assert test_setup flag
         #  self.assertEqual(test_setup, 0)
-

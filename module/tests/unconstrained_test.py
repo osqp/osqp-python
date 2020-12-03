@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -41,13 +42,9 @@ class unconstrained_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        nptest.assert_array_almost_equal(
-            res.x, np.array([
-                -0.61981415, -0.06174194, 0.83824061, -0.0595013, -0.17810828,
-                2.90550031, -1.8901713, -1.91191741, -3.73603446, 1.7530356,
-                -1.67018181, 3.42221944, 0.61263403, -0.45838347, -0.13194248,
-                2.95744794, 5.2902277, -1.42836238, -8.55123842, -0.79093815,
-                0.43418189, -0.69323554, 1.15967924, -0.47821898, 3.6108927,
-                0.03404309, 0.16322926, -2.17974795, 0.32458796, -1.97553574]))
-        nptest.assert_array_almost_equal(res.y, np.array([]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -35.020288603855825)
+        x_sol, _, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                self.l, self.u)
+        # Assert close
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
