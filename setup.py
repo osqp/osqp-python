@@ -1,4 +1,3 @@
-import distutils.sysconfig as sysconfig
 import os
 import shutil as sh
 import sys
@@ -9,6 +8,7 @@ from subprocess import call, check_output
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import distutils.sysconfig as sysconfig
 
 import argparse
 

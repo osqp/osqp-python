@@ -20,8 +20,8 @@ def solve_high_accuracy(P, q, A, l, u):
     problem = cp.Problem(cp.Minimize(quad_form + q @ x),
                          constraints)
     obj = problem.solve(solver=cp.ECOS,
-                        abstol=1e-15, reltol=1e-15,
-                        feastol=1e-15)
+                        abstol=1e-10, reltol=1e-10,
+                        feastol=1e-10)
     x_val = x.value
 
     if A.nnz == 0:

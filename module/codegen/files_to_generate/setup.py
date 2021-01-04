@@ -1,6 +1,6 @@
-import distutils.sysconfig as sysconfig
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import distutils.sysconfig as sysconfig
 from platform import system
 from glob import glob
 import os
