@@ -7,13 +7,6 @@
 #include "structmember.h"           // Python members structure (to store results)
 #include "osqp.h"                   // OSQP API
 
-/* The PyInt variable is a PyLong in Python3.x.
- */
-// #if PY_MAJOR_VERSION >= 3
-// #define PyInt_AsLong PyLong_AsLong
-// #define PyInt_Check PyLong_Check
-// #endif
-
 
 // OSQP Object type
 typedef struct {
