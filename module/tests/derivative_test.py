@@ -52,7 +52,7 @@ class derivative_tests(unittest.TestCase):
 
         return grads
 
-    def test_dl_dq(self, verbose=True):
+    def test_dl_dq(self, verbose=False):
         n, m = 5, 5
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
@@ -82,7 +82,7 @@ class derivative_tests(unittest.TestCase):
 
         npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
 
-    def test_dl_dP(self, verbose=True):
+    def test_dl_dP(self, verbose=False):
         n, m = 3, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
@@ -118,7 +118,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dP.todense(), dP_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
-    def test_dl_dA(self, verbose=True):
+    def test_dl_dA(self, verbose=False):
         n, m = 3, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
@@ -153,7 +153,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dA.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
-    def test_dl_dl(self, verbose=True):
+    def test_dl_dl(self, verbose=False):
         n, m = 10, 10
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
@@ -184,7 +184,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dl_fd, dl,
                             rtol=rel_tol, atol=abs_tol)
 
-    def test_dl_du(self, verbose=True):
+    def test_dl_du(self, verbose=False):
         n, m = 5, 5
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
