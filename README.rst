@@ -31,5 +31,4 @@ The interface is documented `here <https://osqp.org/>`__.
 
 Packaging
 ---------
-This repository just performs the tests and does not build any python package.
-We use the external repositories for `conda recipes <https://github.com/oxfordcontrol/osqp-recipes>`_ and `python wheels <https://github.com/oxfordcontrol/osqp-wheels>`_.
+This repository performs the tests and builds the pypi wheels. Conda packages are on `conda-forge <https://github.com/conda-forge/osqp-feedstock>`__.
