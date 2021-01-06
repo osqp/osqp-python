@@ -1,6 +1,6 @@
-import distutils.sysconfig as sysconfig
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+import distutils.sysconfig as sysconfig
 from platform import system
 from glob import glob
 import os
@@ -74,7 +74,7 @@ PYTHON_EXT_NAME = Extension('PYTHON_EXT_NAME',
 
 
 setup(name='PYTHON_EXT_NAME',
-      version='0.6.1',
+      version='0.6.2',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='This is the Python module for embedded OSQP: ' +

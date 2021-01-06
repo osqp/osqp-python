@@ -1,6 +1,7 @@
 # Test osqp python module
 import osqp
 from osqp._osqp import constant
+from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -9,6 +10,7 @@ from scipy import sparse
 import unittest
 import numpy.testing as nptest
 
+
 class basic_tests(unittest.TestCase):
 
     def setUp(self):
@@ -16,9 +18,10 @@ class basic_tests(unittest.TestCase):
         # Simple QP problem
         self.P = sparse.diags([11., 0.], format='csc')
         self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix([[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
+        self.A = sparse.csc_matrix(
+            [[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
         self.u = np.array([0., 0., -15, 100, 80])
-        self.l = -np.inf * np.ones(len(self.u))
+        self.l = -1e06 * np.ones(len(self.u))
         self.n = self.P.shape[0]
         self.m = self.A.shape[0]
         self.opts = {'verbose': False,
@@ -38,11 +41,13 @@ class basic_tests(unittest.TestCase):
         # Solve problem
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x, np.array([0., 5.]))
-        nptest.assert_array_almost_equal(res.y, np.array([1.66666667, 0.,
-                                                          1.33333333, 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, 20.)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_q(self):
         # Update linear cost
@@ -50,23 +55,29 @@ class basic_tests(unittest.TestCase):
         self.model.update(q=q_new)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, q_new, self.A,
+                                                    self.l, self.u)
+
         # Assert close
-        nptest.assert_array_almost_equal(res.x, np.array([0., 5.]))
-        nptest.assert_array_almost_equal(res.y, np.array([3.33333334, 0.,
-                                                          6.66666667, 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, 100.)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_l(self):
         # Update lower bound
-        l_new = -100 * np.ones(self.m)
+        l_new = -50 * np.ones(self.m)
         self.model.update(l=l_new)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                    l_new, self.u)
+
         # Assert close
-        nptest.assert_array_almost_equal(res.x, np.array([0., 5.]))
-        nptest.assert_array_almost_equal(res.y, np.array([1.66666667, 0.,
-                                                          1.33333333, 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, 20.)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_u(self):
         # Update lower bound
@@ -74,12 +85,14 @@ class basic_tests(unittest.TestCase):
         self.model.update(u=u_new)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                    self.l, u_new)
+
         # Assert close
-        nptest.assert_array_almost_equal(res.x, np.array([-1.51515152e-01,
-                                                          -3.33282828e+02]))
-        nptest.assert_array_almost_equal(res.y, np.array([0., 0., 1.33333333,
-                                                          0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -1333.4595959614962)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_bounds(self):
         # Update lower bound
@@ -89,12 +102,14 @@ class basic_tests(unittest.TestCase):
         self.model.update(u=u_new, l=l_new)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                    l_new, u_new)
+
         # Assert close
-        nptest.assert_array_almost_equal(res.x, np.array([-0.12727273,
-                                                          -19.94909091]))
-        nptest.assert_array_almost_equal(res.y, np.array([0., 0., 0.,
-                                                          -0.8, 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -80.0890909023583)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_max_iter(self):
         self.model.update_settings(max_iter=80)
@@ -126,19 +141,20 @@ class basic_tests(unittest.TestCase):
         # Assert same number of iterations
         self.assertEqual(res_default.info.iter, res_updated_rho.info.iter)
 
-    def test_update_time_limit(self):
-        res = self.model.solve()
-        self.assertEqual(res.info.status_val,
-                         constant('OSQP_SOLVED'))
-
-        # Ensure the solver will time out
-        self.model.update_settings(time_limit=1e-6, verbose=True, max_iter=2000000000,
-                                   eps_abs=1e-20, eps_rel=1e-20,
-                                   check_termination=0)
-
-        res = self.model.solve()
-        self.assertEqual(res.info.status_val,
-                         constant('OSQP_TIME_LIMIT_REACHED'))
+    #  def test_update_time_limit(self):
+    #      res = self.model.solve()
+    #      self.assertEqual(res.info.status_val,
+    #                       constant('OSQP_SOLVED'))
+    #
+    #      # Ensure the solver will time out
+    #      self.model.update_settings(time_limit=1e-3, verbose=True,
+    #                                 max_iter=200000,
+    #                                 eps_abs=1e-20, eps_rel=1e-20,
+    #                                 check_termination=0)
+    #
+    #      res = self.model.solve()
+    #      self.assertEqual(res.info.status_val,
+    #                       constant('OSQP_TIME_LIMIT_REACHED'))
 
     def test_upper_triangular_P(self):
         res_default = self.model.solve()
@@ -153,22 +169,10 @@ class basic_tests(unittest.TestCase):
         res_triu = m.solve()
 
         # Assert equal
-        nptest.assert_array_almost_equal(res_default.x, res_triu.x)
-        nptest.assert_array_almost_equal(res_default.y, res_triu.y)
-        nptest.assert_array_almost_equal(res_default.info.obj_val, 
-                                         res_triu.info.obj_val)
-
-
-    def test_solve_full_vs_object(self):
-
-        # Solve problem with object
-        res = self.model.solve()
-
-        # Solve problem with module function
-        res_module = osqp.solve(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                                **self.opts)
-
-        # Assert close
-        nptest.assert_array_almost_equal(res.x, res_module.x)
-        nptest.assert_array_almost_equal(res.y, res_module.y)
-        nptest.assert_array_almost_equal(res.info.obj_val, res_module.info.obj_val)
+        nptest.assert_allclose(res_default.x, res_triu.x,
+                               rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res_default.y, res_triu.y,
+                               rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(res_default.info.obj_val,
+                                   res_triu.info.obj_val,
+                                   decimal=decimal_tol)

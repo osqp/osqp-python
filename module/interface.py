@@ -1,14 +1,17 @@
 """
-Python interface module for OSQP solver v0.6.1
+Python interface module for OSQP solver v0.6.2
 """
 from __future__ import print_function
 from builtins import object
 import osqp._osqp as _osqp  # Internal low level module
 import numpy as np
+import scipy.sparse as spa
+from warnings import warn
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
 import sys
+import qdldl
 
 
 class OSQP(object):
@@ -27,6 +30,8 @@ class OSQP(object):
 
         solver settings can be specified as additional keyword arguments
         """
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        self._derivative_cache = {'P': P, 'q': q, 'A': A, 'l': l, 'u': u}
 
         unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
         self._model.setup(*unpacked_data, **settings)
@@ -101,6 +106,35 @@ class OSQP(object):
         # update matrices P and A
         if Px is not None and Ax is not None:
             self._model.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
+
+
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        # update problem data in self._derivative_cache
+        if q is not None:
+            self._derivative_cache["q"] = q
+
+        if l is not None:
+            self._derivative_cache["l"] = l
+
+        if u is not None:
+            self._derivative_cache["u"] = u
+
+        if Px is not None:
+            if Px_idx.size == 0:
+                self._derivative_cache["P"].data = Px
+            else:
+                self._derivative_cache["P"].data[Px_idx] = Px
+
+        if Ax is not None:
+            if Ax_idx.size == 0:
+                self._derivative_cache["A"].data = Ax
+            else:
+                self._derivative_cache["A"].data[Ax_idx] = Ax
+
+        # delete results from self._derivative_cache to prohibit
+        # taking the derivative of unsolved problems
+        if "results" in self._derivative_cache.keys():
+            del self._derivative_cache["results"]
 
     def update_settings(self, **kwargs):
         """
@@ -198,7 +232,12 @@ class OSQP(object):
         Solve QP Problem
         """
         # Solve QP
-        return self._model.solve()
+        results = self._model.solve()
+
+        # TODO(bart): this will be unnecessary when the derivative will be in C
+        self._derivative_cache['results'] = results
+
+        return results
 
     def warm_start(self, x=None, y=None):
         """
@@ -274,18 +313,98 @@ class OSQP(object):
         cg.codegen(work, folder, python_ext_name, project_type,
                    embedded, force_rewrite, float_flag, long_flag)
 
+    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+        M = self._derivative_cache['M']
 
-def solve(P=None, q=None, A=None, l=None, u=None, **settings):
+        # Prefactor
+        solver = self._derivative_cache['solver']
+
+        sol = solver.solve(rhs)
+        for k in range(max_iter):
+            delta_sol = solver.solve(rhs - M @ sol)
+            sol = sol + delta_sol
+
+            if np.linalg.norm(M @ sol - rhs) < tol:
+                break
+
+        if k == max_iter - 1:
+            warn("max_iter iterative refinement reached.")
+
+        return sol
+
+    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
+                           P_idx=None, A_idx=None, eps_iter_ref=1e-04):
         """
-        Solve problem of the form 
-
-        minimize     1/2 x' * P * x + q' * x
-        subject to   l <= A * x <= u
-
-        solver settings can be specified as additional keyword arguments. 
-        This function disables the GIL because it internally performs 
-        setup solve and cleanup.
+        Compute adjoint derivative after solve.
         """
 
-        unpacked_data, settings = utils.prepare_data(P, q, A, l, u, **settings)
-        return _osqp.solve(*unpacked_data, **settings)
+        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        A = self._derivative_cache['A']
+        l, u = self._derivative_cache['l'], self._derivative_cache['u']
+
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError("Problem has not been solved. "
+                             "You cannot take derivatives. "
+                             "Please call the solve function.")
+
+        if results.info.status != "solved":
+            raise ValueError("Problem has not been solved to optimality. "
+                             "You cannot take derivatives")
+
+        m, n = A.shape
+        x = results.x
+        y = results.y
+        y_u = np.maximum(y, 0)
+        y_l = -np.minimum(y, 0)
+
+        if A_idx is None:
+            A_idx = A.nonzero()
+
+        if P_idx is None:
+            P_idx = P.nonzero()
+
+        if dy_u is None:
+            dy_u = np.zeros(m)
+        if dy_l is None:
+            dy_l = np.zeros(m)
+
+        # Make sure M matrix exists
+        if 'M' not in self._derivative_cache:
+            # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
+            # to make the matrix symmetric
+            inv_dia_y_u = spa.diags(np.reciprocal(y_u + 1e-20))
+            inv_dia_y_l = spa.diags(np.reciprocal(y_l + 1e-20))
+            M = spa.bmat([
+                [P,            A.T,                  -A.T],
+                [A, spa.diags(A @ x - u) @ inv_dia_y_u, None],
+                [-A, None, spa.diags(l - A @ x) @ inv_dia_y_l]
+            ], format='csc')
+            delta = spa.bmat([[eps_iter_ref * spa.eye(n), None],
+                              [None, -eps_iter_ref * spa.eye(2 * m)]],
+                             format='csc')
+            self._derivative_cache['M'] = M
+            self._derivative_cache['solver'] = qdldl.Solver(M + delta)
+
+        rhs = - np.concatenate([dx, dy_u, dy_l])
+
+        r_sol = self.derivative_iterative_refinement(rhs)
+
+        r_x, r_yu, r_yl = np.split(r_sol, [n, n+m])
+
+        # Extract derivatives for the constraints
+        rows, cols = A_idx
+        dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
+            (r_yu[rows] - r_yl[rows]) * x[cols]
+        dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
+        du = - r_yu
+        dl = r_yl
+
+        # Extract derivatives for the cost (P, q)
+        rows, cols = P_idx
+        dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
+        dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
+        dq = r_x
+
+        return (dP, dq, dA, dl, du)

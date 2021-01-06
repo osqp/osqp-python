@@ -33,16 +33,16 @@ class primal_infeasibility_tests(unittest.TestCase):
         self.n = 50
         self.m = 500
         # Generate random Matrices
-        Pt = sparse.random(self.n, self.n)
+        Pt = np.random.rand(self.n, self.n)
         self.P = sparse.triu(Pt.T.dot(Pt), format='csc')
-        self.q = sp.randn(self.n)
+        self.q = np.random.rand(self.n)
         self.A = sparse.random(self.m, self.n).tolil()  # Lil for efficiency
-        self.u = 3 + sp.randn(self.m)
-        self.l = -3 + sp.randn(self.m)
+        self.u = 3 + np.random.randn(self.m)
+        self.l = -3 + np.random.randn(self.m)
 
         # Make random problem primal infeasible
         self.A[int(self.n/2), :] = self.A[int(self.n/2)+1, :]
-        self.l[int(self.n/2)] = self.u[int(self.n/2)+1] + 10 * sp.rand()
+        self.l[int(self.n/2)] = self.u[int(self.n/2)+1] + 10 * np.random.rand()
         self.u[int(self.n/2)] = self.l[int(self.n/2)] + 0.5
 
         # Convert A to csc

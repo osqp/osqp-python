@@ -7,13 +7,6 @@
 #include "structmember.h"           // Python members structure (to store results)
 #include "osqp.h"                   // OSQP API
 
-/* The PyInt variable is a PyLong in Python3.x.
- */
-#if PY_MAJOR_VERSION >= 3
-#define PyInt_AsLong PyLong_AsLong
-#define PyInt_Check PyLong_Check
-#endif
-
 
 // OSQP Object type
 typedef struct {
@@ -36,8 +29,7 @@ static PyTypeObject OSQP_Type;
  * Interface Methods    *
  ************************/
 
- /* Module initialization for Python 3*/
- #if PY_MAJOR_VERSION >= 3
+ /* Module initialization*/
  static struct PyModuleDef moduledef = {
      PyModuleDef_HEAD_INIT, "_osqp",       /* m_name */
      NULL,                                 /* m_doc */
@@ -48,20 +40,14 @@ static PyTypeObject OSQP_Type;
      NULL,                                 /* m_clear */
      NULL,                                 /* m_free */
  };
- #endif
-
 
 
 static PyObject * moduleinit(void){
 
     PyObject *m;
 
-    // Initialize module (no methods. all inside OSQP object)
-#if PY_MAJOR_VERSION >= 3
+    // Initialize module
     m = PyModule_Create(&moduledef);
-#else
-    m = Py_InitModule3("_osqp", OSQP_module_methods, NULL);
-#endif
 
     if (m == NULL) return NULL;
 
@@ -86,20 +72,7 @@ static PyObject * moduleinit(void){
 
 
 // Init OSQP Internal module
-#if PY_MAJOR_VERSION >= 3
 PyMODINIT_FUNC PyInit__osqp(void) {
-#else
-PyMODINIT_FUNC init_osqp(void) {
-#endif
-
     import_array(); /* for numpy arrays */
-
-    // Module initialization is not a global variable in
-    // Python 3
-#if PY_MAJOR_VERSION >= 3
     return moduleinit();
-#else
-    moduleinit();
-#endif
-
 }

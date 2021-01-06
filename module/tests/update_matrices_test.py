@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
 import numpy as np
 import scipy as sp
 from scipy import sparse
@@ -23,8 +24,10 @@ class update_matrices_tests(unittest.TestCase):
         Pt_new = Pt.copy()
         Pt_new.data += 0.1 * np.random.randn(Pt.nnz)
 
-        self.P = sparse.triu(Pt.T.dot(Pt) + sparse.eye(self.n), format='csc')
-        self.P_new = sparse.triu(Pt_new.T.dot(Pt_new) + sparse.eye(self.n), format='csc')
+        self.P = (Pt.T.dot(Pt) + sparse.eye(self.n)).tocsc()
+        self.P_new = (Pt_new.T.dot(Pt_new) + sparse.eye(self.n)).tocsc()
+        self.P_triu = sparse.triu(self.P)
+        self.P_triu_new = sparse.triu(self.P_new)
         self.q = np.random.randn(self.n)
         self.A = sparse.random(self.m, self.n, density=p, format='csc')
         self.A_new = self.A.copy()
@@ -43,38 +46,42 @@ class update_matrices_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.85459329, 0.73472366, 0.06156, -0.06095794, -0.96167612]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([0., 0., 0., -2.32275314, 0., -0.93213354, 0., -0.8939565]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -1.5116431929127323)
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
+                                                    self.l, self.u)
+        # Assert close
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P(self):
         # Update matrix P
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Px = self.P_triu_new.data
+        Px_idx = np.arange(self.P_triu_new.nnz)
         self.model.update(Px=Px, Px_idx=Px_idx)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.79105808, 0.68008954, -0.00974931, -0.00569589, -0.92142316]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([0., -0.0977256, 0., -2.3051196, 0., -0.84705904, 0., -0.9014214]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -1.40901946656505)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P_allind(self):
         # Update matrix P
-        Px = self.P_new.data
+        Px = self.P_triu_new.data
         self.model.update(Px=Px)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.79105808, 0.68008954, -0.00974931, -0.00569589, -0.92142316]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([0., -0.0977256, 0., -2.3051196, 0., -0.84705904, 0., -0.9014214]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -1.40901946656505)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_A(self):
         # Update matrix A
@@ -83,12 +90,13 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.44557958, 0.11209195, 0.22051994, -0.78051077, -0.01697192]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.97318457, -1.43719371, 0., -0.05364337, -1.3354648, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.79990427087463)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_A_allind(self):
         # Update matrix A
@@ -96,69 +104,74 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Ax=Ax)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.44557958, 0.11209195, 0.22051994, -0.78051077, -0.01697192]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.97318457, -1.43719371, 0., -0.05364337, -1.3354648, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.79990427087463)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P_A_indP_indA(self):
         # Update matrices P and A
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Px = self.P_triu_new.data
+        Px_idx = np.arange(self.P_triu_new.nnz)
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.45599336, 0.11471169, 0.22567378, -0.80654725, -0.01778191]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.76495387, -1.44638239, 0., 0., -1.28476339, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.8249598023368026)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P_A_indP(self):
         # Update matrices P and A
-        Px = self.P_new.data
-        Px_idx = np.arange(self.P_new.nnz)
+        Px = self.P_triu_new.data
+        Px_idx = np.arange(self.P_triu_new.nnz)
         Ax = self.A_new.data
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.45599336, 0.11471169, 0.22567378, -0.80654725, -0.01778191]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.76495387, -1.44638239, 0., 0., -1.28476339, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.8249598023368026)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P_A_indA(self):
         # Update matrices P and A
-        Px = self.P_new.data
+        Px = self.P_triu_new.data
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
         self.model.update(Px=Px, Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.45599336, 0.11471169, 0.22567378, -0.80654725, -0.01778191]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.76495387, -1.44638239, 0., 0., -1.28476339, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.8249598023368026)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)
 
     def test_update_P_A_allind(self):
         # Update matrices P and A
-        Px = self.P_new.data
+        Px = self.P_triu_new.data
         Ax = self.A_new.data
         self.model.update(Px=Px, Ax=Ax)
         res = self.model.solve()
 
+        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
+                                                    self.l, self.u)
         # Assert close
-        nptest.assert_array_almost_equal(res.x,
-            np.array([0.45599336, 0.11471169, 0.22567378, -0.80654725, -0.01778191]))
-        nptest.assert_array_almost_equal(res.y,
-            np.array([-1.76495387, -1.44638239, 0., 0., -1.28476339, 0., 0., 0.]))
-        nptest.assert_array_almost_equal(res.info.obj_val, -0.8249598023368026)
+        nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
+        nptest.assert_almost_equal(
+            res.info.obj_val, obj_sol, decimal=decimal_tol)

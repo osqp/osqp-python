@@ -102,7 +102,7 @@ class codegen_matrices_tests(unittest.TestCase):
 
         # Assert close
         nptest.assert_array_almost_equal(x,
-            np.array([0.15765766, 7.34234234]), decimal=5)
+                                         np.array([0.15765766, 7.34234234]), decimal=5)
         nptest.assert_array_almost_equal(
             y, np.array([0., 0., 2.36711712, 0., 0.]), decimal=5)
 
@@ -121,7 +121,7 @@ class codegen_matrices_tests(unittest.TestCase):
 
         # Assert close
         nptest.assert_array_almost_equal(x,
-            np.array([0.15765766, 7.34234234]), decimal=5)
+                                         np.array([0.15765766, 7.34234234]), decimal=5)
         nptest.assert_array_almost_equal(
             y, np.array([0., 0., 2.36711712, 0., 0.]), decimal=5)
 
@@ -185,7 +185,8 @@ class codegen_matrices_tests(unittest.TestCase):
 
         # Assert close
         nptest.assert_array_almost_equal(x, np.array([4.25, 3.25]), decimal=5)
-        nptest.assert_array_almost_equal(y, np.array([0., 0., 3.625, 0., 0.]), decimal=5)
+        nptest.assert_array_almost_equal(
+            y, np.array([0., 0., 3.625, 0., 0.]), decimal=5)
 
         # Update matrix P to the original value
         Px = self.P.data
@@ -205,7 +206,8 @@ class codegen_matrices_tests(unittest.TestCase):
 
         # Assert close
         nptest.assert_array_almost_equal(x, np.array([4.25, 3.25]), decimal=5)
-        nptest.assert_array_almost_equal(y, np.array([0., 0., 3.625, 0., 0.]), decimal=5)
+        nptest.assert_array_almost_equal(
+            y, np.array([0., 0., 3.625, 0., 0.]), decimal=5)
 
         # Update matrices P and A to the original values
         Px = self.P.data
