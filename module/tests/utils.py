@@ -25,12 +25,12 @@ def solve_high_accuracy(P, q, A, l, u):
     l_ineq = l[~eq_idx]
 
     # Construct QP
-    P_qp = P.tocoo()
-    q_qp = q
-    A_qp = A_eq.tocoo()
-    b_qp = b_eq
-    G_qp = spa.vstack([A_ineq, -A_ineq], format='coo')
-    h_qp = np.hstack([u_ineq, -l_ineq])
+    P_qp = P.tocoo().astype(np.double)
+    q_qp = q.astype(np.double)
+    A_qp = A_eq.tocoo().astype(np.double)
+    b_qp = b_eq.astype(np.double)
+    G_qp = spa.vstack([A_ineq, -A_ineq], format='coo').astype(np.double)
+    h_qp = np.hstack([u_ineq, -l_ineq]).astype(np.double)
 
     # Construct and solve CVXOPT problem
     P_cvxopt = spmatrix(P_qp.data, P_qp.row, P_qp.col, P_qp.shape, tc='d')
