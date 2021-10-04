@@ -1,2 +1,12 @@
 [build-system]
-requires = ["numpy >= 1.7", "setuptools>=40.8.0", "wheel"]
+requires = ["numpy>=1.7", "setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "qdldl"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/osqp/_version.py"
+
+[tool.cibuildwheel]
+build = "cp3?-*"
+skip = "*-win32 *-manylinux_i686 *-musllinux_*"
+test-requires = ["pytest"]
+test-command = "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\""
