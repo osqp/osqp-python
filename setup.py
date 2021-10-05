@@ -139,7 +139,7 @@ Copy C sources for code generation
 '''
 
 # Create codegen directory
-osqp_codegen_sources_dir = os.path.join('src', 'module', 'codegen', 'sources')
+osqp_codegen_sources_dir = os.path.join('src', 'osqp', 'codegen', 'sources')
 if os.path.exists(osqp_codegen_sources_dir):
     sh.rmtree(osqp_codegen_sources_dir)
 os.makedirs(osqp_codegen_sources_dir)
@@ -264,8 +264,8 @@ setup(name='osqp',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
       long_description=readme(),
-      package_dir={'osqp': os.path.join('src', 'module'),
-                   'osqppurepy': os.path.join('src', 'modulepurepy')},
+      package_dir={'osqp': os.path.join('src', 'osqp'),
+                   'osqppurepy': os.path.join('src', 'osqppurepy')},
       include_package_data=True,  # Include package data from MANIFEST.in
       setup_requires=["numpy >= 1.7", "qdldl"],
       install_requires=requirements,
