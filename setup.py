@@ -6,7 +6,7 @@ from platform import system
 from shutil import copyfile, copy
 from subprocess import call, check_output
 
-from setuptools import setup, Extension
+from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
 import distutils.sysconfig as sysconfig
 
@@ -243,11 +243,6 @@ _osqp = Extension('osqp._osqp',
                   sources=sources_files,
                   extra_compile_args=compile_args)
 
-packages = ['osqp',
-            'osqp.codegen',
-            'osqp.tests',
-            'osqppurepy']
-
 
 # Read README.rst file
 def readme():
@@ -270,5 +265,5 @@ setup(name='osqp',
       license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': build_ext_osqp},
-      packages=packages,
+      packages=find_namespace_packages(where='src'),
       ext_modules=[_osqp])
