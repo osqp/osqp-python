@@ -259,15 +259,13 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='osqp',
-      version='0.6.2.post0',
+      version='0.6.2',  # managed by setuptools-scm
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
       long_description=readme(),
-      package_dir={'osqp': os.path.join('src', 'osqp'),
-                   'osqppurepy': os.path.join('src', 'osqppurepy')},
+      package_dir={'': 'src'},
       include_package_data=True,  # Include package data from MANIFEST.in
-      setup_requires=["numpy >= 1.7", "qdldl"],
       install_requires=requirements,
       license='Apache 2.0',
       url="https://osqp.org/",

@@ -1,2 +1,6 @@
 [build-system]
-requires = ["numpy >= 1.7", "setuptools>=40.8.0", "wheel"]
+requires = ["numpy>=1.7", "setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "qdldl"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools_scm]
+write_to = "src/osqp/_version.py"
