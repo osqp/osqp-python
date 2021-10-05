@@ -4,7 +4,7 @@ import sys
 from glob import glob
 from platform import system
 from shutil import copyfile, copy
-from subprocess import call, check_output
+from subprocess import call, check_output, check_call, CalledProcessError, STDOUT
 
 from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
@@ -202,8 +202,31 @@ copy(os.path.join(osqp_dir, 'include', 'CMakeLists.txt'),
      osqp_codegen_sources_h_dir)
 
 
-class build_ext_osqp(build_ext):
-    def build_extensions(self):
+_osqp = Extension('osqp._osqp',
+                  define_macros=define_macros,
+                  libraries=libraries,
+                  library_dirs=library_dirs,
+                  include_dirs=include_dirs,
+                  extra_objects=extra_objects,
+                  sources=sources_files,
+                  extra_compile_args=compile_args)
+
+
+class CMakeExtension(Extension):
+    def __init__(self, name, sourcedir=''):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
+
+
+class CMakeBuild(build_ext):
+    def build_extension(self, ext):
+        if ext.name == 'osqp._osqp':
+            self.build_extension_legacy(ext)
+        else:
+            self.build_extension_pybind11(ext)
+        super().build_extension(ext)
+
+    def build_extension_legacy(self, ext):
         # Compile OSQP using CMake
 
         # Create build directory
@@ -230,18 +253,28 @@ class build_ext_osqp(build_ext):
         lib_origin = os.path.join(*lib_origin)
         copyfile(lib_origin, os.path.join('src', 'extension', 'src', lib_name))
 
-        # Run extension
-        build_ext.build_extensions(self)
+    def build_extension_pybind11(self, ext):
+        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DPYTHON_EXECUTABLE=' + sys.executable]
 
+        cfg = 'Debug' if self.debug else 'Release'
+        build_args = ['--config', cfg]
 
-_osqp = Extension('osqp._osqp',
-                  define_macros=define_macros,
-                  libraries=libraries,
-                  library_dirs=library_dirs,
-                  include_dirs=include_dirs,
-                  extra_objects=extra_objects,
-                  sources=sources_files,
-                  extra_compile_args=compile_args)
+        if system() == "Windows":
+            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
+            if sys.maxsize > 2**32:
+                cmake_args += ['-A', 'x64']
+            build_args += ['--', '/m']
+        else:
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            build_args += ['--', '-j2']
+
+        if not os.path.exists(self.build_temp):
+            os.makedirs(self.build_temp)
+
+        check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
+        check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
 
 # Read README.rst file
@@ -264,6 +297,6 @@ setup(name='osqp',
       install_requires=requirements,
       license='Apache 2.0',
       url="https://osqp.org/",
-      cmdclass={'build_ext': build_ext_osqp},
+      cmdclass={'build_ext': CMakeBuild},
       packages=find_namespace_packages(where='src'),
-      ext_modules=[_osqp])
+      ext_modules=[_osqp, CMakeExtension('osqp.ext')])
