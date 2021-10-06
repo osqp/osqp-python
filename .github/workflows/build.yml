@@ -41,7 +41,7 @@ jobs:
           yum install -y blas-devel lapack-devel &&
           wget https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/refs/tags/v5.10.1.tar.gz &&
           mkdir SuitSparse &&
-          tar -xf v5.10.1.tar.gz --directory SuitSparse --strip-components=1
+          tar -xf v5.10.1.tar.gz --directory SuitSparse --strip-components=1 &&
           export CVXOPT_SUITSPARSE_SRC_DIR=$(realpath SuitSparse)
         CIBW_TEST_REQUIRES: "pytest cvxopt"
         CIBW_TEST_COMMAND: "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\" "
