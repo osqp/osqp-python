@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@master
@@ -35,7 +35,7 @@ jobs:
       env:
         CIBW_BEFORE_BUILD: yum install -y lapack-devel blas-devel
         # Only build on Python 3 and skip 32-bit builds
-        CIBW_BUILD: cp38-*
+        CIBW_BUILD: cp3?-*
         CIBW_SKIP: "*-win32 *-manylinux_i686"
         CIBW_TEST_REQUIRES: "pytest cvxopt==1.1.8"
         CIBW_TEST_COMMAND: "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\" "
