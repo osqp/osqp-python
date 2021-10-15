@@ -66,8 +66,7 @@ def write_mat_extern(f, mat, name):
     """
     Write matrix prototype to file
     """
-    if len(mat['x']) > 0:
-        f.write("extern csc %s;\n" % name)
+    f.write("extern csc %s;\n" % name)
 
 
 def write_data_src(f, data):
