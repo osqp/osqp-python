@@ -1,6 +1,6 @@
 # Test osqp python module
 import osqp
-from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
+from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -45,8 +45,7 @@ class polish_tests(unittest.TestCase):
         # Solve problem
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_polish_simple')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -73,8 +72,7 @@ class polish_tests(unittest.TestCase):
         # Solve problem
         res = self.model.solve()
 
-        x_sol, _, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
-                                                self.l, self.u)
+        x_sol, _, obj_sol = load_high_accuracy('test_polish_unconstrained')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_almost_equal(
@@ -100,8 +98,7 @@ class polish_tests(unittest.TestCase):
         # Solve problem
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_polish_random')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)

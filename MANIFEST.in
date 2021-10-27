@@ -1,5 +1,6 @@
 include README.rst LICENSE requirements.txt
 include osqp_sources/CMakeLists.txt
+include src/osqp/tests/solutions/*.npz
 recursive-include osqp_sources/configure *
 recursive-include osqp_sources/src *
 recursive-include osqp_sources/lin_sys *
