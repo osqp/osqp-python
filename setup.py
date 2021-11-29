@@ -6,7 +6,7 @@ from platform import system
 from shutil import copyfile, copy
 from subprocess import call, check_output
 
-from setuptools import setup, Extension
+from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
 import distutils.sysconfig as sysconfig
 
@@ -103,10 +103,10 @@ include_dirs = [
                                             # extract workspace for codegen
     os.path.join(qdldl_dir, "qdldl_sources",
                             "include"),     # qdldl includes for file types
-    os.path.join('extension', 'include'),   # auxiliary .h files
+    os.path.join('src', 'extension', 'include'),   # auxiliary .h files
     get_numpy_include()]                    # numpy header files
 
-sources_files = glob(os.path.join('extension', 'src', '*.c'))
+sources_files = glob(os.path.join('src', 'extension', 'src', '*.c'))
 
 
 # Set optimizer flag
@@ -132,14 +132,14 @@ if system() == 'Windows':
     libraries += ['legacy_stdio_definitions']
 
 # Add OSQP compiled library
-extra_objects = [os.path.join('extension', 'src', lib_name)]
+extra_objects = [os.path.join('src', 'extension', 'src', lib_name)]
 
 '''
 Copy C sources for code generation
 '''
 
 # Create codegen directory
-osqp_codegen_sources_dir = os.path.join('module', 'codegen', 'sources')
+osqp_codegen_sources_dir = os.path.join('src', 'osqp', 'codegen', 'sources')
 if os.path.exists(osqp_codegen_sources_dir):
     sh.rmtree(osqp_codegen_sources_dir)
 os.makedirs(osqp_codegen_sources_dir)
@@ -228,7 +228,7 @@ class build_ext_osqp(build_ext):
         # Copy static library to src folder
         lib_origin = [osqp_build_dir, 'out'] + lib_subdir + [lib_name]
         lib_origin = os.path.join(*lib_origin)
-        copyfile(lib_origin, os.path.join('extension', 'src', lib_name))
+        copyfile(lib_origin, os.path.join('src', 'extension', 'src', lib_name))
 
         # Run extension
         build_ext.build_extensions(self)
@@ -243,11 +243,6 @@ _osqp = Extension('osqp._osqp',
                   sources=sources_files,
                   extra_compile_args=compile_args)
 
-packages = ['osqp',
-            'osqp.codegen',
-            'osqp.tests',
-            'osqppurepy']
-
 
 # Read README.rst file
 def readme():
@@ -259,18 +254,15 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='osqp',
-      version='0.6.2.post0',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
       long_description=readme(),
-      package_dir={'osqp': 'module',
-                   'osqppurepy': 'modulepurepy'},
+      package_dir={'': 'src'},
       include_package_data=True,  # Include package data from MANIFEST.in
-      setup_requires=["numpy >= 1.7", "qdldl"],
       install_requires=requirements,
       license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': build_ext_osqp},
-      packages=packages,
+      packages=find_namespace_packages(where='src'),
       ext_modules=[_osqp])

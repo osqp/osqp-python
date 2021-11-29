@@ -9,7 +9,7 @@ import scipy as sp
 import unittest
 import numpy.testing as nptest
 
-from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
+from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 
 
 class feasibility_tests(unittest.TestCase):
@@ -49,8 +49,7 @@ class feasibility_tests(unittest.TestCase):
         # Solve problem
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_feasibility_problem')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
