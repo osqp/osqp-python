@@ -1,5 +1,6 @@
 #include <pybind11/pybind11.h>
 #include "ext/include/hello.h"
+#include "osqp_api_functions.h"
 
 namespace py = pybind11;
 
@@ -24,5 +25,6 @@ PYBIND11_MODULE(ext, m) {
 
     py::class_<Hello>(m, "Hello")
     .def(py::init<>())
-    .def("greet", &Hello::greet);
+    .def("greet", &Hello::greet)
+    .def("version", &osqp_version);
 }
