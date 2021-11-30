@@ -257,8 +257,8 @@ class CMakeBuild(build_ext):
             raise RuntimeError("CMake must be installed to build OSQP")
 
         # Compile static library with CMake
-        call(['cmake'] + cmake_args + ['..'])
-        call(['cmake', '--build', '.', '--target', 'osqpstatic', '-DBUILD_TESTING=OFF'] +
+        call(['cmake'] + cmake_args + ['..', '-DBUILD_TESTING=OFF'])
+        call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
              cmake_build_flags)
 
         # Change directory back to the python interface
