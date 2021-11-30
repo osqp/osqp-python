@@ -222,7 +222,7 @@ spam = Extension('osqp.spam',
                   extra_compile_args=compile_args)
 
 
-prepare_codegen(osqp2_dir, qdldl2_dir)
+# prepare_codegen(osqp2_dir, qdldl2_dir)
 prepare_codegen(osqp_dir, qdldl_dir)    # Perform at the end since extension2 is broken wrt codegen
 
 
@@ -303,7 +303,6 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(name='osqp',
-      version='0.6.2',  # managed by setuptools-scm
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',

@@ -1,6 +1,6 @@
 # Test osqp python module
 import osqp
-from osqp.tests.utils import solve_high_accuracy, rel_tol, abs_tol, decimal_tol
+from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 import numpy as np
 import scipy as sp
 from scipy import sparse
@@ -46,8 +46,7 @@ class update_matrices_tests(unittest.TestCase):
         res = self.model.solve()
 
         # Assert close
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_solve')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -61,8 +60,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px, Px_idx=Px_idx)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -75,8 +73,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_allind')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -90,8 +87,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_A')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -104,8 +100,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Ax=Ax)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_A_allind')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -121,8 +116,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indP_indA')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -137,8 +131,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px, Px_idx=Px_idx, Ax=Ax)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indP')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -153,8 +146,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px, Ax=Ax, Ax_idx=Ax_idx)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indA')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
@@ -168,8 +160,7 @@ class update_matrices_tests(unittest.TestCase):
         self.model.update(Px=Px, Ax=Ax)
         res = self.model.solve()
 
-        x_sol, y_sol, obj_sol = solve_high_accuracy(self.P_new, self.q, self.A_new,
-                                                    self.l, self.u)
+        x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_allind')
         # Assert close
         nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)

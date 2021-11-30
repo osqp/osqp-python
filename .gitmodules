@@ -7,3 +7,4 @@
 [submodule "osqp2_sources"]
 	path = osqp2_sources
 	url = https://github.com/osqp/osqp.git
+	branch = vineetbansal/mkl
