@@ -258,7 +258,7 @@ class CMakeBuild(build_ext):
 
         # Compile static library with CMake
         call(['cmake'] + cmake_args + ['..'])
-        call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
+        call(['cmake', '--build', '.', '--target', 'osqpstatic', '-DBUILD_TESTING=OFF'] +
              cmake_build_flags)
 
         # Change directory back to the python interface
