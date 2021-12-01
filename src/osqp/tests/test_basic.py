@@ -1,5 +1,6 @@
 import osqp.ext as ext
 from osqp.ext import Hello
+from osqp.ext import OSQPSettings
 
 
 def test_greet():
@@ -7,9 +8,6 @@ def test_greet():
     assert h.greet() == 'Hello Pybind11'
 
 
-def test_add():
-    assert ext.add(3, 6) == 9
-
-
-def test_subtract():
-    assert ext.subtract(3, 6) == -3
+def test_osqp_rho():
+    settings = OSQPSettings()
+    assert settings.rho == 0.1

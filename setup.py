@@ -88,11 +88,6 @@ osqp_ext_src_dir = os.path.join('src', 'extension', 'src')
 osqp_build_dir = os.path.join(osqp_dir, 'build')
 qdldl_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'qdldl')
 
-osqp2_dir = os.path.join('osqp2_sources')
-osqp2_ext_src_dir = os.path.join('src', 'extension2', 'src')
-osqp2_build_dir = os.path.join(osqp2_dir, 'build')
-qdldl2_dir = os.path.join(osqp2_dir, 'lin_sys', 'direct', 'qdldl')
-
 
 # Interface files
 class get_numpy_include(object):
@@ -206,23 +201,6 @@ _osqp = Extension('osqp._osqp',
                   extra_compile_args=compile_args)
 
 
-spam = Extension('osqp.spam',
-                  define_macros=define_macros,
-                  libraries=libraries,
-                  library_dirs=library_dirs,
-                  include_dirs=[
-                        os.path.join(osqp2_dir, 'include'),      # osqp.h
-                        os.path.join(qdldl2_dir),                # qdldl_interface header to extract workspace for codegen
-                        os.path.join(qdldl2_dir, "qdldl_sources", "include"),     # qdldl includes for file types
-                        os.path.join('src', 'extension2', 'include'),   # auxiliary .h files
-                        get_numpy_include()
-                  ],
-                  extra_objects=[os.path.join('src', 'extension2', 'src', lib_name)],
-                  sources=glob(os.path.join('src', 'extension2', 'src', '*.c')),
-                  extra_compile_args=compile_args)
-
-
-# prepare_codegen(osqp2_dir, qdldl2_dir)
 prepare_codegen(osqp_dir, qdldl_dir)    # Perform at the end since extension2 is broken wrt codegen
 
 
@@ -314,4 +292,4 @@ setup(name='osqp',
       url="https://osqp.org/",
       cmdclass={'build_ext': CMakeBuild},
       packages=find_namespace_packages(where='src'),
-      ext_modules=[_osqp, spam, CMakeExtension('osqp.ext')])
+      ext_modules=[_osqp, CMakeExtension('osqp.ext')])
