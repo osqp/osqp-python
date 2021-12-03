@@ -214,8 +214,6 @@ class CMakeBuild(build_ext):
     def build_extension(self, ext):
         if ext.name == 'osqp._osqp':
             self.build_extension_legacy(ext, osqp_ext_src_dir, osqp_build_dir)
-        elif ext.name == 'osqp.spam':
-            self.build_extension_legacy(ext, osqp2_ext_src_dir, osqp2_build_dir)
         else:
             self.build_extension_pybind11(ext)
         super().build_extension(ext)
