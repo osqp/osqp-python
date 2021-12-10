@@ -1,54 +1,103 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 namespace py = pybind11;
-
 using namespace pybind11::literals;
 
 #include "osqp_api_functions.h"
 #include "osqp_api_types.h"
-#include "osqp_api_utils.h"
 
-#include "ext/include/hello.h"
+class CSC {
+    public:
+        CSC(py::object A);
+        ~CSC();
+        csc* getcsc();
+    private:
+        csc* _csc;
+        py::array_t<c_int> _p;
+        py::array_t<c_int> _i;
+        py::array_t<c_float> _x;
+};
 
+CSC::CSC(py::object A) {
+    py::object spa = py::module::import("scipy.sparse");
+
+    py::tuple dim = A.attr("shape");
+    int m = dim[0].cast<int>();
+    int n = dim[1].cast<int>();
+
+    if (!spa.attr("isspmatrix_csc")(A)) A = spa.attr("csc_matrix")(A);
+
+    this->_p = A.attr("indptr").cast<py::array_t<c_int, py::array::c_style>>();
+    this->_i = A.attr("indices").cast<py::array_t<c_int, py::array::c_style>>();
+    this->_x = A.attr("data").cast<py::array_t<c_float, py::array::c_style>>();
+
+    this->_csc = new csc();
+    this->_csc->m = m;
+    this->_csc->n = n;
+    this->_csc->p = (c_int *)this->_p.data();
+    this->_csc->i = (c_int *)this->_i.data();
+    this->_csc->x = (c_float *)this->_x.data();
+    this->_csc->nzmax = A.attr("nnz").cast<int>();
+    this->_csc->nz = -1;
+}
+
+csc *CSC::getcsc() {
+    return this->_csc;
+}
+
+CSC::~CSC() {
+    printf("Destructing CSC\n");
+    delete this->_csc;
+}
 
 OSQPSettings* init_OSQPSettings() {
-  OSQPSettings* settings = (OSQPSettings *)malloc(sizeof(OSQPSettings));
-  if (settings) {
-    osqp_set_default_settings(settings);
-  }
-  return settings;
+    OSQPSettings* settings = (OSQPSettings *)malloc(sizeof(OSQPSettings));
+    if (settings) {
+        osqp_set_default_settings(settings);
+    }
+    return settings;
 }
 
-OSQPSolver* init_OSQPSolver() {
-  OSQPSolver* solver = (OSQPSolver *)malloc(sizeof(OSQPSolver));
-  return solver;
+class MyOSQPSolver {
+    public:
+        MyOSQPSolver(CSC&, py::array_t<c_float>, CSC&, py::array_t<c_float>, py::array_t<c_float>, c_int, c_int, const OSQPSettings*);
+        ~MyOSQPSolver();
+        OSQPInfo* solve();
+    private:
+        OSQPSolver *_solver;
+};
+
+MyOSQPSolver::MyOSQPSolver(
+        CSC& P,
+        const py::array_t<c_float> q,
+        CSC& A,
+        const py::array_t<c_float> l,
+        const py::array_t<c_float> u,
+        c_int m,
+        c_int n,
+        const OSQPSettings *settings
+) {
+    this->_solver = new OSQPSolver();
+    const c_float* _q = q.data();
+    const c_float* _l = l.data();
+    const c_float* _u = u.data();
+    osqp_setup(&this->_solver, P.getcsc(), _q, A.getcsc(), _l, _u, m, n, settings);
 }
 
-c_int do_it(OSQPSolver* solver, csc* P, c_float* q, csc* A, c_float* l, c_float* u, c_int m, c_int n, OSQPSettings* settings) {
-    c_int exitflag = osqp_setup(&solver, P, q, A, l, u, m, n, settings);
-    return exitflag;
+MyOSQPSolver::~MyOSQPSolver() {
+    delete this->_solver;
 }
 
+OSQPInfo* MyOSQPSolver::solve() {
+    osqp_solve(this->_solver);
+    return this->_solver->info;
+}
 
 PYBIND11_MODULE(ext, m) {
     m.attr("__name__") = "osqp.ext";
 
-    py::class_<Hello>(m, "Hello")
-    .def(py::init<>())
-    .def("greet", &Hello::greet)
-    .def("version", &osqp_version);
-
-    py::class_<csc>(m, "CSC");
-    m.def("mysum", [](py::array_t<c_float> x) {
-        auto r = x.unchecked<1>();
-        const c_float* A = x.data();
-        c_float sum = 0;
-        py::ssize_t n = r.shape(0);
-        for (int i=0; i<n; i++) {
-            sum += A[i];
-        }
-        return sum;
-    });
+    py::class_<CSC>(m, "CSC")
+    .def(py::init<py::object>());
 
     py::class_<OSQPSettings>(m, "OSQPSettings")
     .def(py::init(&init_OSQPSettings))
@@ -64,10 +113,8 @@ PYBIND11_MODULE(ext, m) {
     .def_readonly("status", &OSQPInfo::status)
     .def_readonly("obj_val", &OSQPInfo::obj_val);
 
-    py::class_<OSQPSolver>(m, "OSQPSolver")
-    .def(py::init(&init_OSQPSolver));
-
-    m.def("do_it", &do_it);
-
-
+    py::class_<MyOSQPSolver>(m, "OSQPSolver")
+    .def(py::init<CSC&, const py::array_t<c_float>, CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
+            "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
+    .def("solve", &MyOSQPSolver::solve);
 }

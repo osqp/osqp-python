@@ -8,8 +8,8 @@ list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG f7edaa7c1340002ad8d8e5eee667bdcbb1e919b9
- SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/osqp3_sources)
+  GIT_TAG develop-1.0
+  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/osqp3_sources)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
@@ -17,6 +17,4 @@ FetchContent_MakeAvailable(osqp)
 add_subdirectory(pybind11)
 
 pybind11_add_module(ext src/bindings.cpp)
-add_subdirectory(src/ext)
-
-target_link_libraries(ext PRIVATE hello osqpstatic)
+target_link_libraries(ext PUBLIC pybind11::module osqpstatic)
