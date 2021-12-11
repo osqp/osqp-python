@@ -1,28 +1,20 @@
-import sys
 import numpy as np
 from scipy import sparse
 
-from osqp.ext import OSQPSettings, CSC, OSQPSolver
-from osqp.utils import prepare_data
+from osqp.ext import CSC, OSQPSettings, OSQPSolver
 
 
-def test_csc():
+def test_solver():
     settings = OSQPSettings()
-    assert settings.rho == 0.1
+    P = CSC(sparse.diags([11., 0.], format='csc'))
+    q = np.array([3, 4])
+    A = CSC(sparse.csc_matrix(
+        [[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]]))
+    u = np.array([0., 0., -15, 100, 80])
+    l = -1e06 * np.ones(len(u))
 
-    # P = sparse.diags([11., 0.], format='csc')
-    # q = np.array([3, 4])
-    # A = sparse.csc_matrix(
-    #     [[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
-    # u = np.array([0., 0., -15, 100, 80])
-    # l = -1e06 * np.ones(len(u))
-    #
-    # (n, m), P_x, P_i, P_p, q, A_x, A_i, A_p, l, u = prepare_data(P, q, A, l, u)[0]
-    #
-    # A = CSC(m, n, len(A_i), A_x, A_i, A_p)
-    # P = CSC(n, n, len(P_i), P_x, P_i, P_p)
-    #
-    # solver = OSQPSolver(P, q, A, l, u, m, n, settings)
-    # info = solver.solve()
-    # print(info)
+    n = 2
+    m = 5
 
+    solver = OSQPSolver(P, q.astype(np.float64), A, l.astype(np.float64), u.astype(np.float64), m, n, settings)
+    solver.solve()

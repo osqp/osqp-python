@@ -46,7 +46,6 @@ csc *CSC::getcsc() {
 }
 
 CSC::~CSC() {
-    printf("Destructing CSC\n");
     delete this->_csc;
 }
 
