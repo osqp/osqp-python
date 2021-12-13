@@ -63,7 +63,7 @@ class MyOSQPSolver {
         ~MyOSQPSolver();
         py::tuple solve();
         c_int update_data_vec(py::object, py::object, py::object);
-        c_int update_settings(const OSQPSettings *);
+        c_int update_settings(const OSQPSettings&);
         OSQPSettings* get_settings();
     private:
         OSQPSolver *_solver;
@@ -99,8 +99,8 @@ py::tuple MyOSQPSolver::solve() {
     return py::make_tuple(this->_solver->solution, this->_solver->info);
 }
 
-c_int MyOSQPSolver::update_settings(const OSQPSettings *new_settings) {
-    return osqp_update_settings(this->_solver, new_settings);
+c_int MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
+    return osqp_update_settings(this->_solver, &new_settings);
 }
 
 c_int MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
@@ -211,5 +211,5 @@ PYBIND11_MODULE(ext, m) {
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
     .def("update_settings", &MyOSQPSolver::update_settings)
-    .def("get_settings", &MyOSQPSolver::get_settings);
+    .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference);
 }
