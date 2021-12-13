@@ -14,18 +14,25 @@ import sys
 import qdldl
 
 
-def constant(*args, **kwargs):
-    return _osqp.constant(*args, **kwargs)
+def constant(which, pybind11=False):
+    if pybind11:
+        import osqp.ext
+        _constant = getattr(osqp.ext, which)
+        return _constant.value
+    else:
+        return _osqp.constant(which)
 
 
 class OSQP(object):
-    def __init__(self, extension_module='legacy'):
-        assert extension_module in ('legacy', 'pybind11'), 'Unrecognized extension module'
-        if extension_module == 'legacy':
+    def __new__(cls, *args, **kwargs):
+        if kwargs.pop('pybind11', False):
+            from .new_interface import OSQP as OSQP_pybind11
+            return OSQP_pybind11(*args, **kwargs)
+        else:
+            return super(OSQP, cls).__new__(cls, *args, **kwargs)
+
+    def __init__(self):
             self._model = _osqp.OSQP()
-        elif extension_module == 'pybind11':
-            from .new_interface import OSQPModel
-            self._model = OSQPModel()
 
     def version(self):
         return self._model.version()
