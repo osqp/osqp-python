@@ -57,15 +57,62 @@ OSQPSettings* init_OSQPSettings() {
     return settings;
 }
 
+class MyOSQPSolution {
+    public:
+        MyOSQPSolution(OSQPSolution&, c_int, c_int);
+        py::array_t<c_float> get_x();
+        py::array_t<c_float> get_y();
+        py::array_t<c_float> get_prim_inf_cert();
+        py::array_t<c_float> get_dual_inf_cert();
+    private:
+        c_int _m;
+        c_int _n;
+        OSQPSolution& _solution;
+};
+
+MyOSQPSolution::MyOSQPSolution(OSQPSolution& solution, c_int m, c_int n): _m(m), _n(n), _solution(solution) {}
+
+py::array_t<c_float> MyOSQPSolution::get_x() {
+    return py::array_t<c_float>(
+            { this->_n },
+            { sizeof(c_float) },
+            this->_solution.x);
+}
+
+py::array_t<c_float> MyOSQPSolution::get_y() {
+    return py::array_t<c_float>(
+            { this->_m },
+            { sizeof(c_float) },
+            this->_solution.y);
+}
+
+py::array_t<c_float> MyOSQPSolution::get_prim_inf_cert() {
+    return py::array_t<c_float>(
+            { this->_m },
+            { sizeof(c_float) },
+            this->_solution.prim_inf_cert);
+}
+
+py::array_t<c_float> MyOSQPSolution::get_dual_inf_cert() {
+    return py::array_t<c_float>(
+            { this->_n },
+            { sizeof(c_float) },
+            this->_solution.dual_inf_cert);
+}
+
 class MyOSQPSolver {
     public:
         MyOSQPSolver(CSC&, py::array_t<c_float>, CSC&, py::array_t<c_float>, py::array_t<c_float>, c_int, c_int, const OSQPSettings*);
         ~MyOSQPSolver();
-        py::tuple solve();
+        c_int solve();
         c_int update_data_vec(py::object, py::object, py::object);
         c_int update_settings(const OSQPSettings&);
         OSQPSettings* get_settings();
+        MyOSQPSolution& get_solution();
+        OSQPInfo* get_info();
     private:
+        c_int m;
+        c_int n;
         OSQPSolver *_solver;
 };
 
@@ -78,7 +125,7 @@ MyOSQPSolver::MyOSQPSolver(
         c_int m,
         c_int n,
         const OSQPSettings *settings
-) {
+): m(m), n(n) {
     this->_solver = new OSQPSolver();
     const c_float* _q = q.data();
     const c_float* _l = l.data();
@@ -94,9 +141,21 @@ OSQPSettings* MyOSQPSolver::get_settings() {
     return this->_solver->settings;
 }
 
-py::tuple MyOSQPSolver::solve() {
-    osqp_solve(this->_solver);
-    return py::make_tuple(this->_solver->solution, this->_solver->info);
+MyOSQPSolution& MyOSQPSolver::get_solution() {
+    MyOSQPSolution* solution = new MyOSQPSolution(*this->_solver->solution, this->m, this->n);
+    return *solution;
+}
+
+OSQPInfo* MyOSQPSolver::get_info() {
+    return this->_solver->info;
+}
+
+c_int MyOSQPSolver::solve() {
+    return osqp_solve(this->_solver);
+//    return py::make_tuple(
+//        new MyOSQPSolution(*this->_solver->solution, this->m, this->n),
+//        this->_solver->info
+//    );
 }
 
 c_int MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
@@ -183,11 +242,11 @@ PYBIND11_MODULE(ext, m) {
     .def_readwrite("delta", &OSQPSettings::delta)
     .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter);
 
-    py::class_<OSQPSolution>(m, "OSQPSolution")
-    .def_readonly("x", &OSQPSolution::x)
-    .def_readonly("y", &OSQPSolution::y)
-    .def_readonly("prim_inf_cert", &OSQPSolution::prim_inf_cert)
-    .def_readonly("dual_inf_cert", &OSQPSolution::dual_inf_cert);
+    py::class_<MyOSQPSolution>(m, "OSQPSolution")
+    .def_property_readonly("x", &MyOSQPSolution::get_x)
+    .def_property_readonly("y", &MyOSQPSolution::get_y)
+    .def_property_readonly("prim_inf_cert", &MyOSQPSolution::get_prim_inf_cert)
+    .def_property_readonly("dual_inf_cert", &MyOSQPSolution::get_dual_inf_cert);
 
     py::class_<OSQPInfo>(m, "OSQPInfo")
     .def_readonly("status", &OSQPInfo::status)
@@ -208,6 +267,8 @@ PYBIND11_MODULE(ext, m) {
     py::class_<MyOSQPSolver>(m, "OSQPSolver")
     .def(py::init<CSC&, const py::array_t<c_float>, CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
+    .def_property_readonly("solution", &MyOSQPSolver::get_solution)
+    .def_property_readonly("info", &MyOSQPSolver::get_info)
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
     .def("update_settings", &MyOSQPSolver::update_settings)

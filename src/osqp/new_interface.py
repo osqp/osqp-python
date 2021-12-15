@@ -1,3 +1,4 @@
+from types import SimpleNamespace
 import numpy as np
 from osqp.ext import CSC, OSQPInfo, OSQPSolver, OSQPSettings, OSQPSolution
 import osqp.utils as utils
@@ -44,4 +45,11 @@ class OSQP:
         self._solver = OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
 
     def solve(self):
-        return self._solver.solve()  # (solution, info) 2-tuple
+        self._solver.solve()
+        # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
+        # directly inside the returned object on solve(). This should be simplified!
+        return SimpleNamespace(
+            x=self._solver.solution.x,
+            y=self._solver.solution.y,
+            info=self._solver.info
+        )
