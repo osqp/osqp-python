@@ -93,8 +93,8 @@ static PyObject * OSQP_solve(OSQP *self) {
         y = (PyObject *)PyArrayFromCArray(self->workspace->solution->y, md);
 
         // Infeasibility certificates -> None values
-        prim_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
-        dual_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        prim_inf_cert = PyArray_EMPTY(1, md, NPY_OBJECT, 0);
+        dual_inf_cert = PyArray_EMPTY(1, nd, NPY_OBJECT, 0);
 
     } else if (self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE ||
             self->workspace->info->status_val == OSQP_PRIMAL_INFEASIBLE_INACCURATE) {
