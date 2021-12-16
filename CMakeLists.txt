@@ -8,7 +8,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG vineetbansal/develop1-hotfix0) 
+  GIT_TAG develop-1.0)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)

@@ -1,6 +1,6 @@
 # Test osqp python module
 import osqp
-from osqp._osqp import constant
+from osqp import constant
 from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np

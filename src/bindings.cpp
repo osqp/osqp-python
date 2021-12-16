@@ -107,6 +107,7 @@ class MyOSQPSolver {
         c_int solve();
         c_int update_data_vec(py::object, py::object, py::object);
         c_int update_settings(const OSQPSettings&);
+        c_int update_rho(c_float);
         OSQPSettings* get_settings();
         MyOSQPSolution& get_solution();
         OSQPInfo* get_info();
@@ -152,14 +153,14 @@ OSQPInfo* MyOSQPSolver::get_info() {
 
 c_int MyOSQPSolver::solve() {
     return osqp_solve(this->_solver);
-//    return py::make_tuple(
-//        new MyOSQPSolution(*this->_solver->solution, this->m, this->n),
-//        this->_solver->info
-//    );
 }
 
 c_int MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
     return osqp_update_settings(this->_solver, &new_settings);
+}
+
+c_int MyOSQPSolver::update_rho(c_float rho_new) {
+    return osqp_update_rho(this->_solver, rho_new);
 }
 
 c_int MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
@@ -272,5 +273,6 @@ PYBIND11_MODULE(ext, m) {
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
     .def("update_settings", &MyOSQPSolver::update_settings)
+    .def("update_rho", &MyOSQPSolver::update_rho)
     .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference);
 }

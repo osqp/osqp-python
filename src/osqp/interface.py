@@ -11,11 +11,14 @@ from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
 import sys
+import os
 import qdldl
 
+USE_PYBIND_EXT = os.environ.get('OSQP_USE_PYBIND', False)
 
-def constant(which, pybind11=False):
-    if pybind11:
+
+def constant(which):
+    if USE_PYBIND_EXT:
         import osqp.ext
         _constant = getattr(osqp.ext, which)
         return _constant.value
@@ -25,7 +28,7 @@ def constant(which, pybind11=False):
 
 class OSQP(object):
     def __new__(cls, *args, **kwargs):
-        if kwargs.pop('pybind11', False):
+        if USE_PYBIND_EXT:
             from .new_interface import OSQP as OSQP_pybind11
             return OSQP_pybind11(*args, **kwargs)
         else:
