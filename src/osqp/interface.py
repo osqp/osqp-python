@@ -14,7 +14,7 @@ import sys
 import os
 import qdldl
 
-USE_PYBIND_EXT = os.environ.get('OSQP_USE_PYBIND', False)
+USE_PYBIND_EXT = bool(int(os.environ.get('OSQP_USE_PYBIND', 0)))
 
 
 def constant(which):

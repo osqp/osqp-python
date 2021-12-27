@@ -1,3 +1,4 @@
+#include <iostream>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 namespace py = pybind11;
@@ -10,7 +11,7 @@ class CSC {
     public:
         CSC(py::object A);
         ~CSC();
-        csc* getcsc();
+        csc& getcsc() const;
     private:
         csc* _csc;
         py::array_t<c_int> _p;
@@ -41,20 +42,12 @@ CSC::CSC(py::object A) {
     this->_csc->nz = -1;
 }
 
-csc *CSC::getcsc() {
-    return this->_csc;
+csc& CSC::getcsc() const {
+    return *this->_csc;
 }
 
 CSC::~CSC() {
     delete this->_csc;
-}
-
-OSQPSettings* init_OSQPSettings() {
-    OSQPSettings* settings = (OSQPSettings *)malloc(sizeof(OSQPSettings));
-    if (settings) {
-        osqp_set_default_settings(settings);
-    }
-    return settings;
 }
 
 class MyOSQPSolution {
@@ -102,36 +95,44 @@ py::array_t<c_float> MyOSQPSolution::get_dual_inf_cert() {
 
 class MyOSQPSolver {
     public:
-        MyOSQPSolver(CSC&, py::array_t<c_float>, CSC&, py::array_t<c_float>, py::array_t<c_float>, c_int, c_int, const OSQPSettings*);
+        MyOSQPSolver(const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*);
         ~MyOSQPSolver();
-        c_int solve();
-        c_int update_data_vec(py::object, py::object, py::object);
-        c_int update_settings(const OSQPSettings&);
-        c_int update_rho(c_float);
+
         OSQPSettings* get_settings();
         MyOSQPSolution& get_solution();
         OSQPInfo* get_info();
+
+        c_int update_settings(const OSQPSettings&);
+        c_int update_rho(c_float);
+        c_int update_data_vec(py::object, py::object, py::object);
+        c_int update_data_mat(py::object, py::object, py::object, py::object);
+        c_int solve();
     private:
         c_int m;
         c_int n;
+        const CSC& _P;
+        py::array_t<c_float> _q;
+        py::array_t<c_float> _l;
+        const CSC& _A;
+        py::array_t<c_float> _u;
         OSQPSolver *_solver;
 };
 
 MyOSQPSolver::MyOSQPSolver(
-        CSC& P,
+        const CSC& P,
         const py::array_t<c_float> q,
-        CSC& A,
+        const CSC& A,
         const py::array_t<c_float> l,
         const py::array_t<c_float> u,
         c_int m,
         c_int n,
         const OSQPSettings *settings
-): m(m), n(n) {
+): m(m), n(n), _P(P), _A(A) {
     this->_solver = new OSQPSolver();
-    const c_float* _q = q.data();
-    const c_float* _l = l.data();
-    const c_float* _u = u.data();
-    osqp_setup(&this->_solver, P.getcsc(), _q, A.getcsc(), _l, _u, m, n, settings);
+    this->_q = q;
+    this->_l = l;
+    this->_u = u;
+    osqp_setup(&this->_solver, &this->_P.getcsc(), (c_float *)this->_q.data(), &this->_A.getcsc(), (c_float *)this->_l.data(), (c_float *)this->_u.data(), m, n, settings);
 }
 
 MyOSQPSolver::~MyOSQPSolver() {
@@ -187,11 +188,36 @@ c_int MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
     return osqp_update_data_vec(this->_solver, _q, _l, _u);
 }
 
+c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
+    c_float* _P_x;
+    c_int* _P_i;
+    c_int _P_n = 0;
+    c_float* _A_x;
+    c_int* _A_i;
+    c_int _A_n = 0;
+
+    if (P_x.is_none() || P_i.is_none()) {
+        _P_x = NULL;
+        _P_i = NULL;
+    } else {
+        _P_x = (c_float *)py::array_t<c_float>(P_x).data();
+        _P_i = (c_int *)py::array_t<c_int>(P_i).data();
+        _P_n = py::array_t<c_int>(P_i).size();
+    }
+    if (A_x.is_none() || A_i.is_none()) {
+        _A_x = NULL;
+        _A_i = NULL;
+    } else {
+        _A_x = (c_float *)py::array_t<c_float>(A_x).data();
+        _A_i = (c_int *)py::array_t<c_int>(A_i).data();
+        _A_n = py::array_t<c_int>(A_i).size();
+    }
+
+    return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
+}
+
 PYBIND11_MODULE(ext, m) {
     m.attr("__name__") = "osqp.ext";
-
-    py::class_<CSC>(m, "CSC")
-    .def(py::init<py::object>());
 
     py::enum_<linsys_solver_type>(m, "linsys_solver_type")
     .value("DIRECT_SOLVER", DIRECT_SOLVER)
@@ -202,9 +228,13 @@ PYBIND11_MODULE(ext, m) {
     .value("OSQP_MAX_ITER_REACHED", OSQP_MAX_ITER_REACHED)
     .export_values();
 
-    py::class_<OSQPSettings>(m, "OSQPSettings")
-    .def(py::init(&init_OSQPSettings))
+    py::class_<CSC>(m, "CSC")
+    .def(py::init<py::object>());
 
+    py::class_<OSQPSettings>(m, "OSQPSettings")
+    .def(py::init([]() {
+        return new OSQPSettings;
+    }))
     .def_readwrite("device", &OSQPSettings::device)
     .def_readwrite("linsys_solver", &OSQPSettings::linsys_solver)
     .def_readwrite("verbose", &OSQPSettings::verbose)
@@ -243,6 +273,8 @@ PYBIND11_MODULE(ext, m) {
     .def_readwrite("delta", &OSQPSettings::delta)
     .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter);
 
+    m.def("osqp_set_default_settings", &osqp_set_default_settings);
+
     py::class_<MyOSQPSolution>(m, "OSQPSolution")
     .def_property_readonly("x", &MyOSQPSolution::get_x)
     .def_property_readonly("y", &MyOSQPSolution::get_y)
@@ -266,12 +298,13 @@ PYBIND11_MODULE(ext, m) {
     .def_readonly("run_time", &OSQPInfo::run_time);
 
     py::class_<MyOSQPSolver>(m, "OSQPSolver")
-    .def(py::init<CSC&, const py::array_t<c_float>, CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
+    .def(py::init<const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
-    .def_property_readonly("solution", &MyOSQPSolver::get_solution)
-    .def_property_readonly("info", &MyOSQPSolver::get_info)
+    .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
+    .def_property_readonly("info", &MyOSQPSolver::get_info, py::return_value_policy::reference)
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
+    .def("update_data_mat", &MyOSQPSolver::update_data_mat, "P_x"_a.none(true), "P_i"_a.none(true), "A_x"_a.none(true), "A_i"_a.none(true))
     .def("update_settings", &MyOSQPSolver::update_settings)
     .def("update_rho", &MyOSQPSolver::update_rho)
     .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference);

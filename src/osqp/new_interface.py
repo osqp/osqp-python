@@ -1,7 +1,8 @@
 from types import SimpleNamespace
 import warnings
 import numpy as np
-from osqp.ext import CSC, OSQPInfo, OSQPSolver, OSQPSettings, OSQPSolution
+import scipy.sparse as spa
+from osqp.ext import CSC, OSQPInfo, OSQPSolver, OSQPSettings, OSQPSolution, osqp_set_default_settings
 import osqp.utils as utils
 
 
@@ -15,6 +16,7 @@ class OSQP:
         self.l = None
         self.u = None
         self.settings = OSQPSettings()
+        osqp_set_default_settings(self.settings)
 
         self._solver = None
 
@@ -46,16 +48,24 @@ class OSQP:
             self.settings = new_settings
 
     def update(self, **kwargs):
-        return self._solver.update_data_vec(
-            q=kwargs.get('q'),
-            l=kwargs.get('l'),
-            u=kwargs.get('u')
-        )
+        if 'q' in kwargs or 'l' in kwargs or 'u' in kwargs:
+            self._solver.update_data_vec(
+                q=kwargs.get('q'),
+                l=kwargs.get('l'),
+                u=kwargs.get('u')
+            )
+        if 'Px' in kwargs or 'Px_idx' in kwargs or 'Ax' in kwargs or 'Ax_idx' in kwargs:
+            self._solver.update_data_mat(
+                P_x=kwargs.get('Px'),
+                P_i=kwargs.get('Px_idx'),
+                A_x=kwargs.get('Ax'),
+                A_i=kwargs.get('Ax_idx'),
+            )
 
     def setup(self, P, q, A, l, u, **settings):
         self.m = l.shape[0]
         self.n = q.shape[0]
-        self.P = CSC(P)
+        self.P = CSC(spa.triu(P, format='csc'))
         self.q = q.astype(np.float64)
         self.A = CSC(A)
         self.l = l.astype(np.float64)
