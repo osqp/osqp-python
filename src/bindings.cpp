@@ -106,6 +106,7 @@ class MyOSQPSolver {
         c_int update_rho(c_float);
         c_int update_data_vec(py::object, py::object, py::object);
         c_int update_data_mat(py::object, py::object, py::object, py::object);
+        c_int warm_start(py::object, py::object);
         c_int solve();
     private:
         c_int m;
@@ -150,6 +151,24 @@ MyOSQPSolution& MyOSQPSolver::get_solution() {
 
 OSQPInfo* MyOSQPSolver::get_info() {
     return this->_solver->info;
+}
+
+c_int MyOSQPSolver::warm_start(py::object x, py::object y) {
+    c_float* _x;
+    c_float* _y;
+
+    if (x.is_none()) {
+        _x = NULL;
+    } else {
+        _x = (c_float *)py::array_t<c_float>(x).data();
+    }
+    if (y.is_none()) {
+        _y = NULL;
+    } else {
+        _y = (c_float *)py::array_t<c_float>(y).data();
+    }
+
+    return osqp_warm_start(this->_solver, _x, _y);
 }
 
 c_int MyOSQPSolver::solve() {
@@ -225,7 +244,17 @@ PYBIND11_MODULE(ext, m) {
     .export_values();
 
     py::enum_<osqp_status_type>(m, "osqp_status_type")
+    .value("OSQP_SOLVED", OSQP_SOLVED)
+    .value("OSQP_SOLVED_INACCURATE", OSQP_SOLVED_INACCURATE)
+    .value("OSQP_PRIMAL_INFEASIBLE", OSQP_PRIMAL_INFEASIBLE)
+    .value("OSQP_PRIMAL_INFEASIBLE_INACCURATE", OSQP_PRIMAL_INFEASIBLE_INACCURATE)
+    .value("OSQP_DUAL_INFEASIBLE", OSQP_DUAL_INFEASIBLE)
+    .value("OSQP_DUAL_INFEASIBLE_INACCURATE", OSQP_DUAL_INFEASIBLE_INACCURATE)
     .value("OSQP_MAX_ITER_REACHED", OSQP_MAX_ITER_REACHED)
+    .value("OSQP_TIME_LIMIT_REACHED", OSQP_TIME_LIMIT_REACHED)
+    .value("OSQP_NON_CVX", OSQP_NON_CVX)
+    .value("OSQP_SIGINT", OSQP_SIGINT)
+    .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
 
     py::class_<CSC>(m, "CSC")
@@ -302,6 +331,7 @@ PYBIND11_MODULE(ext, m) {
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
     .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
     .def_property_readonly("info", &MyOSQPSolver::get_info, py::return_value_policy::reference)
+    .def("warm_start", &MyOSQPSolver::warm_start, "x"_a.none(true), "y"_a.none(true))
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
     .def("update_data_mat", &MyOSQPSolver::update_data_mat, "P_x"_a.none(true), "P_i"_a.none(true), "A_x"_a.none(true), "A_i"_a.none(true))

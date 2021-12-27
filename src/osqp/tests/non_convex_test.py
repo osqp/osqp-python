@@ -1,6 +1,6 @@
 # Test osqp python module
 import osqp
-from osqp._osqp import constant
+from osqp import constant
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse

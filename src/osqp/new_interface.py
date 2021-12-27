@@ -75,6 +75,9 @@ class OSQP:
 
         self._solver = OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
 
+    def warm_start(self, x=None, y=None):
+        return self._solver.warm_start(x, y)
+
     def solve(self):
         self._solver.solve()
         # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
