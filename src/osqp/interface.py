@@ -20,8 +20,25 @@ USE_PYBIND_EXT = bool(int(os.environ.get('OSQP_USE_PYBIND', 0)))
 def constant(which):
     if USE_PYBIND_EXT:
         import osqp.ext
-        _constant = getattr(osqp.ext, which)
-        return _constant.value
+        _constant = getattr(osqp.ext, which, None)
+
+        # If the constant was exported directly as an atomic type in the extension, use it;
+        # Otherwise it's an enum out of which we can obtain the raw value
+        if isinstance(_constant, (int, float, str)):
+            return _constant
+        elif _constant is not None:
+            return _constant.value
+        else:
+            # Handle special cases
+            if which == 'OSQP_NAN':
+                return np.nan
+
+            solvers = ('QDLDL_SOLVER', 'MKL_PARDISO_SOLVER', 'CUDA_PCG_SOLVER')
+            if which in solvers:
+                warn(f"The constant {which} is provided only for backward compatibility."
+                     "Please use OSQP_ALGEBRA directly.")
+                return solvers.index(which)
+            raise RuntimeError(f"Unknown constant {which}")
     else:
         return _osqp.constant(which)
 
