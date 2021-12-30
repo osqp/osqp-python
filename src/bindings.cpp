@@ -146,9 +146,9 @@ MyOSQPSolver::MyOSQPSolver(
     this->_u = u;
 
     c_int status = osqp_setup(&this->_solver, &this->_P.getcsc(), (c_float *)this->_q.data(), &this->_A.getcsc(), (c_float *)this->_l.data(), (c_float *)this->_u.data(), m, n, settings);
-    //if (status) {
-    //    throw pybind11::value_error("Setup error");
-    //}
+    if (status) {
+        throw pybind11::value_error("Setup error");
+    }
 }
 
 MyOSQPSolver::~MyOSQPSolver() {
