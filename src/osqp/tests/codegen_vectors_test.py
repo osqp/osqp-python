@@ -1,43 +1,60 @@
 # Test osqp python module
 import osqp
+from osqp import OSQP_USE_PYBIND
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
 
 # Unit Test
 import unittest
+import pytest
 import numpy.testing as nptest
 import shutil as sh
 
 
+@pytest.mark.skipif(OSQP_USE_PYBIND, reason="codegen not implemented yet")
 class codegen_vectors_tests(unittest.TestCase):
 
-    def setUp(self):
-        # Simple QP problem
-        self.P = sparse.diags([11., 0.], format='csc')
-        self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix(
+    @classmethod
+    def setUpClass(cls):
+        P = sparse.diags([11., 0.], format='csc')
+        q = np.array([3, 4])
+        A = sparse.csc_matrix(
             [[-1, 0], [0, -1], [-1, -3], [2, 5], [3, 4]])
-        self.u = np.array([0, 0, -15, 100, 80])
-        self.l = -np.inf * np.ones(len(self.u))
-        self.n = self.P.shape[0]
-        self.m = self.A.shape[0]
-        self.opts = {'verbose': False,
+        u = np.array([0, 0, -15, 100, 80])
+        l = -np.inf * np.ones(len(u))
+        n = P.shape[0]
+        m = A.shape[0]
+        opts = {'verbose': False,
                      'eps_abs': 1e-08,
                      'eps_rel': 1e-08,
                      'rho': 0.01,
                      'alpha': 1.6,
                      'max_iter': 10000,
                      'warm_start': True}
+
+        model = osqp.OSQP()
+        model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
+
+        model.codegen('code', python_ext_name='vec_emosqp',
+                           force_rewrite=True)
+        sh.rmtree('code')
+
+        cls.m = m
+        cls.n = n
+        cls.P = P
+        cls.q = q
+        cls.A = A
+        cls.l = l
+        cls.u = u
+        cls.opts = opts
+
+    def setUp(self):
         self.model = osqp.OSQP()
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
                          **self.opts)
 
     def test_solve(self):
-        # Generate the code
-        self.model.codegen('code', python_ext_name='vec_emosqp',
-                           force_rewrite=True)
-        sh.rmtree('code')
         import vec_emosqp
 
         # Solve problem

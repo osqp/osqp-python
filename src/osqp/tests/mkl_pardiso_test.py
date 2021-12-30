@@ -1,5 +1,5 @@
-import os
 import osqp
+from osqp import OSQP_USE_PYBIND
 import numpy as np
 from scipy import sparse
 
@@ -8,7 +8,7 @@ import unittest
 import pytest
 
 
-@pytest.mark.skipif(bool(int(os.environ.get('OSQP_USE_PYBIND', 0))), reason="Cannot yet switch solvers at runtime")
+@pytest.mark.skipif(OSQP_USE_PYBIND, reason="Cannot yet switch solvers at runtime")
 class mkl_pardiso_tests(unittest.TestCase):
 
     def setUp(self):

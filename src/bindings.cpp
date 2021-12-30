@@ -112,7 +112,6 @@ class MyOSQPSolver {
         OSQPSettings* get_settings();
         MyOSQPSolution& get_solution();
         OSQPInfo* get_info();
-        OSQPWorkspace* get_workspace();
 
         c_int update_settings(const OSQPSettings&);
         c_int update_rho(c_float);
@@ -145,7 +144,11 @@ MyOSQPSolver::MyOSQPSolver(
     this->_q = q;
     this->_l = l;
     this->_u = u;
-    osqp_setup(&this->_solver, &this->_P.getcsc(), (c_float *)this->_q.data(), &this->_A.getcsc(), (c_float *)this->_l.data(), (c_float *)this->_u.data(), m, n, settings);
+
+    c_int status = osqp_setup(&this->_solver, &this->_P.getcsc(), (c_float *)this->_q.data(), &this->_A.getcsc(), (c_float *)this->_l.data(), (c_float *)this->_u.data(), m, n, settings);
+    if (status) {
+        throw pybind11::value_error("Setup error");
+    }
 }
 
 MyOSQPSolver::~MyOSQPSolver() {
@@ -163,10 +166,6 @@ MyOSQPSolution& MyOSQPSolver::get_solution() {
 
 OSQPInfo* MyOSQPSolver::get_info() {
     return this->_solver->info;
-}
-
-OSQPWorkspace* MyOSQPSolver::get_workspace() {
-    return this->_solver->work;
 }
 
 c_int MyOSQPSolver::warm_start(py::object x, py::object y) {
@@ -188,9 +187,9 @@ c_int MyOSQPSolver::warm_start(py::object x, py::object y) {
 }
 
 c_int MyOSQPSolver::solve() {
-    py::gil_scoped_acquire acquire;
-    c_int results = osqp_solve(this->_solver);
     py::gil_scoped_release release;
+    c_int results = osqp_solve(this->_solver);
+    py::gil_scoped_acquire acquire;
     return results;
 }
 
@@ -234,21 +233,36 @@ c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A
     c_int* _A_i;
     c_int _A_n = 0;
 
-    if (P_x.is_none() || P_i.is_none()) {
+    if (P_x.is_none()) {
         _P_x = NULL;
+    } else {
+        auto _P_x_array = py::array_t<c_float>(P_x);
+        _P_x = (c_float *)_P_x_array.data();
+        _P_n = _P_x_array.size();
+    }
+
+    if (P_i.is_none()) {
         _P_i = NULL;
     } else {
-        _P_x = (c_float *)py::array_t<c_float>(P_x).data();
-        _P_i = (c_int *)py::array_t<c_int>(P_i).data();
-        _P_n = py::array_t<c_int>(P_i).size();
+        auto _P_i_array = py::array_t<c_int>(P_i);
+        _P_i = (c_int *)_P_i_array.data();
+        _P_n = _P_i_array.size();
     }
-    if (A_x.is_none() || A_i.is_none()) {
+
+    if (A_x.is_none()) {
         _A_x = NULL;
+    } else {
+        auto _A_x_array = py::array_t<c_float>(A_x);
+        _A_x = (c_float *)_A_x_array.data();
+        _A_n = _A_x_array.size();
+    }
+
+    if (A_i.is_none()) {
         _A_i = NULL;
     } else {
-        _A_x = (c_float *)py::array_t<c_float>(A_x).data();
-        _A_i = (c_int *)py::array_t<c_int>(A_i).data();
-        _A_n = py::array_t<c_int>(A_i).size();
+        auto _A_i_array = py::array_t<c_int>(A_i);
+        _A_i = (c_int *)_A_i_array.data();
+        _A_n = _A_i_array.size();
     }
 
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
@@ -291,9 +305,6 @@ PYBIND11_MODULE(ext, m) {
     .def_readonly("x", &CSC::_x)
     .def_readonly("nzmax", &CSC::nzmax)
     .def_readonly("nz", &CSC::nz);
-
-    py::class_<OSQPScaling>(m, "OSQPScaling")
-    .def_readonly("c", &OSQPScaling::c);
 
     py::class_<OSQPSettings>(m, "OSQPSettings")
     .def(py::init([]() {
@@ -367,7 +378,6 @@ PYBIND11_MODULE(ext, m) {
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
     .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
     .def_property_readonly("info", &MyOSQPSolver::get_info, py::return_value_policy::reference)
-    .def_property_readonly("work", &MyOSQPSolver::get_workspace, py::return_value_policy::reference)
     .def("warm_start", &MyOSQPSolver::warm_start, "x"_a.none(true), "y"_a.none(true))
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
@@ -376,6 +386,4 @@ PYBIND11_MODULE(ext, m) {
     .def("update_rho", &MyOSQPSolver::update_rho)
     .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference);
 
-    py::class_<OSQPWorkspace>(m, "OSQPWorkspace")
-    .def_readonly("scaling", &OSQPWorkspace::scaling);
 }

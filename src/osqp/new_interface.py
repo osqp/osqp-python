@@ -79,12 +79,13 @@ class OSQP:
             if kwargs.get(_var) is not None:
                 self._derivative_cache[_var] = kwargs[_var]
 
-        for _var in ('Px', 'Ax'):
-            if kwargs.get(_var) is not None:
-                if kwargs[f'{_var}_idx'].size == 0:
-                    self._derivative_cache[_var].data = kwargs[_var]
+        for _var in ('P', 'A'):
+            _varx = f'{_var}x'
+            if kwargs.get(_varx) is not None:
+                if kwargs.get(f'{_varx}_idx') is None:
+                    self._derivative_cache[_var].data = kwargs[_varx]
                 else:
-                    self._derivative_cache[_var].data[kwargs[f'{_var}_idx']] = kwargs[_var]
+                    self._derivative_cache[_var].data[kwargs[f'{_varx}_idx']] = kwargs[_varx]
 
         # delete results from self._derivative_cache to prohibit
         # taking the derivative of unsolved problems
@@ -177,9 +178,8 @@ class OSQP:
                    embedded, force_rewrite, float_flag, long_flag)
 
     def _get_workspace(self):
-        print('debug')
-        # TODO: Not everything below is currently being returned, just enough for tests to pass,
-        # since I'm not sure which ones were intended as a public API and which ones are the bare esssential ones.
+        # TODO: This will likely not be needed once we directly call self._solver.codegen(..)
+        # TODO: Not everything below is currently being returned by pybind11, Nones indicate pending attributes
         return {
             'rho_vectors': {
                 'rho_vec': None,
@@ -252,7 +252,7 @@ class OSQP:
                 'fwork': None
             },
             'scaling': {
-                'c': self._solver.work.scaling.c,
+                'c': None,
                 'cinv': None,
                 'D': None,
                 'E': None,
@@ -280,6 +280,7 @@ class OSQP:
                 'time_limit': self.settings.time_limit
             }
         }
+
     def _derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
         M = self._derivative_cache['M']
 
