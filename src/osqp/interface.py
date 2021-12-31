@@ -3,7 +3,6 @@ Python interface module for OSQP solver v0.6.2.post0
 """
 from __future__ import print_function
 from builtins import object
-import osqp._osqp as _osqp  # Internal low level module
 import numpy as np
 import scipy.sparse as spa
 from warnings import warn
@@ -40,6 +39,7 @@ def constant(which):
                 return solvers.index(which)
             raise RuntimeError(f"Unknown constant {which}")
     else:
+        import osqp._osqp as _osqp
         return _osqp.constant(which)
 
 
@@ -52,7 +52,8 @@ class OSQP(object):
             return super(OSQP, cls).__new__(cls, *args, **kwargs)
 
     def __init__(self):
-            self._model = _osqp.OSQP()
+        import osqp._osqp as _osqp
+        self._model = _osqp.OSQP()
 
     def version(self):
         return self._model.version()
@@ -91,7 +92,7 @@ class OSQP(object):
             elif len(l) != m:
                 raise ValueError("l must have length m")
             # Convert values to -OSQP_INFTY
-            l = np.maximum(l, -_osqp.constant('OSQP_INFTY'))
+            l = np.maximum(l, -constant('OSQP_INFTY'))
         if u is not None:
             if not isinstance(u, np.ndarray):
                 raise TypeError("u must be numpy.ndarray, not %s" %
@@ -99,7 +100,7 @@ class OSQP(object):
             elif len(u) != m:
                 raise ValueError("u must have length m")
             # Convert values to OSQP_INFTY
-            u = np.minimum(u, _osqp.constant('OSQP_INFTY'))
+            u = np.minimum(u, constant('OSQP_INFTY'))
         if Ax is None:
             if len(Ax_idx) > 0:
                 raise ValueError("Vector Ax has not been specified")

@@ -205,9 +205,10 @@ prepare_codegen(osqp_dir, qdldl_dir)    # Perform at the end since extension2 is
 
 
 class CMakeExtension(Extension):
-    def __init__(self, name, sourcedir=''):
+    def __init__(self, name, sourcedir='', cmake_args=None):
         Extension.__init__(self, name, sources=[])
         self.sourcedir = os.path.abspath(sourcedir)
+        self.cmake_args = cmake_args
 
 
 class CMakeBuild(build_ext):
@@ -264,6 +265,9 @@ class CMakeBuild(build_ext):
 
         if not os.path.exists(self.build_temp):
             os.makedirs(self.build_temp)
+
+        if ext.cmake_args is not None:
+            cmake_args.extend(ext.cmake_args)
 
         check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
         check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)

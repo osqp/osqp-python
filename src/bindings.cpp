@@ -152,7 +152,7 @@ MyOSQPSolver::MyOSQPSolver(
 }
 
 MyOSQPSolver::~MyOSQPSolver() {
-    delete this->_solver;
+    osqp_cleanup(this->_solver);
 }
 
 OSQPSettings* MyOSQPSolver::get_settings() {
