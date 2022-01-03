@@ -1,8 +1,4 @@
-"""
-Python interface module for OSQP solver v0.6.2.post0
-"""
-from __future__ import print_function
-from builtins import object
+import importlib
 import numpy as np
 import scipy.sparse as spa
 from warnings import warn
@@ -13,13 +9,47 @@ import sys
 import os
 import qdldl
 
-OSQP_USE_PYBIND = bool(int(os.environ.get('OSQP_USE_PYBIND', 0)))
+
+_ALGEBRAS = ('default', 'mkl', 'cuda', 'legacy')   # Highest->Lowest priority of algebras that are tried in turn
+OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 
 
-def constant(which):
-    if OSQP_USE_PYBIND:
-        import osqp.ext
-        _constant = getattr(osqp.ext, which, None)
+def algebra_available(algebra):
+    assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
+    if algebra == 'legacy':
+        module = 'osqp._osqp'
+    else:
+        module = f'osqp.ext_{algebra}'
+
+    try:
+        importlib.import_module(module)
+    except ImportError:
+        return False
+    else:
+        return True
+
+
+def algebras_available():
+    return [algebra for algebra in _ALGEBRAS if algebra_available(algebra)]
+
+
+def default_algebra():
+    if OSQP_ALGEBRA is not None:
+        return OSQP_ALGEBRA
+    for algebra in _ALGEBRAS:
+        if algebra_available(algebra):
+            return algebra
+    raise RuntimeError('No algebra backend available!')
+
+
+def constant(which, algebra=None):
+    algebra = algebra or default_algebra()
+    if algebra in (None, 'legacy'):
+        import osqp._osqp as _osqp
+        return _osqp.constant(which)
+    else:
+        m = importlib.import_module(f'osqp.ext_{algebra}')
+        _constant = getattr(m, which, None)
 
         # If the constant was exported directly as an atomic type in the extension, use it;
         # Otherwise it's an enum out of which we can obtain the raw value
@@ -38,20 +68,18 @@ def constant(which):
                      "Please use OSQP_ALGEBRA directly.")
                 return solvers.index(which)
             raise RuntimeError(f"Unknown constant {which}")
-    else:
-        import osqp._osqp as _osqp
-        return _osqp.constant(which)
 
 
-class OSQP(object):
+class OSQP:
     def __new__(cls, *args, **kwargs):
-        if OSQP_USE_PYBIND:
-            from .new_interface import OSQP as OSQP_pybind11
-            return OSQP_pybind11(*args, **kwargs)
-        else:
+        algebra = kwargs.pop('algebra', OSQP_ALGEBRA) or default_algebra()
+        if algebra == 'legacy':
             return super(OSQP, cls).__new__(cls, *args, **kwargs)
+        else:
+            from .new_interface import OSQP as OSQP_pybind11
+            return OSQP_pybind11(*args, **kwargs, algebra=algebra)
 
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         import osqp._osqp as _osqp
         self._model = _osqp.OSQP()
 

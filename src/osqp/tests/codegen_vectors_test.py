@@ -1,6 +1,5 @@
 # Test osqp python module
 import osqp
-from osqp import OSQP_USE_PYBIND
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -12,7 +11,6 @@ import numpy.testing as nptest
 import shutil as sh
 
 
-@pytest.mark.skipif(OSQP_USE_PYBIND, reason="codegen not implemented yet")
 class codegen_vectors_tests(unittest.TestCase):
 
     @classmethod
@@ -33,7 +31,7 @@ class codegen_vectors_tests(unittest.TestCase):
                      'max_iter': 10000,
                      'warm_start': True}
 
-        model = osqp.OSQP()
+        model = osqp.OSQP(algebra='legacy')
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model.codegen('code', python_ext_name='vec_emosqp',

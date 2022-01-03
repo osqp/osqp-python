@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp import default_algebra
 # import osqppurepy as osqp
 from multiprocessing.pool import ThreadPool
 import time
@@ -8,8 +9,10 @@ from scipy import sparse
 
 # Unit Test
 import unittest
+import pytest
 
 
+@pytest.mark.skipif(default_algebra() == 'mkl', reason="mkl runs faster without python-level threading")
 class multithread_tests(unittest.TestCase):
 
     def test_multithread(self):

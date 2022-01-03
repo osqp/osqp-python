@@ -12,4 +12,4 @@ test-requires = ["pytest"]
 test-command = "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\""
 
 [tool.cibuildwheel.linux]
-environment-pass = ["OSQP_USE_PYBIND"]
+environment-pass = ["OSQP_ALGEBRA"]

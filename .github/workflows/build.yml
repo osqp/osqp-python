@@ -31,9 +31,9 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: OSQP_USE_PYBIND
+    - name: OSQP_ALGEBRA
       run: |
-        echo "OSQP_USE_PYBIND=1" >> $GITHUB_ENV
+        echo "OSQP_ALGEBRA=legacy" >> $GITHUB_ENV
 
     - name: Build wheels
       run: |

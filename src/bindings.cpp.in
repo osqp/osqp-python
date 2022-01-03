@@ -268,21 +268,21 @@ c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
-PYBIND11_MODULE(ext, m) {
-    m.attr("__name__") = "osqp.ext";
+PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
+    //m.attr("__name__") = "osqp.ext";
 
     // Any constants that we wish to make directly accessible in the extension module
     m.attr("OSQP_INFTY") = OSQP_INFTY;
     m.attr("OSQP_ALGEBRA") = OSQP_ALGEBRA;
 
     // Enum values that are directly accessible
-    py::enum_<linsys_solver_type>(m, "linsys_solver_type")
+    py::enum_<linsys_solver_type>(m, "linsys_solver_type", py::module_local())
     .value("DIRECT_SOLVER", DIRECT_SOLVER)
     .value("INDIRECT_SOLVER", INDIRECT_SOLVER)
     .export_values();
 
     // Enum values that are directly accessible
-    py::enum_<osqp_status_type>(m, "osqp_status_type")
+    py::enum_<osqp_status_type>(m, "osqp_status_type", py::module_local())
     .value("OSQP_SOLVED", OSQP_SOLVED)
     .value("OSQP_SOLVED_INACCURATE", OSQP_SOLVED_INACCURATE)
     .value("OSQP_PRIMAL_INFEASIBLE", OSQP_PRIMAL_INFEASIBLE)
@@ -296,7 +296,7 @@ PYBIND11_MODULE(ext, m) {
     .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
 
-    py::class_<CSC>(m, "CSC")
+    py::class_<CSC>(m, "CSC", py::module_local())
     .def(py::init<py::object>())
     .def_readonly("m", &CSC::m)
     .def_readonly("n", &CSC::n)
@@ -306,7 +306,7 @@ PYBIND11_MODULE(ext, m) {
     .def_readonly("nzmax", &CSC::nzmax)
     .def_readonly("nz", &CSC::nz);
 
-    py::class_<OSQPSettings>(m, "OSQPSettings")
+    py::class_<OSQPSettings>(m, "OSQPSettings", py::module_local())
     .def(py::init([]() {
         return new OSQPSettings;
     }))
@@ -350,13 +350,13 @@ PYBIND11_MODULE(ext, m) {
 
     m.def("osqp_set_default_settings", &osqp_set_default_settings);
 
-    py::class_<MyOSQPSolution>(m, "OSQPSolution")
+    py::class_<MyOSQPSolution>(m, "OSQPSolution", py::module_local())
     .def_property_readonly("x", &MyOSQPSolution::get_x)
     .def_property_readonly("y", &MyOSQPSolution::get_y)
     .def_property_readonly("prim_inf_cert", &MyOSQPSolution::get_prim_inf_cert)
     .def_property_readonly("dual_inf_cert", &MyOSQPSolution::get_dual_inf_cert);
 
-    py::class_<OSQPInfo>(m, "OSQPInfo")
+    py::class_<OSQPInfo>(m, "OSQPInfo", py::module_local())
     .def_readonly("status", &OSQPInfo::status)
     .def_readonly("status_val", &OSQPInfo::status_val)
     .def_readonly("status_polish", &OSQPInfo::status_polish)
@@ -373,7 +373,7 @@ PYBIND11_MODULE(ext, m) {
     .def_readonly("polish_time", &OSQPInfo::polish_time)
     .def_readonly("run_time", &OSQPInfo::run_time);
 
-    py::class_<MyOSQPSolver>(m, "OSQPSolver")
+    py::class_<MyOSQPSolver>(m, "OSQPSolver", py::module_local())
     .def(py::init<const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
     .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)

@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.13)
 project(ext)
-set(CMAKE_VERBOSE_MAKEFILE ON)
 
 include(FetchContent)
 message(STATUS "Fetching/configuring OSQP")
@@ -15,5 +14,13 @@ FetchContent_MakeAvailable(osqp)
 
 add_subdirectory(pybind11)
 
-pybind11_add_module(ext src/bindings.cpp)
-target_link_libraries(ext PUBLIC pybind11::module osqpstatic)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
+               ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp)
+pybind11_add_module(${OSQP_EXT_MODULE_NAME} src/bindings.cpp)
+
+# TODO: We shouldn't have to do this once the interfaces are set up correctly
+if(${ALGEBRA} STREQUAL "default")
+    target_link_libraries(ext_default PUBLIC pybind11::module osqpstatic)
+elseif(${ALGEBRA} STREQUAL "mkl")
+    target_link_libraries(ext_mkl PUBLIC pybind11::module osqpstatic $<LINK_ONLY:MKL::MKL>)
+endif()

@@ -33,7 +33,19 @@ parser.add_argument(
     action='store_true',
     default=False,
     help='Compile extension in debug mode')
-args, unknown = parser.parse_known_args()
+parser.add_argument(
+    '--algebra-default',
+    dest='algebra_default',
+    action='store_true',
+    default=True,
+    help='Compile OSQP with default algebra')
+parser.add_argument(
+    '--algebra-mkl',
+    dest='algebra_mkl',
+    action='store_true',
+    default=False,
+    help='Compile OSQP with MKL algebra')
+args, _ = parser.parse_known_args()
 
 # necessary to remove OSQP args before passing to setup:
 if OSQP_ARG_MARK in sys.argv:
@@ -234,7 +246,7 @@ class CMakeBuild(build_ext):
             raise RuntimeError("CMake must be installed to build OSQP")
 
         # Compile static library with CMake
-        call(['cmake'] + cmake_args + ['..', '-DBUILD_TESTING=OFF'])
+        call(['cmake'] + cmake_args + ['..', '-DUNITTESTS=OFF'])
         call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
              cmake_build_flags)
 
@@ -249,7 +261,8 @@ class CMakeBuild(build_ext):
     def build_extension_pybind11(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON_EXECUTABLE=' + sys.executable]
+                      '-DPYTHON_EXECUTABLE=' + sys.executable,
+                      '-DBUILD_TESTING=OFF']
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
@@ -263,9 +276,12 @@ class CMakeBuild(build_ext):
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j2']
 
-        if not os.path.exists(self.build_temp):
-            os.makedirs(self.build_temp)
+        if os.path.exists(self.build_temp):
+            sh.rmtree(self.build_temp)
+        os.makedirs(self.build_temp)
 
+        _ext_name = ext.name.split('.')[-1]
+        cmake_args.extend([f'-DOSQP_EXT_MODULE_NAME={_ext_name}'])
         if ext.cmake_args is not None:
             cmake_args.extend(ext.cmake_args)
 
@@ -282,6 +298,12 @@ def readme():
 with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
+ext_modules = [_osqp]
+if args.algebra_default:
+    ext_modules.extend([CMakeExtension('osqp.ext_default', cmake_args=['-DALGEBRA=default'])])
+if args.algebra_mkl:
+    ext_modules.extend([CMakeExtension('osqp.ext_mkl', cmake_args=['-DALGEBRA=mkl'])])
+
 setup(name='osqp',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
@@ -294,4 +316,5 @@ setup(name='osqp',
       url="https://osqp.org/",
       cmdclass={'build_ext': CMakeBuild},
       packages=find_namespace_packages(where='src'),
-      ext_modules=[_osqp, CMakeExtension('osqp.ext')])
+      ext_modules=ext_modules
+)

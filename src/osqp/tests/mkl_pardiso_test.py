@@ -1,5 +1,5 @@
 import osqp
-from osqp import OSQP_USE_PYBIND
+from osqp import algebra_available
 import numpy as np
 from scipy import sparse
 
@@ -8,7 +8,7 @@ import unittest
 import pytest
 
 
-@pytest.mark.skipif(OSQP_USE_PYBIND, reason="Cannot yet switch solvers at runtime")
+@pytest.mark.skipif(not algebra_available('mkl'), reason="mkl algebra not available")
 class mkl_pardiso_tests(unittest.TestCase):
 
     def setUp(self):
@@ -24,9 +24,8 @@ class mkl_pardiso_tests(unittest.TestCase):
 
     def test_issue14(self):
 
-        m = osqp.OSQP()
-        m.setup(self.P, self.q, self.A, self.l, self.u,
-                linsys_solver="mkl pardiso")
+        m = osqp.OSQP(algebra='mkl')
+        m.setup(self.P, self.q, self.A, self.l, self.u)
         m.solve()
 
         #  # Assert test_setup flag

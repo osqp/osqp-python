@@ -1,11 +1,12 @@
 import sys
+import importlib
 from types import SimpleNamespace
 import warnings
 import numpy as np
 import scipy.sparse as spa
 import qdldl
+from osqp import algebra_available, default_algebra
 from osqp.interface import constant
-from osqp.ext import CSC, OSQPInfo, OSQPSolver, OSQPSettings, OSQPSolution, osqp_set_default_settings
 import osqp.utils as utils
 import osqp.codegen as cg
 
@@ -19,12 +20,24 @@ class OSQP:
         self.A = None
         self.l = None
         self.u = None
-        self.settings = OSQPSettings()
-        osqp_set_default_settings(self.settings)
+
+        self.algebra = kwargs.pop('algebra', default_algebra())
+        if not algebra_available(self.algebra):
+            raise RuntimeError(f'Algebra {self.algebra} not available')
+        self.ext = importlib.import_module(f'osqp.ext_{self.algebra}')
+
+        self.settings = self.ext.OSQPSettings()
+        self.ext.osqp_set_default_settings(self.settings)
 
         # The following attributes are populated on setup()
         self._solver = None
         self._derivative_cache = {}
+
+    def __str__(self):
+        return f'OSQP with algebra={self.algebra}'
+
+    def constant(self, which):
+        return constant(which, algebra=self.algebra)
 
     def update_settings(self, **kwargs):
 
@@ -36,8 +49,8 @@ class OSQP:
                 kwargs[v] = kwargs[k]
                 del kwargs[k]
 
-        new_settings = OSQPSettings()
-        for k in OSQPSettings.__dict__:
+        new_settings = self.ext.OSQPSettings()
+        for k in self.ext.OSQPSettings.__dict__:
             if not k.startswith('__'):
                 if k in kwargs:
                     setattr(new_settings, k, kwargs[k])
@@ -94,15 +107,15 @@ class OSQP:
     def setup(self, P, q, A, l, u, **settings):
         self.m = l.shape[0]
         self.n = q.shape[0]
-        self.P = CSC(spa.triu(P, format='csc'))
+        self.P = self.ext.CSC(spa.triu(P, format='csc'))
         self.q = q.astype(np.float64)
-        self.A = CSC(A)
+        self.A = self.ext.CSC(A)
         self.l = l.astype(np.float64)
         self.u = u.astype(np.float64)
 
         self.update_settings(**settings)
 
-        self._solver = OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
+        self._solver = self.ext.OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
         self._derivative_cache.update({
             'P': P,
             'q': q,
@@ -119,7 +132,7 @@ class OSQP:
         self._solver.solve()
 
         info = self._solver.info
-        if info.status_val == constant('OSQP_NON_CVX'):
+        if info.status_val == constant('OSQP_NON_CVX', algebra=self.algebra):
             info.obj_val = np.nan
         # TODO: Handle primal/dual infeasibility
 
