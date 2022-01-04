@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "numpy>=1.7", "scipy>=0.13.2", "qdldl"]
+requires = ["setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "oldest-supported-numpy", "scipy>=0.13.2", "qdldl"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
