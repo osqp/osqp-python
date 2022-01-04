@@ -138,7 +138,7 @@ class OSQP:
 
         # Create a Namespace of OSQPInfo keys and associated values
         _info = SimpleNamespace(**{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
-        
+
         # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
         # directly inside the returned object on solve(). This should be simplified!
         results = SimpleNamespace(
@@ -150,152 +150,9 @@ class OSQP:
         self._derivative_cache['results'] = results
         return results
 
-    def codegen(self, folder, project_type='', parameters='vectors',
-                python_ext_name='emosqp', force_rewrite=False,
+    def codegen(self, folder, project_type='', parameters='vectors', python_ext_name='emosqp', force_rewrite=False,
                 FLOAT=False, LONG=True):
-        """
-        Generate embeddable C code for the problem
-        """
-
-        # Check parameters arguments
-        if parameters == 'vectors':
-            embedded = 1
-        elif parameters == 'matrices':
-            embedded = 2
-        else:
-            raise ValueError("Unknown value of 'parameters' argument.")
-
-        # Set float and long flags
-        if FLOAT:
-            float_flag = 'ON'
-        else:
-            float_flag = 'OFF'
-        if LONG:
-            long_flag = 'ON'
-        else:
-            long_flag = 'OFF'
-
-        # Check project_type argument
-        expectedProject = ('', 'Makefile', 'MinGW Makefiles',
-                           'Unix Makefiles', 'CodeBlocks', 'Xcode')
-        if project_type not in expectedProject:
-            raise ValueError("Unknown value of 'project_type' argument.")
-
-        if project_type == 'Makefile':
-            if system() == 'Windows':
-                project_type = 'MinGW Makefiles'
-            elif system() == 'Linux' or system() == 'Darwin':
-                project_type = 'Unix Makefiles'
-
-        work = self._get_workspace()
-
-        # Generate code with codegen module
-        cg.codegen(work, folder, python_ext_name, project_type,
-                   embedded, force_rewrite, float_flag, long_flag)
-
-    def _get_workspace(self):
-        # TODO: This will likely not be needed once we directly call self._solver.codegen(..)
-        # TODO: Not everything below is currently being returned by pybind11, Nones indicate pending attributes
-        return {
-            'rho_vectors': {
-                'rho_vec': None,
-                'rho_inv_vec': None,
-                'constr_type': None,
-            },
-            'data': {
-                'm': self.m,
-                'n': self.n,
-                'P': {
-                    'nzmax': self.P.nzmax,
-                    'm': self.P.m,
-                    'n': self.P.n,
-                    'p': self.P.p,
-                    'i': self.P.i,
-                    'x': self.P.x,
-                    'nz': self.P.nz
-                },
-                'A': {
-                    'nzmax': self.A.nzmax,
-                    'm': self.A.m,
-                    'n': self.A.n,
-                    'p': self.A.p,
-                    'i': self.A.i,
-                    'x': self.A.x,
-                    'nz': self.A.nz
-                },
-                'q': self.q,
-                'l': self.l,
-                'u': self.u
-            },
-            'linsys_solver': {
-                'L': {
-                    'nzmax': None,
-                    'm': None,
-                    'n': None,
-                    'p': None,
-                    'i': None,
-                    'x': None,
-                    'nz': None
-                },
-                'Dinv': None,
-                'P': None,
-                'bp': None,
-                'sol': None,
-                'rho_inv_vec': None,
-                'sigma': None,
-                'polish': None,
-                'n': None,
-                'm': None,
-                'Pdiag_idx': None,
-                'Pdiag_n': None,
-                'KKT': {
-                    'nzmax': None,
-                    'm': None,
-                    'n': None,
-                    'p': None,
-                    'i': None,
-                    'x': None,
-                    'nz': None
-                },
-                'PtoKKT': None,
-                'AtoKKT': None,
-                'rhotoKKT': None,
-                'D': None,
-                'etree': None,
-                'Lnz': None,
-                'iwork': None,
-                'bwork': None,
-                'fwork': None
-            },
-            'scaling': {
-                'c': None,
-                'cinv': None,
-                'D': None,
-                'E': None,
-                'Dinv': None,
-                'Einv': None
-            },
-            'settings': {
-                'rho': self.settings.rho,
-                'sigma': self.settings.sigma,
-                'scaling': self.settings.scaling,
-                'adaptive_rho': self.settings.adaptive_rho,
-                'adaptive_rho_interval': self.settings.adaptive_rho_interval,
-                'adaptive_rho_tolerance': self.settings.adaptive_rho_tolerance,
-                'adaptive_rho_fraction': self.settings.adaptive_rho_interval,
-                'max_iter': self.settings.max_iter,
-                'eps_abs': self.settings.eps_abs,
-                'eps_rel': self.settings.eps_rel,
-                'eps_prim_inf': self.settings.eps_prim_inf,
-                'eps_dual_inf': self.settings.eps_dual_inf,
-                'alpha': self.settings.alpha,
-                'linsys_solver': self.settings.linsys_solver.value,
-                'warm_start': self.settings.warm_starting,
-                'scaled_termination': self.settings.scaled_termination,
-                'check_termination': self.settings.check_termination,
-                'time_limit': self.settings.time_limit
-            }
-        }
+        return NotImplementedError
 
     def _derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
         M = self._derivative_cache['M']

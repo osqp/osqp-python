@@ -1,5 +1,5 @@
 import osqp
-from osqp import algebra_available
+from osqp import default_algebra
 import numpy as np
 from scipy import sparse
 
@@ -8,7 +8,7 @@ import unittest
 import pytest
 
 
-@pytest.mark.skipif(not algebra_available('mkl'), reason="mkl algebra not available")
+@pytest.mark.skipif(default_algebra() != 'mkl', reason='Only applicable to MKL algebra')
 class mkl_pardiso_tests(unittest.TestCase):
 
     def setUp(self):
@@ -24,7 +24,7 @@ class mkl_pardiso_tests(unittest.TestCase):
 
     def test_issue14(self):
 
-        m = osqp.OSQP(algebra='mkl')
+        m = osqp.OSQP()
         m.setup(self.P, self.q, self.A, self.l, self.u)
         m.solve()
 

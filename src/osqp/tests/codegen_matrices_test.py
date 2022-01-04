@@ -1,5 +1,6 @@
 # Test osqp python module
 import osqp
+from osqp import default_algebra
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -12,6 +13,7 @@ import shutil as sh
 import os
 
 
+@pytest.mark.skipif(default_algebra() != 'legacy', reason='Codegen not implemented for non-legacy algebra.')
 class codegen_matrices_tests(unittest.TestCase):
 
     @classmethod
@@ -34,7 +36,7 @@ class codegen_matrices_tests(unittest.TestCase):
                      'max_iter': 3000,
                      'warm_start': True}
 
-        model = osqp.OSQP(algebra='legacy')
+        model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model.codegen('code2', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')

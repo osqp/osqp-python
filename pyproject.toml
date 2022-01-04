@@ -1,5 +1,5 @@
 [build-system]
-requires = ["numpy>=1.7", "setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "qdldl"]
+requires = ["setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "numpy>=1.7", "scipy>=0.13.2", "qdldl"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
@@ -9,7 +9,7 @@ write_to = "src/osqp/_version.py"
 build = "cp3*"
 skip = "*-win32 *-manylinux_i686 *-musllinux_*"
 test-requires = ["pytest"]
-test-command = "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\""
+test-command = "pytest -s {project}/src/osqp/tests"
 
 [tool.cibuildwheel.linux]
 environment-pass = ["OSQP_ALGEBRA"]

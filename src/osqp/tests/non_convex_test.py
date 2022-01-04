@@ -1,12 +1,13 @@
 # Test osqp python module
 import osqp
-from osqp import constant
+from osqp import constant, default_algebra
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
 
 # Unit Test
 import unittest
+import pytest
 import numpy.testing as nptest
 
 
@@ -23,6 +24,7 @@ class non_convex_tests(unittest.TestCase):
         self.l = -np.inf * np.ones(len(self.u))
         self.model = osqp.OSQP()
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason='Only applicable for legacy/default algebra')
     def test_non_convex_small_sigma(self):
         opts = {'verbose': False, 'sigma': 1e-6}
         try:

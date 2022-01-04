@@ -1,3 +1,6 @@
+import sys
+import os
+import functools
 import importlib
 import numpy as np
 import scipy.sparse as spa
@@ -5,8 +8,6 @@ from warnings import warn
 from platform import system
 import osqp.codegen as cg
 import osqp.utils as utils
-import sys
-import os
 import qdldl
 
 
@@ -14,6 +15,7 @@ _ALGEBRAS = ('default', 'mkl', 'cuda', 'legacy')   # Highest->Lowest priority of
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 
 
+@functools.cache
 def algebra_available(algebra):
     assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
     if algebra == 'legacy':
@@ -29,10 +31,12 @@ def algebra_available(algebra):
         return True
 
 
+@functools.cache
 def algebras_available():
     return [algebra for algebra in _ALGEBRAS if algebra_available(algebra)]
 
 
+@functools.cache
 def default_algebra():
     if OSQP_ALGEBRA is not None:
         return OSQP_ALGEBRA

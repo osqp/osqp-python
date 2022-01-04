@@ -10,46 +10,6 @@ from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
 import distutils.sysconfig as sysconfig
 
-import argparse
-
-OSQP_ARG_MARK = '--osqp'
-
-parser = argparse.ArgumentParser(description='OSQP Setup script arguments.')
-parser.add_argument(
-    OSQP_ARG_MARK,
-    dest='osqp',
-    action='store_true',
-    default=False,
-    help='Put this first to ensure following arguments are parsed correctly')
-parser.add_argument(
-    '--long',
-    dest='long',
-    action='store_true',
-    default=False,
-    help='Use long integers')
-parser.add_argument(
-    '--debug',
-    dest='debug',
-    action='store_true',
-    default=False,
-    help='Compile extension in debug mode')
-parser.add_argument(
-    '--algebra-default',
-    dest='algebra_default',
-    action='store_true',
-    default=True,
-    help='Compile OSQP with default algebra')
-parser.add_argument(
-    '--algebra-mkl',
-    dest='algebra_mkl',
-    action='store_true',
-    default=False,
-    help='Compile OSQP with MKL algebra')
-args, _ = parser.parse_known_args()
-
-# necessary to remove OSQP args before passing to setup:
-if OSQP_ARG_MARK in sys.argv:
-    sys.argv = sys.argv[0:sys.argv.index(OSQP_ARG_MARK)]
 
 # Add parameters to cmake_args and define_macros
 cmake_args = ["-DUNITTESTS=OFF"]
@@ -72,19 +32,10 @@ else:  # Linux or Mac
     lib_name = 'libosqp.a'
 
 # Pass Python option to CMake and Python interface compilation
-cmake_args += ['-DPYTHON=ON']
-
-# Remove long integers for numpy compatibility (default args.long == False)
-# https://github.com/numpy/numpy/issues/5906
-# https://github.com/ContinuumIO/anaconda-issues/issues/3823
-if not args.long:
-    print("Disabling LONG\n" +
-          "Remove long integers for numpy compatibility. See:\n" +
-          " - https://github.com/numpy/numpy/issues/5906\n" +
-          " - https://github.com/ContinuumIO/anaconda-issues/issues/3823\n" +
-          "You can reenable long integers by passing: "
-          "--osqp --long argument.\n")
-    cmake_args += ['-DDLONG=OFF']
+# Note: DDLONG=OFF due to
+#   https://github.com/numpy/numpy/issues/5906
+#   https://github.com/ContinuumIO/anaconda-issues/issues/3823
+cmake_args += ['-DPYTHON=ON', '-DDLONG=OFF']
 
 # Pass python to compiler launched from setup.py
 define_macros += [('PYTHON', None)]
@@ -115,12 +66,6 @@ if system() != 'Windows':
     compile_args = ["-O3"]
 else:
     compile_args = []
-
-# If in debug mode
-if args.debug:
-    print("Debug mode")
-    compile_args += ["-g"]
-    cmake_args += ["-DCMAKE_BUILD_TYPE=Debug"]
 
 # External libraries
 library_dirs = []
@@ -223,7 +168,7 @@ class CMakeExtension(Extension):
         self.cmake_args = cmake_args
 
 
-class CMakeBuild(build_ext):
+class CmdCMakeBuild(build_ext):
     def build_extension(self, ext):
         if ext.name == 'osqp._osqp':
             self.build_extension_legacy(ext, osqp_ext_src_dir, osqp_build_dir)
@@ -295,13 +240,12 @@ def readme():
         return f.read()
 
 
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
+ext_modules = [
+    _osqp,
+    CMakeExtension('osqp.ext_default', cmake_args=['-DALGEBRA=default'])
+]
 
-ext_modules = [_osqp]
-if args.algebra_default:
-    ext_modules.extend([CMakeExtension('osqp.ext_default', cmake_args=['-DALGEBRA=default'])])
-if args.algebra_mkl:
+if bool(int(os.environ.get('OSQP_EXT_BUILD_MKL', 0))):
     ext_modules.extend([CMakeExtension('osqp.ext_mkl', cmake_args=['-DALGEBRA=mkl'])])
 
 setup(name='osqp',
@@ -311,10 +255,9 @@ setup(name='osqp',
       long_description=readme(),
       package_dir={'': 'src'},
       include_package_data=True,  # Include package data from MANIFEST.in
-      install_requires=requirements,
       license='Apache 2.0',
       url="https://osqp.org/",
-      cmdclass={'build_ext': CMakeBuild},
+      cmdclass={'build_ext': CmdCMakeBuild},
       packages=find_namespace_packages(where='src'),
       ext_modules=ext_modules
 )

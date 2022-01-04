@@ -269,7 +269,6 @@ c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A
 }
 
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
-    //m.attr("__name__") = "osqp.ext";
 
     // Any constants that we wish to make directly accessible in the extension module
     m.attr("OSQP_INFTY") = OSQP_INFTY;
