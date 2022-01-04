@@ -12,7 +12,10 @@ FetchContent_Declare(
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
 
-add_subdirectory(pybind11)
+FetchContent_Declare(
+  pybind11
+  GIT_REPOSITORY https://github.com/pybind/pybind11.git)
+FetchContent_MakeAvailable(pybind11)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
                ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp)
