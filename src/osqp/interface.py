@@ -15,7 +15,7 @@ _ALGEBRAS = ('default', 'mkl', 'cuda', 'legacy')   # Highest->Lowest priority of
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 
 
-@functools.cache
+@functools.lru_cache(maxsize=4)
 def algebra_available(algebra):
     assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
     if algebra == 'legacy':
@@ -31,12 +31,12 @@ def algebra_available(algebra):
         return True
 
 
-@functools.cache
+@functools.lru_cache(maxsize=1)
 def algebras_available():
     return [algebra for algebra in _ALGEBRAS if algebra_available(algebra)]
 
 
-@functools.cache
+@functools.lru_cache(maxsize=1)
 def default_algebra():
     if OSQP_ALGEBRA is not None:
         return OSQP_ALGEBRA
