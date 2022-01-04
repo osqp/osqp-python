@@ -31,8 +31,9 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: OSQP_ALGEBRA
+    - name: Set envvars
       run: |
+        echo "OSQP_EXT_BUILD_MKL=1" >> $GITHUB_ENV
         echo "OSQP_ALGEBRA=legacy" >> $GITHUB_ENV
 
     - name: Build wheels
