@@ -255,6 +255,7 @@ setup(name='osqp',
       long_description=readme(),
       package_dir={'': 'src'},
       include_package_data=True,  # Include package data from MANIFEST.in
+      install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl'],
       license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': CmdCMakeBuild},
