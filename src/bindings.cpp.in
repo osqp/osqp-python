@@ -377,7 +377,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def(py::init<const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
     .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
-    .def_property_readonly("info", &MyOSQPSolver::get_info, py::return_value_policy::reference)
+    .def_property_readonly("info", &MyOSQPSolver::get_info)
     .def("warm_start", &MyOSQPSolver::warm_start, "x"_a.none(true), "y"_a.none(true))
     .def("solve", &MyOSQPSolver::solve)
     .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))

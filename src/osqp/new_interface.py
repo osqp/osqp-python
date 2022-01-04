@@ -136,12 +136,15 @@ class OSQP:
             info.obj_val = np.nan
         # TODO: Handle primal/dual infeasibility
 
+        # Create a Namespace of OSQPInfo keys and associated values
+        _info = SimpleNamespace(**{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
+        
         # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
         # directly inside the returned object on solve(). This should be simplified!
         results = SimpleNamespace(
             x=self._solver.solution.x,
             y=self._solver.solution.y,
-            info=info
+            info=_info
         )
 
         self._derivative_cache['results'] = results
