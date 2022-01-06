@@ -10,7 +10,7 @@ import unittest
 import pytest
 import numpy.testing as nptest
 import shutil as sh
-import os
+import sys
 
 
 @pytest.mark.skipif(default_algebra() != 'legacy', reason='Codegen not implemented for non-legacy algebra.')
@@ -39,8 +39,9 @@ class codegen_matrices_tests(unittest.TestCase):
         model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-        model.codegen('code2', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
+        model_dir = model.codegen('code2', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
         sh.rmtree('code2')
+        sys.path.append(model_dir)
 
         cls.m = m
         cls.n = n

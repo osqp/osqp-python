@@ -10,6 +10,7 @@ import unittest
 import pytest
 import numpy.testing as nptest
 import shutil as sh
+import sys
 
 
 @pytest.mark.skipif(default_algebra() != 'legacy', reason='Codegen not implemented for non-legacy algebra.')
@@ -36,9 +37,10 @@ class codegen_vectors_tests(unittest.TestCase):
         model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-        model.codegen('code', python_ext_name='vec_emosqp',
+        model_dir = model.codegen('code', python_ext_name='vec_emosqp',
                            force_rewrite=True)
         sh.rmtree('code')
+        sys.path.append(model_dir)
 
         cls.m = m
         cls.n = n

@@ -379,7 +379,7 @@ class OSQP:
         print("[done]")
 
         # Generate code with codegen module
-        cg.codegen(work, folder, python_ext_name, project_type,
+        return cg.codegen(work, folder, python_ext_name, project_type,
                    embedded, force_rewrite, float_flag, long_flag)
 
     def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
