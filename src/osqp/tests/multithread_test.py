@@ -12,7 +12,7 @@ import unittest
 import pytest
 
 
-@pytest.mark.skipif(default_algebra() == 'mkl', reason="mkl runs faster without python-level threading")
+@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason="threading improvements expected for legacy/default algebra")
 class multithread_tests(unittest.TestCase):
 
     def test_multithread(self):
