@@ -40,12 +40,3 @@ else
     ldconfig
 
 fi
-
-mkdir build-release && cd build-release
-
-if [ "$CIBW_ARCHS" == "aarch64" ]; then
-else
-fi
-
-cd ..
-rm -r build-release
