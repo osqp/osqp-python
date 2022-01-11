@@ -37,9 +37,11 @@ jobs:
         echo "OSQP_ALGEBRA=legacy" >> $GITHUB_ENV
 
     - name: Build wheels
-      run: |
-        python -m pip install cibuildwheel
-        python -m cibuildwheel --output-dir wheelhouse
+      uses: pypa/cibuildwheel@v2.3.1
+      with:
+        output-dir: wheelhouse
+      env:
+        CIBW_BEFORE_ALL_LINUX: .github/workflows/prepare_build_environment_linux.sh    
 
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')
