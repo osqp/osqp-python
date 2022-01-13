@@ -12,16 +12,20 @@ import qdldl
 
 
 _ALGEBRAS = ('cuda', 'mkl', 'default', 'legacy')   # Highest->Lowest priority of algebras that are tried in turn
+# Mapping from algebra to loadable module
+_ALGEBRA_MODULES = {
+    'cuda': 'osqp_cuda',
+    'mkl' : 'osqp_mkl',
+    'default': 'osqp.ext_default',
+    'legacy': 'osqp._osqp'
+}
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 
 
 @functools.lru_cache(maxsize=4)
 def algebra_available(algebra):
     assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
-    if algebra == 'legacy':
-        module = 'osqp._osqp'
-    else:
-        module = f'osqp.ext_{algebra}'
+    module = _ALGEBRA_MODULES[algebra]
 
     try:
         importlib.import_module(module)
@@ -52,7 +56,7 @@ def constant(which, algebra=None):
         import osqp._osqp as _osqp
         return _osqp.constant(which)
     else:
-        m = importlib.import_module(f'osqp.ext_{algebra}')
+        m = importlib.import_module(_ALGEBRA_MODULES[algebra])
         _constant = getattr(m, which, None)
 
         # If the constant was exported directly as an atomic type in the extension, use it;

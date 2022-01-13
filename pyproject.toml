@@ -9,8 +9,4 @@ write_to = "src/osqp/_version.py"
 build = "cp3*"
 skip = "*-win32 *-manylinux_i686 *-musllinux_*"
 test-requires = ["pytest"]
-test-command = "LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so pytest -s {project}/src/osqp/tests"
-
-[tool.cibuildwheel.linux]
-environment = { OSQP_EXT_BUILD_CUDA="0", OSQP_BUILD_EXT_MKL="1", MKL_ROOT="/opt/intel/oneapi/mkl/latest" }
-before-all = ".github/workflows/prepare_build_environment_linux.sh"
+test-command = "pytest -s {project}/src/osqp/tests"

@@ -6,7 +6,7 @@ import numpy as np
 import scipy.sparse as spa
 import qdldl
 from osqp import algebra_available, default_algebra
-from osqp.interface import constant
+from osqp.interface import constant, _ALGEBRA_MODULES
 import osqp.utils as utils
 import osqp.codegen as cg
 
@@ -24,7 +24,7 @@ class OSQP:
         self.algebra = kwargs.pop('algebra', default_algebra())
         if not algebra_available(self.algebra):
             raise RuntimeError(f'Algebra {self.algebra} not available')
-        self.ext = importlib.import_module(f'osqp.ext_{self.algebra}')
+        self.ext = importlib.import_module(_ALGEBRA_MODULES[self.algebra])
 
         self.settings = self.ext.OSQPSettings()
         self.ext.osqp_set_default_settings(self.settings)

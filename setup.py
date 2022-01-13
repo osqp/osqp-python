@@ -246,9 +246,9 @@ ext_modules = [
 ]
 
 if bool(int(os.environ.get('OSQP_EXT_BUILD_MKL', 0))):
-    ext_modules.extend([CMakeExtension('osqp.ext_mkl', cmake_args=['-DALGEBRA=mkl'])])
+    ext_modules.extend([CMakeExtension('osqp_mkl', cmake_args=['-DALGEBRA=mkl'])])
 if bool(int(os.environ.get('OSQP_EXT_BUILD_CUDA', 0))):
-    ext_modules.extend([CMakeExtension('osqp.ext_cuda', cmake_args=['-DALGEBRA=cuda'])])
+    ext_modules.extend([CMakeExtension('osqp_cuda', cmake_args=['-DALGEBRA=cuda'])])
 
 setup(name='osqp',
       author='Bartolomeo Stellato, Goran Banjac',
