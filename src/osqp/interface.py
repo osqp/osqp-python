@@ -11,7 +11,7 @@ import osqp.utils as utils
 import qdldl
 
 
-_ALGEBRAS = ('default', 'mkl', 'cuda', 'legacy')   # Highest->Lowest priority of algebras that are tried in turn
+_ALGEBRAS = ('cuda', 'mkl', 'default', 'legacy')   # Highest->Lowest priority of algebras that are tried in turn
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 
 

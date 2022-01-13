@@ -6,10 +6,12 @@ build-backend = "setuptools.build_meta"
 write_to = "src/osqp/_version.py"
 
 [tool.cibuildwheel]
-build = "cp3*"
+build = "cp38-*"
 skip = "*-win32 *-manylinux_i686 *-musllinux_*"
-test-requires = ["pytest"]
-test-command = "pytest -s {project}/src/osqp/tests"
+#test-requires = ["pytest"]
+#test-command = "LD_PRELOAD=/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_core.so:/opt/intel/oneapi/mkl/latest/lib/intel64/libmkl_sequential.so pytest -s {project}/src/osqp/tests"
+test-command = "python -c \"from osqp import algebra_available, default_algebra; assert(algebra_available('cuda'));\""
 
 [tool.cibuildwheel.linux]
-environment-pass = ["OSQP_EXT_BUILD_MKL", "OSQP_ALGEBRA"]
+environment = { OSQP_EXT_BUILD_CUDA="1", MKL_ROOT="/opt/intel/oneapi/mkl/latest" }
+before-all = ".github/workflows/prepare_build_environment_linux.sh"
