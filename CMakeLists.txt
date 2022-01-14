@@ -23,7 +23,7 @@ pybind11_add_module(${OSQP_EXT_MODULE_NAME} src/bindings.cpp)
 
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
 if(${ALGEBRA} STREQUAL "default")
-    target_link_libraries(ext_default PUBLIC pybind11::module osqpstatic)
+    target_link_libraries(osqp_default PUBLIC pybind11::module osqpstatic)
 elseif(${ALGEBRA} STREQUAL "mkl")
     target_link_libraries(osqp_mkl PUBLIC pybind11::module osqpstatic $<LINK_ONLY:MKL::MKL>)
 elseif(${ALGEBRA} STREQUAL "cuda")

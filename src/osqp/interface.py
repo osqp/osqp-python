@@ -16,7 +16,7 @@ _ALGEBRAS = ('cuda', 'mkl', 'default', 'legacy')   # Highest->Lowest priority of
 _ALGEBRA_MODULES = {
     'cuda': 'osqp_cuda',
     'mkl' : 'osqp_mkl',
-    'default': 'osqp.ext_default',
+    'default': 'osqp_default',
     'legacy': 'osqp._osqp'
 }
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
