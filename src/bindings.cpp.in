@@ -269,6 +269,18 @@ c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A
 
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
+#ifdef DFLOAT
+    m.attr("OSQP_DFLOAT") = 1;
+#else
+    m.attr("OSQP_DFLOAT") = 0;
+#endif
+
+#ifdef DLONG
+    m.attr("OSQP_DLONG") = 1;
+#else
+    m.attr("OSQP_DLONG") = 0;
+#endif
+
     // Any constants that we wish to make directly accessible in the extension module
     m.attr("OSQP_INFTY") = OSQP_INFTY;
     m.attr("OSQP_ALGEBRA") = OSQP_ALGEBRA;

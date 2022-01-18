@@ -29,12 +29,24 @@ class OSQP:
         self.settings = self.ext.OSQPSettings()
         self.ext.osqp_set_default_settings(self.settings)
 
+        self._dtype = np.float32 if self.ext.OSQP_DFLOAT == 1 else np.float64
+        self._itype = np.int64 if self.ext.OSQP_DLONG == 1 else np.int32
+
         # The following attributes are populated on setup()
         self._solver = None
         self._derivative_cache = {}
 
     def __str__(self):
         return f'OSQP with algebra={self.algebra}'
+
+    @property
+    def solver_type(self):
+        return 'direct' if self.settings.linsys_solver == self.ext.linsys_solver_type.DIRECT_SOLVER else 'indirect'
+
+    @solver_type.setter
+    def solver_type(self, value):
+        assert value in ('direct', 'indirect')
+        self.settings.linsys_solver = self.ext.linsys_solver_type.DIRECT_SOLVER if value == 'direct' else self.ext.linsys_solver_type.INDIRECT_SOLVER
 
     def constant(self, which):
         return constant(which, algebra=self.algebra)
@@ -107,11 +119,11 @@ class OSQP:
     def setup(self, P, q, A, l, u, **settings):
         self.m = l.shape[0]
         self.n = q.shape[0]
-        self.P = self.ext.CSC(spa.triu(P, format='csc'))
-        self.q = q.astype(np.float64)
-        self.A = self.ext.CSC(A)
-        self.l = l.astype(np.float64)
-        self.u = u.astype(np.float64)
+        self.P = self.ext.CSC(spa.triu(P.astype(self._dtype), format='csc'))
+        self.q = q.astype(self._dtype)
+        self.A = self.ext.CSC(A.astype(self._dtype))
+        self.l = l.astype(self._dtype)
+        self.u = u.astype(self._dtype)
 
         self.update_settings(**settings)
 
