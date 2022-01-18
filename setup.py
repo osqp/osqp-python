@@ -242,7 +242,7 @@ def readme():
 
 ext_modules = [
     _osqp,
-    CMakeExtension('osqp_default', cmake_args=['-DALGEBRA=default'])
+    CMakeExtension('osqp.ext_default', cmake_args=['-DALGEBRA=default'])
 ]
 
 if bool(int(os.environ.get('OSQP_EXT_BUILD_MKL', 0))):
