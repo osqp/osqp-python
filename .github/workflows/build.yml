@@ -48,7 +48,7 @@ jobs:
         TWINE_PASSWORD: ${{ secrets.vb_pypi_password }}
       run: |
         python -m pip install --upgrade twine
-        twine upload --repository testpypi wheelhouse/*
+        twine upload wheelhouse/*
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v1
