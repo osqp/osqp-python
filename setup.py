@@ -250,7 +250,7 @@ if bool(int(os.environ.get('OSQP_EXT_BUILD_MKL', 0))):
 if bool(int(os.environ.get('OSQP_EXT_BUILD_CUDA', 0))):
     ext_modules.extend([CMakeExtension('osqp_cuda', cmake_args=['-DALGEBRA=cuda'])])
 
-setup(name='vosqp',
+setup(name='osqp1',
       author='Bartolomeo Stellato, Goran Banjac',
       author_email='bartolomeo.stellato@gmail.com',
       description='OSQP: The Operator Splitting QP Solver',
