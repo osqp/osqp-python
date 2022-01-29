@@ -1,4 +1,4 @@
-name: Build
+name: Build CUDA
 
 on: [push, pull_request]
 
@@ -9,7 +9,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@master
@@ -31,21 +31,30 @@ jobs:
       with:
         python-version: '3.9'
 
-    - name: Build wheels
+    - name: Build CUDA wheels
       uses: pypa/cibuildwheel@v2.3.1
       with:
         output-dir: wheelhouse
+      env:
+        CIBW_BUILD: cp38-*
+        CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_* *-macosx_*"
+        CIBW_TEST_REQUIRES: pytest
 
-    - name: Build source
-      if: startsWith(matrix.os, 'ubuntu')
-      run: |
-        python setup.py sdist --dist-dir=wheelhouse
+        CIBW_ENVIRONMENT_LINUX: OSQP_ALGEBRA=cuda CMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+        CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
+        CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
+        CIBW_TEST_COMMAND_LINUX: "python -c \"from osqp import default_algebra; assert(default_algebra()=='cuda')\""
+        
+        CIBW_ENVIRONMENT_WINDOWS: OSQP_ALGEBRA=cuda CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2/bin/nvcc.exe"
+        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_cuda.sh
+        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+        CIBW_TEST_COMMAND_WINDOWS: "python -c 'from osqp import default_algebra; assert(default_algebra()==\"cuda\")'"
 
     - name: Release to pypi
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.vb_pypi_password }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
       run: |
         python -m pip install --upgrade twine
         twine upload wheelhouse/*
