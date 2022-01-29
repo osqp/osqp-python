@@ -46,6 +46,8 @@ jobs:
         
         CIBW_ENVIRONMENT_MACOS: OSQP_ALGEBRA=mkl MKL_ROOT=/opt/intel/oneapi/mkl/latest
         CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
+        CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
+        CIBW_TEST_COMMAND_MACOS: "pytest -s {project}/src/osqp/tests"
        
         CIBW_ENVIRONMENT_WINDOWS: OSQP_ALGEBRA=mkl MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
         CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_mkl.sh
