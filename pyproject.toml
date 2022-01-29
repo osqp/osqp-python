@@ -1,12 +1,6 @@
 [build-system]
-requires = ["setuptools>=40.8.0", "wheel", "setuptools_scm>=6.2", "oldest-supported-numpy", "scipy>=0.13.2"]
+requires = ["setuptools>=45", "wheel", "oldest-supported-numpy", "scipy>=0.13.2", "setuptools_scm>=6.2"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 write_to = "src/osqp/_version.py"
-
-[tool.cibuildwheel]
-build = "cp3*"
-skip = "*-win32 *-manylinux_i686 *-musllinux_*"
-test-requires = ["pytest"]
-test-command = "pytest -s {project}/src/osqp/tests"
