@@ -225,7 +225,7 @@ class CmdCMakeBuild(build_ext):
         cmake_args.extend([f'-DOSQP_EXT_MODULE_NAME={_ext_name}'])
 
         # What variables from the environment do we wish to pass on to cmake as variables?
-        cmake_env_vars = ('CMAKE_CUDA_COMPILER', 'CUDA_TOOLKIT_ROOT_DIR', 'MKL_DIR', 'MKL_ROOT')
+        cmake_env_vars = ('CMAKE_CUDA_COMPILER', 'CUDA_TOOLKIT_ROOT_DIR', 'CUDAToolkit_ROOT', 'MKL_DIR', 'MKL_ROOT')
         for cmake_env_var in cmake_env_vars:
             cmake_var = os.environ.get(cmake_env_var)
             if cmake_var:
