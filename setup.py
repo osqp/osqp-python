@@ -17,9 +17,9 @@ define_macros = []
 lib_subdir = []
 
 if system() == 'Windows':
-    cmake_args += ['-G', 'Visual Studio 14 2015']
+    cmake_args += ['-G', 'Visual Studio 16 2019']
     if sys.maxsize // 2 ** 32 > 0:
-        cmake_args[-1] += ' Win64'
+        cmake_args += ['-A', 'x64']
     cmake_build_flags += ['--config', 'Release']
     lib_name = 'osqp.lib'
     lib_subdir = ['Release']
@@ -209,6 +209,11 @@ class CmdCMakeBuild(build_ext):
 
         if system() == "Windows":
             cmake_args += ['-G', 'Visual Studio 16 2019']
+            # Finding the CUDA Toolkit on Windows seems to work reliably only if BOTH
+            # CMAKE_GENERATOR_TOOLSET (-T) and CUDA_TOOLKIT_ROOT_DIR are supplied to cmake
+            if 'CUDA_TOOLKIT_ROOT_DIR' in os.environ:
+                cuda_root = os.environ['CUDA_TOOLKIT_ROOT_DIR']
+                cmake_args += ['-T', f'cuda={cuda_root}']
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
             if sys.maxsize > 2**32:
                 cmake_args += ['-A', 'x64']
@@ -225,7 +230,7 @@ class CmdCMakeBuild(build_ext):
         cmake_args.extend([f'-DOSQP_EXT_MODULE_NAME={_ext_name}'])
 
         # What variables from the environment do we wish to pass on to cmake as variables?
-        cmake_env_vars = ('CMAKE_CUDA_COMPILER', 'CUDA_TOOLKIT_ROOT_DIR', 'CUDAToolkit_ROOT', 'MKL_DIR', 'MKL_ROOT')
+        cmake_env_vars = ('CMAKE_CUDA_COMPILER', 'CUDA_TOOLKIT_ROOT_DIR', 'MKL_DIR', 'MKL_ROOT')
         for cmake_env_var in cmake_env_vars:
             cmake_var = os.environ.get(cmake_env_var)
             if cmake_var:
