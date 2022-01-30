@@ -209,6 +209,7 @@ class CmdCMakeBuild(build_ext):
 
         if system() == "Windows":
             cmake_args += ['-G', 'Visual Studio 16 2019']
+            cmake_args += ['-T', 'cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.2']
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
             if sys.maxsize > 2**32:
                 cmake_args += ['-A', 'x64']
