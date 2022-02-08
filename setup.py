@@ -246,7 +246,7 @@ class CmdCMakeBuild(build_ext):
 algebra = os.environ.get('OSQP_ALGEBRA', 'default')
 assert algebra in ('default', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
 if algebra == 'default':
-    package_name = 'osqpdev'
+    package_name = 'osqp'
     ext_modules = [_osqp, CMakeExtension(f'osqp.ext_default', cmake_args=['-DALGEBRA=default'])]
 else:
     package_name = f'osqp_{algebra}'
