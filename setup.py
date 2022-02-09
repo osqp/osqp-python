@@ -248,9 +248,11 @@ assert algebra in ('default', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
 if algebra == 'default':
     package_name = 'osqp'
     ext_modules = [_osqp, CMakeExtension(f'osqp.ext_default', cmake_args=['-DALGEBRA=default'])]
+    extras_require = {'mkl': ['osqp-mkl'], 'cuda': ['osqp-cuda']}
 else:
     package_name = f'osqp_{algebra}'
     ext_modules = [CMakeExtension(f'osqp_{algebra}', cmake_args=[f'-DALGEBRA={algebra}'])]
+    extras_require = {}
 
 setup(name=package_name,
       author='Bartolomeo Stellato, Goran Banjac',
@@ -261,6 +263,7 @@ setup(name=package_name,
       include_package_data=True,
       install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl'],
       python_requires='>=3.7',
+      extras_require=extras_require,
       license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': CmdCMakeBuild},
