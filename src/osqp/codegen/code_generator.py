@@ -12,7 +12,7 @@ import sys
 from . import utils
 
 
-def codegen(work, target_dir, python_ext_name, project_type, embedded,
+def codegen(work, target_dir, python_ext_name, project_type, compile_python_ext, embedded,
             force_rewrite, float_flag, long_flag):
     """
     Generate code
@@ -165,23 +165,22 @@ def codegen(work, target_dir, python_ext_name, project_type, embedded,
         os.chdir(current_dir)
         print("[done]")
 
-    # Compile python interface
-    sys.stdout.write("Compiling Python wrapper... \t\t\t\t\t")
-    sys.stdout.flush()
-    current_dir = os.getcwd()
-    os.chdir(target_src_dir)
-    call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'])
-    print("[done]")
-
-    # Copy compiled solver
-    sys.stdout.write("Copying code-generated Python solver to current " +
-                     "directory... \t")
-    sys.stdout.flush()
-    module_name = glob('%s*' % python_ext_name + module_ext)
-    if not any(module_name):
-        raise ValueError('No Python module generated! ' +
-                         'Some errors have occurred.')
-    module_name = module_name[0]
-    sh.copy(module_name, current_dir)
-    os.chdir(current_dir)
-    print("[done]")
+    # Compile python interface and copy compiled solver
+    if compile_python_ext:
+        sys.stdout.write("Compiling Python wrapper... \t\t\t\t\t")
+        sys.stdout.flush()
+        current_dir = os.getcwd()
+        os.chdir(target_src_dir)
+        call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'])
+        print("[done]")
+        sys.stdout.write("Copying code-generated Python solver to current " +
+                         "directory... \t")
+        sys.stdout.flush()
+        module_name = glob('%s*' % python_ext_name + module_ext)
+        if not any(module_name):
+            raise ValueError('No Python module generated! ' +
+                             'Some errors have occurred.')
+        module_name = module_name[0]
+        sh.copy(module_name, current_dir)
+        os.chdir(current_dir)
+        print("[done]")
