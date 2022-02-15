@@ -47,7 +47,7 @@ lib_subdir = []
 
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
-    cmake_args += ['-G', 'Visual Studio 16 2019']
+    cmake_args += ['-G', 'Visual Studio 15 2017']
     # Differentiate between 32-bit and 64-bit
     if sys.maxsize // 2 ** 32 > 0:
         cmake_args += ['-A', 'x64']
