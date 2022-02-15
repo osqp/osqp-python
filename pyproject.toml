@@ -9,4 +9,4 @@ write_to = "src/osqp/_version.py"
 build = "cp3*"
 skip = "*-win32 *-manylinux_i686 *-musllinux_*"
 test-requires = ["pytest"]
-test-command = "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\""
+test-command = "pytest -s {project}/src/osqp/tests -k \"not mkl\""

@@ -184,3 +184,5 @@ def codegen(work, target_dir, python_ext_name, project_type, compile_python_ext,
         sh.copy(module_name, current_dir)
         os.chdir(current_dir)
         print("[done]")
+
+    return current_dir
