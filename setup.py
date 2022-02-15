@@ -47,10 +47,10 @@ lib_subdir = []
 
 # Check if windows linux or mac to pass flag
 if system() == 'Windows':
-    cmake_args += ['-G', 'Visual Studio 14 2015']
+    cmake_args += ['-G', 'Visual Studio 16 2019']
     # Differentiate between 32-bit and 64-bit
     if sys.maxsize // 2 ** 32 > 0:
-        cmake_args[-1] += ' Win64'
+        cmake_args += ['-A', 'x64']
     cmake_build_flags += ['--config', 'Release']
     lib_name = 'osqp.lib'
     lib_subdir = ['Release']
