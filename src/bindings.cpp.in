@@ -286,9 +286,9 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     m.attr("OSQP_ALGEBRA") = OSQP_ALGEBRA;
 
     // Enum values that are directly accessible
-    py::enum_<linsys_solver_type>(m, "linsys_solver_type", py::module_local())
-    .value("DIRECT_SOLVER", DIRECT_SOLVER)
-    .value("INDIRECT_SOLVER", INDIRECT_SOLVER)
+    py::enum_<osqp_linsys_solver_type>(m, "osqp_linsys_solver_type", py::module_local())
+    .value("OSQP_DIRECT_SOLVER", OSQP_DIRECT_SOLVER)
+    .value("OSQP_INDIRECT_SOLVER", OSQP_INDIRECT_SOLVER)
     .export_values();
 
     // Enum values that are directly accessible

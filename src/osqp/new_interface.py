@@ -41,12 +41,12 @@ class OSQP:
 
     @property
     def solver_type(self):
-        return 'direct' if self.settings.linsys_solver == self.ext.linsys_solver_type.DIRECT_SOLVER else 'indirect'
+        return 'direct' if self.settings.linsys_solver == self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER else 'indirect'
 
     @solver_type.setter
     def solver_type(self, value):
         assert value in ('direct', 'indirect')
-        self.settings.linsys_solver = self.ext.linsys_solver_type.DIRECT_SOLVER if value == 'direct' else self.ext.linsys_solver_type.INDIRECT_SOLVER
+        self.settings.linsys_solver = self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER if value == 'direct' else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
 
     def constant(self, which):
         return constant(which, algebra=self.algebra)
