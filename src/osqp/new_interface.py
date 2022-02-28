@@ -80,14 +80,15 @@ class OSQP:
 
     def update(self, **kwargs):
         # TODO: sanity-check on types/dimensions
-        # TODO: clamp values to +/- OSQP_INFTY
 
-        if 'q' in kwargs or 'l' in kwargs or 'u' in kwargs:
-            self._solver.update_data_vec(
-                q=kwargs.get('q'),
-                l=kwargs.get('l'),
-                u=kwargs.get('u')
-            )
+        q, l, u = kwargs.get('q'), kwargs.get('l'), kwargs.get('u')
+        if l is not None:
+            l = np.maximum(l, -constant('OSQP_INFTY'))
+        if u is not None:
+            u = np.minimum(u, constant('OSQP_INFTY'))
+
+        if q is not None or l is not None or u is not None:
+            self._solver.update_data_vec(q=q, l=l, u=u)
         if 'Px' in kwargs or 'Px_idx' in kwargs or 'Ax' in kwargs or 'Ax_idx' in kwargs:
             self._solver.update_data_mat(
                 P_x=kwargs.get('Px'),
@@ -96,13 +97,12 @@ class OSQP:
                 A_i=kwargs.get('Ax_idx'),
             )
 
-        # TODO: The following is mostly a copy-paste from the old interface and could use a cleanup
-
-        # TODO(bart): this will be unnecessary when the derivative will be in C
-        # update problem data in self._derivative_cache
-        for _var in 'qlu':
-            if kwargs.get(_var) is not None:
-                self._derivative_cache[_var] = kwargs[_var]
+        if q is not None:
+            self._derivative_cache['q'] = q
+        if l is not None:
+            self._derivative_cache['l'] = l
+        if u is not None:
+            self._derivative_cache['u'] = u
 
         for _var in ('P', 'A'):
             _varx = f'{_var}x'
@@ -140,13 +140,16 @@ class OSQP:
         # TODO: sanity checks on types/dimensions
         return self._solver.warm_start(x, y)
 
-    def solve(self):
+    def solve(self, raise_error=False):
         self._solver.solve()
 
         info = self._solver.info
         if info.status_val == constant('OSQP_NON_CVX', algebra=self.algebra):
             info.obj_val = np.nan
         # TODO: Handle primal/dual infeasibility
+
+        if info.status_val != constant('OSQP_SOLVED') and raise_error:
+            raise ValueError('Problem not solved!')
 
         # Create a Namespace of OSQPInfo keys and associated values
         _info = SimpleNamespace(**{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
@@ -166,22 +169,24 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def _derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
         M = self._derivative_cache['M']
 
         # Prefactor
         solver = self._derivative_cache['solver']
 
         sol = solver.solve(rhs)
+
         for k in range(max_iter):
             delta_sol = solver.solve(rhs - M @ sol)
             sol = sol + delta_sol
 
+            #  print("norm_iter_ref = %.4e\n" % np.linalg.norm(M @ sol - rhs))
             if np.linalg.norm(M @ sol - rhs) < tol:
                 break
 
         if k == max_iter - 1:
-            warn("max_iter iterative refinement reached.")
+            warnings.warn("max_iter iterative refinement reached.")
 
         return sol
 
@@ -230,7 +235,7 @@ class OSQP:
             inv_dia_y_u = spa.diags(np.reciprocal(y_u + 1e-20))
             inv_dia_y_l = spa.diags(np.reciprocal(y_l + 1e-20))
             M = spa.bmat([
-                [P,            A.T,                  -A.T],
+                [P, A.T, -A.T],
                 [A, spa.diags(A @ x - u) @ inv_dia_y_u, None],
                 [-A, None, spa.diags(l - A @ x) @ inv_dia_y_l]
             ], format='csc')
@@ -242,14 +247,14 @@ class OSQP:
 
         rhs = - np.concatenate([dx, dy_u, dy_l])
 
-        r_sol = self._derivative_iterative_refinement(rhs)
+        r_sol = self.derivative_iterative_refinement(rhs)
 
-        r_x, r_yu, r_yl = np.split(r_sol, [n, n+m])
+        r_x, r_yu, r_yl = np.split(r_sol, [n, n + m])
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
         dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
-            (r_yu[rows] - r_yl[rows]) * x[cols]
+                  (r_yu[rows] - r_yl[rows]) * x[cols]
         dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
         du = - r_yu
         dl = r_yl

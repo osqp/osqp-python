@@ -187,10 +187,13 @@ class OSQP:
             self._derivative_cache["q"] = q
 
         if l is not None:
-            self._derivative_cache["l"] = l
+            # Convert infinity values to OSQP Infinity
+            self._derivative_cache["l"] = \
+                np.maximum(l, -constant('OSQP_INFTY'))
 
         if u is not None:
-            self._derivative_cache["u"] = u
+            self._derivative_cache["u"] = \
+                np.minimum(u, constant('OSQP_INFTY'))
 
         if Px is not None:
             if Px_idx.size == 0:
@@ -208,6 +211,8 @@ class OSQP:
         # taking the derivative of unsolved problems
         if "results" in self._derivative_cache.keys():
             del self._derivative_cache["results"]
+            del self._derivative_cache["M"]
+            del self._derivative_cache["solver"]
 
     def update_settings(self, **kwargs):
         """
@@ -393,10 +398,12 @@ class OSQP:
         solver = self._derivative_cache['solver']
 
         sol = solver.solve(rhs)
+
         for k in range(max_iter):
             delta_sol = solver.solve(rhs - M @ sol)
             sol = sol + delta_sol
 
+            #  print("norm_iter_ref = %.4e\n" % np.linalg.norm(M @ sol - rhs))
             if np.linalg.norm(M @ sol - rhs) < tol:
                 break
 
