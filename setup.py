@@ -17,7 +17,7 @@ define_macros = []
 lib_subdir = []
 
 if system() == 'Windows':
-    cmake_args += ['-G', 'Visual Studio 16 2019']
+    cmake_args += ['-G', 'Visual Studio 17 2022']
     if sys.maxsize // 2 ** 32 > 0:
         cmake_args += ['-A', 'x64']
     cmake_build_flags += ['--config', 'Release']
@@ -208,7 +208,7 @@ class CmdCMakeBuild(build_ext):
         build_args = ['--config', cfg]
 
         if system() == "Windows":
-            cmake_args += ['-G', 'Visual Studio 16 2019']
+            cmake_args += ['-G', 'Visual Studio 17 2022']
             # Finding the CUDA Toolkit on Windows seems to work reliably only if BOTH
             # CMAKE_GENERATOR_TOOLSET (-T) and CUDA_TOOLKIT_ROOT_DIR are supplied to cmake
             if 'CUDA_TOOLKIT_ROOT_DIR' in os.environ:
