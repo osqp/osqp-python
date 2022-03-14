@@ -1,6 +1,8 @@
 # Test osqp python module
+import pytest
+
 import osqp
-from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
+from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, Random
 import numpy as np
 import scipy as sp
 from scipy import sparse
@@ -20,7 +22,7 @@ class update_matrices_tests(unittest.TestCase):
         self.m = 8
         p = 0.7
 
-        Pt = sparse.random(self.n, self.n, density=p)
+        self.Pt = Pt = sparse.random(self.n, self.n, density=p)
         Pt_new = Pt.copy()
         Pt_new.data += 0.1 * np.random.randn(Pt.nnz)
 
@@ -66,6 +68,86 @@ class update_matrices_tests(unittest.TestCase):
         nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
         nptest.assert_almost_equal(
             res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    def test_update_P_partial(self):
+        with Random(4234):
+            n_changed = np.random.randint(self.P_triu.nnz)
+            changed_data = np.random.random(n_changed)
+            changed_indices = np.random.choice(np.arange(self.P_triu.nnz), n_changed)
+        changed_P_triu_data = self.P_triu.data.copy()
+        changed_P_triu_data[changed_indices] = changed_data
+        changed_P_triu = np.array(sparse.coo_matrix((changed_P_triu_data, (self.P_triu.row, self.P_triu.col))).todense())
+        changed_P = np.triu(changed_P_triu, 1) + np.tril(changed_P_triu.T)
+        if not np.all(np.linalg.eigvals(changed_P) > 0):
+            pytest.skip("Perturbed P not positive semi-definite")
+
+        self.model.update(Px=changed_data, Px_idx=changed_indices)
+        res1 = self.model.solve()
+
+        # The results we obtain should be the same as if we were solving a new problem with the new P
+        model = osqp.OSQP()
+        model.setup(P=changed_P, q=self.q, A=self.A, l=self.l, u=self.u,
+                         **self.opts)
+        res2 = model.solve()
+
+        assert np.allclose(res1.x, res2.x, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.y, res2.y, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.info.obj_val, res2.info.obj_val, atol=abs_tol, rtol=rel_tol)
+
+    def test_update_A_partial(self):
+        with Random(60023):
+            n_changed = np.random.randint(self.A.nnz)
+            changed_data = np.random.random(n_changed)
+            changed_indices = np.random.choice(np.arange(self.A.nnz), n_changed)
+        changed_A_data = self.A.data.copy()
+        changed_A_data[changed_indices] = changed_data
+        changed_A = sparse.csc_matrix((changed_A_data, self.A.indices, self.A.indptr))
+
+        self.model.update(Ax=changed_data, Ax_idx=changed_indices)
+        res1 = self.model.solve()
+
+        # The results we obtain should be the same as if we were solving a new problem with the new A
+        model = osqp.OSQP()
+        model.setup(P=self.P, q=self.q, A=changed_A, l=self.l, u=self.u,
+                         **self.opts)
+        res2 = model.solve()
+
+        assert np.allclose(res1.x, res2.x, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.y, res2.y, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.info.obj_val, res2.info.obj_val, atol=abs_tol, rtol=rel_tol)
+
+    def test_update_P_A_partial(self):
+        with Random(54355):
+            n_P_changed = np.random.randint(self.P_triu.nnz)
+            _changed_P_data = np.random.random(n_P_changed)
+            changed_P_indices = np.random.choice(np.arange(self.P_triu.nnz), n_P_changed)
+            n_A_changed = np.random.randint(self.A.nnz)
+            _changed_A_data = np.random.random(n_A_changed)
+            changed_A_indices = np.random.choice(np.arange(self.A.nnz), n_A_changed)
+
+        changed_P_triu_data = self.P_triu.data.copy()
+        changed_P_triu_data[changed_P_indices] = _changed_P_data
+        changed_P_triu = np.array(sparse.coo_matrix((changed_P_triu_data, (self.P_triu.row, self.P_triu.col))).todense())
+        changed_P = np.triu(changed_P_triu, 1) + np.tril(changed_P_triu.T)
+        if not np.all(np.linalg.eigvals(changed_P) > 0):
+            pytest.skip("Perturbed P not positive semi-definite")
+
+        changed_A_data = self.A.data.copy()
+        changed_A_data[changed_A_indices] = _changed_A_data
+        changed_A = sparse.csc_matrix((changed_A_data, self.A.indices, self.A.indptr))
+
+        self.model.update(Px=_changed_P_data, Px_idx=changed_P_indices, Ax=_changed_A_data, Ax_idx=changed_A_indices)
+        res1 = self.model.solve()
+
+        # The results we obtain should be the same as if we were solving a new problem with the new P/A
+        model = osqp.OSQP()
+        model.setup(P=changed_P, q=self.q, A=changed_A, l=self.l, u=self.u,
+                         **self.opts)
+        res2 = model.solve()
+
+        assert np.allclose(res1.x, res2.x, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.y, res2.y, atol=abs_tol, rtol=rel_tol)
+        assert np.allclose(res1.info.obj_val, res2.info.obj_val, atol=abs_tol, rtol=rel_tol)
 
     def test_update_P_allind(self):
         # Update matrix P
