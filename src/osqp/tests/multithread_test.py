@@ -1,13 +1,10 @@
-# Test osqp python module
 import osqp
 from osqp import default_algebra
-# import osqppurepy as osqp
 from multiprocessing.pool import ThreadPool
 import time
 import numpy as np
 from scipy import sparse
 
-# Unit Test
 import unittest
 import pytest
 
