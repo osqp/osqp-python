@@ -27,13 +27,15 @@ max_iter = 10000
 class derivative_tests(unittest.TestCase):
 
     def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
-        L = np.random.randn(n, n)
-        P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
+        L = np.random.randn(n, n-1)
+        # P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
+        P = sparse.csc_matrix(L.dot(L.T) - 0.01 * sparse.eye(n))
         x_0 = npr.randn(n)
         s_0 = npr.rand(m)
         A = sparse.csc_matrix(npr.randn(m, n))
         u = A.dot(x_0) + s_0
-        l = -5 - 10 * npr.rand(m)
+        # l = -10 - 10 * npr.rand(m)
+        l = A.dot(x_0) - s_0
         q = npr.randn(n)
         true_x = npr.randn(n)
 
@@ -49,6 +51,8 @@ class derivative_tests(unittest.TestCase):
             raise ValueError("Problem not solved!")
         x = results.x
         grads = m.adjoint_derivative(dx=x - true_x)
+        # grads = m.adjoint_derivative(dx=np.ones(x.size))
+
 
         return grads
 
@@ -214,3 +218,58 @@ class derivative_tests(unittest.TestCase):
 
         npt.assert_allclose(du_fd, du,
                             rtol=rel_tol, atol=abs_tol)
+
+    def test_dl_dq_inf(self, verbose=False):
+        n, m = 20, 20
+
+        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        P, q, A, l, u, true_x = prob
+        # u = l
+        l[0:10] = -osqp.constant('OSQP_INFTY')
+        # u[1] = l[1]
+
+        '''Brandon's example
+        '''
+        # n = 100
+        # npr.seed(1)
+        # P = 0.01*npr.randn(n,n)
+        # P = P.T.dot(P)
+        # P = sparse.csr_matrix(P)
+        # q = npr.randn(n)
+        # A = sparse.csr_matrix(npr.randn(n, n))
+        # l = npr.randn(n)
+        # u = l
+        # dx=np.ones(n)
+        
+        
+        A_idx = A.nonzero()
+
+        def grad(A_val):
+            A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
+            [dP, dq, dA, dl, du] = self.get_grads(P, q, A_qp, l, u, true_x)
+            return dA
+
+        def f(A_val):
+            A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
+            m = osqp.OSQP()
+            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs,
+                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            res = m.solve()
+            if res.info.status != "solved":
+                raise ValueError("Problem not solved!")
+            x_hat = res.x
+
+            return 0.5 * np.sum(np.square(x_hat - true_x))
+            # return np.sum(x_hat)
+
+        dA = grad(A.data)
+        dA_fd_val = approx_fprime(A.data, f, grad_precision)
+        dA_fd = sparse.csc_matrix((dA_fd_val, A_idx), shape=A.shape)
+
+        # if verbose:
+        print('dA_fd: ', np.round(dA_fd.data, decimals=4))
+        print('dA: ', np.round(dA.data, decimals=4))
+
+        npt.assert_allclose(dA.todense(), dA_fd.todense(),
+                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(0, 1, rtol=rel_tol, atol=abs_tol)
