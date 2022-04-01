@@ -190,7 +190,7 @@ class OSQP:
 
         if k == max_iter - 1:
             warnings.warn("max_iter iterative refinement reached.")
-        print('num_iters', k)
+        # print('num_iters', k)
         
         return sol
 
@@ -252,27 +252,62 @@ class OSQP:
         inv_dia_y_u = spa.diags(np.reciprocal(y_u + 1e-20))
         inv_dia_y_l = spa.diags(np.reciprocal(y_l + 1e-20))
         inv_dia_lambda = spa.diags(np.reciprocal(lambd + 1e-20))
+        dia_lambda = spa.diags(lambd)
         M = spa.bmat([
             [P, G.T],
             [G, spa.diags(G @ x - h) @ inv_dia_lambda]
+        ], format='csc')
+        slacks = G @ x - h
+        slacks[slacks > -1e-4] = 0
+        M2 = spa.bmat([
+            [P, G.T],
+            [dia_lambda @ G, spa.diags(slacks)]
         ], format='csc')
         delta = spa.bmat([[eps_iter_ref * spa.eye(n), None],
                             [None, -eps_iter_ref * spa.eye(num_ineq)]],
                             format='csc')
         self._derivative_cache['M'] = M
         self._derivative_cache['solver'] = qdldl.Solver(M + delta)
+        
 
         # rhs = - np.concatenate([dx, dy_u, dy_l])
         rhs = - np.concatenate([dx, dlambd])
-
+        
         r_sol = self.derivative_iterative_refinement(rhs)
         r_x, r_lambda_l, r_lambda_u = np.split(r_sol, [n, n + l_non_inf.size])
+
+        # try symmetrized
+        B = spa.bmat([
+            [spa.eye(n + num_ineq), M2.T],
+            [M2, None]
+        ])
+        delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq), None],
+                            [None, -eps_iter_ref * spa.eye(n + num_ineq)]],
+                            format='csc')
+        solver2 = qdldl.Solver(B + delta_B)
+        self._derivative_cache['M'] = B
+        self._derivative_cache['solver'] = solver2
+        rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq)])
+        
+        r_sol_b = self.derivative_iterative_refinement(rhs_b)
+        #### r_x_b, r_lambda_l_b, r_lambda_u_b, _ = np.split(r_sol_b, [n + num_ineq, n, n + l_non_inf.size, ])
+        dual, primal = np.split(r_sol_b, [n + num_ineq])
+
+        # try lsqr
+        # out = spa.linalg.lsqr(M2.T, rhs)
+        # primal = out[0]
+
+        r_x_b, r_lambda_l_b, r_lambda_u_b = np.split(primal, [n, n + l_non_inf.size])
+        r_x, r_lambda_l, r_lambda_u = r_x_b, r_lambda_l_b, r_lambda_u_b
+        # pdb.set_trace()
 
         # revert back to y form
         r_yu = np.zeros(m)
         r_yl = np.zeros(m)
         r_yu[u_non_inf] = r_lambda_u
         r_yl[l_non_inf] = r_lambda_l
+
+        
 
 
         # # Make sure M matrix exists
@@ -300,11 +335,17 @@ class OSQP:
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
+        # dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
+        #           (r_yu[rows] - r_yl[rows]) * x[cols]
+        ryu = spa.diags(y_u) @ r_yu
+        ryl = -spa.diags(y_l) @ r_yl
         dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
-                  (r_yu[rows] - r_yl[rows]) * x[cols]
+                  (ryu[rows] - ryl[rows]) * x[cols]
         dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
-        du = - r_yu
-        dl = r_yl
+        # du = - r_yu
+        # dl = r_yl
+        du = - ryu
+        dl = ryl
 
         # Extract derivatives for the cost (P, q)
         rows, cols = P_idx
@@ -312,6 +353,7 @@ class OSQP:
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
         t1 = time.time()
-        print('derivative time', t1 - t0)
+        # print('derivative time', t1 - t0)
         # pdb.set_trace()
+        # print('dl', dl)
         return dP, dq, dA, dl, du

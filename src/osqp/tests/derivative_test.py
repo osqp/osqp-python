@@ -43,7 +43,7 @@ class derivative_tests(unittest.TestCase):
 
     def get_grads(self, P, q, A, l, u, true_x):
         # Get gradients by solving with osqp
-        m = osqp.OSQP()
+        m = osqp.OSQP(eps_rel=1e-8, eps_abs=1e-8)
         m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
                 max_iter=max_iter, verbose=False)
         results = m.solve()
@@ -220,13 +220,13 @@ class derivative_tests(unittest.TestCase):
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_inf(self, verbose=False):
-        n, m = 20, 20
+        n, m = 40, 40
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
         P, q, A, l, u, true_x = prob
         # u = l
-        l[0:10] = -osqp.constant('OSQP_INFTY')
-        # u[1] = l[1]
+        # l[0:10] = -osqp.constant('OSQP_INFTY')
+        u[:20] = l[:20]
 
         '''Brandon's example
         '''
@@ -269,7 +269,11 @@ class derivative_tests(unittest.TestCase):
         # if verbose:
         print('dA_fd: ', np.round(dA_fd.data, decimals=4))
         print('dA: ', np.round(dA.data, decimals=4))
+        import pdb
+        pdb.set_trace()
 
         npt.assert_allclose(dA.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(0, 1, rtol=rel_tol, atol=abs_tol)
+        # npt.assert_allclose(0, 1, rtol=rel_tol, atol=abs_tol)
+        max_diff = np.max(np.abs(dA.todense() - dA_fd.todense()))
+        print('max diff', max_diff)
