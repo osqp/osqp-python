@@ -232,19 +232,31 @@ class OSQP:
         if dy_l is None:
             dy_l = np.zeros(m)
 
+        # identify equality constraints
+        eq_indices = np.where(l == u)[0]
+        ineq_indices = np.where(l < u)[0]
+        num_eq = eq_indices.size
+        A_ineq = A[ineq_indices, :]
+        l_ineq = l[ineq_indices]
+        u_ineq = u[ineq_indices]
+        A_eq = A[eq_indices, :]
+        b = u[eq_indices]
+
         # switch to Gx <= h form
-        l_non_inf = np.where(l > -constant('OSQP_INFTY'))[0]
-        u_non_inf = np.where(u < constant('OSQP_INFTY'))[0]
+        l_non_inf = np.where(l_ineq > -constant('OSQP_INFTY'))[0]
+        u_non_inf = np.where(u_ineq < constant('OSQP_INFTY'))[0]
         # pdb.set_trace()
         num_ineq = l_non_inf.size + u_non_inf.size
         G = spa.bmat([
-            [-A[l_non_inf, :]],
-            [A[u_non_inf, :]],
+            [-A_ineq[l_non_inf, :]],
+            [A_ineq[u_non_inf, :]],
         ])
-        h = np.concatenate([-l[l_non_inf], u[u_non_inf]])
+        h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
+
+        nu = y[eq_indices]
+        dnu = -dy_l[eq_indices] + dy_u[eq_indices]
         lambd = np.concatenate([-y_l[l_non_inf], y_u[u_non_inf]])
         dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
-
 
         # compute the derivative
         # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
@@ -259,9 +271,14 @@ class OSQP:
         ], format='csc')
         slacks = G @ x - h
         slacks[slacks > -1e-4] = 0
+        # M2 = spa.bmat([
+        #     [P, G.T],
+        #     [dia_lambda @ G, spa.diags(slacks)]
+        # ], format='csc')
         M2 = spa.bmat([
-            [P, G.T],
-            [dia_lambda @ G, spa.diags(slacks)]
+            [P, G.T, A_eq.T],
+            [dia_lambda @ G, spa.diags(slacks), None],
+            [A_eq, None, None]
         ], format='csc')
         delta = spa.bmat([[eps_iter_ref * spa.eye(n), None],
                             [None, -eps_iter_ref * spa.eye(num_ineq)]],
@@ -270,46 +287,41 @@ class OSQP:
         self._derivative_cache['solver'] = qdldl.Solver(M + delta)
         
 
-        # rhs = - np.concatenate([dx, dy_u, dy_l])
-        rhs = - np.concatenate([dx, dlambd])
+        # rhs = - np.concatenate([dx, dlambd])
+        rhs = - np.concatenate([dx, dlambd, dnu])
         
-        r_sol = self.derivative_iterative_refinement(rhs)
-        r_x, r_lambda_l, r_lambda_u = np.split(r_sol, [n, n + l_non_inf.size])
+        # r_sol = self.derivative_iterative_refinement(rhs)
+        # r_x, r_lambda_l, r_lambda_u, r_nu = np.split(r_sol, [n, n + l_non_inf.size, n + num_ineq])
 
         # try symmetrized
         B = spa.bmat([
-            [spa.eye(n + num_ineq), M2.T],
+            [spa.eye(n + num_ineq + num_eq), M2.T],
             [M2, None]
         ])
+        # delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq), None],
+        #                     [None, -eps_iter_ref * spa.eye(n + num_ineq)]],
+        #                     format='csc')
         delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq), None],
-                            [None, -eps_iter_ref * spa.eye(n + num_ineq)]],
+                            [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                             format='csc')
         solver2 = qdldl.Solver(B + delta_B)
         self._derivative_cache['M'] = B
         self._derivative_cache['solver'] = solver2
-        rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq)])
+        rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
         
         r_sol_b = self.derivative_iterative_refinement(rhs_b)
         #### r_x_b, r_lambda_l_b, r_lambda_u_b, _ = np.split(r_sol_b, [n + num_ineq, n, n + l_non_inf.size, ])
-        dual, primal = np.split(r_sol_b, [n + num_ineq])
+        dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
 
         # try lsqr
         # out = spa.linalg.lsqr(M2.T, rhs)
         # primal = out[0]
 
-        r_x_b, r_lambda_l_b, r_lambda_u_b = np.split(primal, [n, n + l_non_inf.size])
+        r_x_b, r_lambda_l_b, r_lambda_u_b, r_nu = np.split(primal, [n, n + l_non_inf.size, n + num_ineq])
         r_x, r_lambda_l, r_lambda_u = r_x_b, r_lambda_l_b, r_lambda_u_b
         # pdb.set_trace()
 
-        # revert back to y form
-        r_yu = np.zeros(m)
-        r_yl = np.zeros(m)
-        r_yu[u_non_inf] = r_lambda_u
-        r_yl[l_non_inf] = r_lambda_l
-
         
-
-
         # # Make sure M matrix exists
         # if 'M' not in self._derivative_cache:
         #     # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
@@ -332,6 +344,18 @@ class OSQP:
         # r_sol = self.derivative_iterative_refinement(rhs)
 
         # r_x, r_yu, r_yl = np.split(r_sol, [n, n + m])
+
+
+
+        # revert back to y form
+        r_yu = np.zeros(m)
+        r_yl = np.zeros(m)
+        r_yu[u_non_inf] = r_lambda_u
+        r_yl[l_non_inf] = r_lambda_l
+
+        # go from (r_nu, r_yu, r_yl) to (r_yu, r_yl)
+        r_yu[eq_indices] = np.maximum(r_nu, 0)
+        r_yl[eq_indices] = -np.minimum(r_nu, 0)
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
