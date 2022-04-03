@@ -172,7 +172,7 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter=1000, tol=1e-12):
         M = self._derivative_cache['M']
 
         # Prefactor
@@ -255,7 +255,11 @@ class OSQP:
 
         nu = y[eq_indices]
         dnu = -dy_l[eq_indices] + dy_u[eq_indices]
-        lambd = np.concatenate([-y_l[l_non_inf], y_u[u_non_inf]])
+        y_ineq = y[ineq_indices].copy()
+        y_u_ineq = np.maximum(y_ineq, 0)
+        y_l_ineq = -np.minimum(y_ineq, 0)
+        lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
+        # lambd = np.concatenate([-y_l[l_non_inf], y_u[u_non_inf]])
         dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
 
         # compute the derivative
@@ -301,7 +305,7 @@ class OSQP:
         # delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq), None],
         #                     [None, -eps_iter_ref * spa.eye(n + num_ineq)]],
         #                     format='csc')
-        delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq), None],
+        delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
                             [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                             format='csc')
         solver2 = qdldl.Solver(B + delta_B)
@@ -350,12 +354,23 @@ class OSQP:
         # revert back to y form
         r_yu = np.zeros(m)
         r_yl = np.zeros(m)
-        r_yu[u_non_inf] = r_lambda_u
-        r_yl[l_non_inf] = r_lambda_l
+        r_yu_ineq = np.zeros(m - num_eq)
+        r_yl_ineq = np.zeros(m - num_eq)
+        r_yu_ineq[u_non_inf] = r_lambda_u
+        r_yl_ineq[l_non_inf] = -r_lambda_l
+
+        # pdb.set_trace()
+        r_yu[ineq_indices] = r_yu_ineq
+        r_yl[ineq_indices] = r_yl_ineq
 
         # go from (r_nu, r_yu, r_yl) to (r_yu, r_yl)
-        r_yu[eq_indices] = np.maximum(r_nu, 0)
-        r_yl[eq_indices] = -np.minimum(r_nu, 0)
+        r_yu_eq = r_nu.copy() / nu
+        r_yu_eq[nu < 0] = 0
+        r_yu[eq_indices] = r_yu_eq
+
+        r_yl_eq = -r_nu / (nu)
+        r_yl_eq[nu >= 0] = 0
+        r_yl[eq_indices] = r_yl_eq
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
@@ -378,6 +393,6 @@ class OSQP:
         dq = r_x
         t1 = time.time()
         # print('derivative time', t1 - t0)
-        # pdb.set_trace()
+        pdb.set_trace()
         # print('dl', dl)
         return dP, dq, dA, dl, du

@@ -9,6 +9,7 @@ import numpy.testing as npt
 
 # Unit Test
 import unittest
+import pdb
 
 
 npr.seed(1)
@@ -219,7 +220,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du,
                             rtol=rel_tol, atol=abs_tol)
 
-    def test_dl_dq_inf(self, verbose=False):
+    def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
@@ -269,11 +270,45 @@ class derivative_tests(unittest.TestCase):
         # if verbose:
         print('dA_fd: ', np.round(dA_fd.data, decimals=4))
         print('dA: ', np.round(dA.data, decimals=4))
-        import pdb
+        
         pdb.set_trace()
 
         npt.assert_allclose(dA.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
-        # npt.assert_allclose(0, 1, rtol=rel_tol, atol=abs_tol)
-        max_diff = np.max(np.abs(dA.todense() - dA_fd.todense()))
-        print('max diff', max_diff)
+        
+
+    def test_dl_dq_eq(self, verbose=False):
+        n, m = 40, 40
+
+        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        P, q, A, l, u, true_x = prob
+        # u = l
+        # l[0:10] = -osqp.constant('OSQP_INFTY')
+        u[:20] = l[:20]
+
+        
+        A_idx = A.nonzero()
+
+        def grad(q):
+            [dP, dq, dA, dl, du] = self.get_grads(P, q, A, l, u, true_x)
+            return dq
+
+        def f(q):
+            m = osqp.OSQP()
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
+                    max_iter=max_iter, verbose=False)
+            res = m.solve()
+            if res.info.status != "solved":
+                raise ValueError("Problem not solved!")
+            x_hat = res.x
+
+            return 0.5 * np.sum(np.square(x_hat - true_x))
+
+        dq = grad(q)
+        dq_fd = approx_fprime(q, f, grad_precision)
+
+        if verbose:
+            print('dq_fd: ', np.round(dq_fd, decimals=4))
+            print('dq: ', np.round(dq, decimals=4))
+        pdb.set_trace()
+        npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
