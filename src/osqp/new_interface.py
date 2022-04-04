@@ -172,7 +172,7 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def derivative_iterative_refinement(self, rhs, max_iter=1000, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter=10000, tol=1e-12):
         M = self._derivative_cache['M']
 
         # Prefactor
@@ -245,7 +245,7 @@ class OSQP:
         # switch to Gx <= h form
         l_non_inf = np.where(l_ineq > -constant('OSQP_INFTY'))[0]
         u_non_inf = np.where(u_ineq < constant('OSQP_INFTY'))[0]
-        # pdb.set_trace()
+        
         num_ineq = l_non_inf.size + u_non_inf.size
         G = spa.bmat([
             [-A_ineq[l_non_inf, :]],
@@ -275,6 +275,7 @@ class OSQP:
         ], format='csc')
         slacks = G @ x - h
         slacks[slacks > -1e-4] = 0
+        lambd[lambd < 1e-4] = 0
         # M2 = spa.bmat([
         #     [P, G.T],
         #     [dia_lambda @ G, spa.diags(slacks)]
@@ -321,9 +322,15 @@ class OSQP:
         # out = spa.linalg.lsqr(M2.T, rhs)
         # primal = out[0]
 
+        # try np.linalg.solve
+        # primal = np.linalg.solve(M2.T.todense(), rhs)
+        out = np.linalg.solve(B.todense(), rhs_b)
+        dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
+        
+
         r_x_b, r_lambda_l_b, r_lambda_u_b, r_nu = np.split(primal, [n, n + l_non_inf.size, n + num_ineq])
         r_x, r_lambda_l, r_lambda_u = r_x_b, r_lambda_l_b, r_lambda_u_b
-        # pdb.set_trace()
+        
 
         
         # # Make sure M matrix exists
@@ -359,7 +366,7 @@ class OSQP:
         r_yu_ineq[u_non_inf] = r_lambda_u
         r_yl_ineq[l_non_inf] = -r_lambda_l
 
-        # pdb.set_trace()
+        
         r_yu[ineq_indices] = r_yu_ineq
         r_yl[ineq_indices] = r_yl_ineq
 
@@ -393,6 +400,6 @@ class OSQP:
         dq = r_x
         t1 = time.time()
         # print('derivative time', t1 - t0)
-        pdb.set_trace()
+        
         # print('dl', dl)
         return dP, dq, dA, dl, du

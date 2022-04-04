@@ -16,8 +16,10 @@ npr.seed(1)
 
 # Tests settings
 grad_precision = 1e-5
-rel_tol = 1e-3
-abs_tol = 1e-3
+rel_tol = 1e-4
+abs_tol = 1e-4
+# rel_tol = 1e-3
+# abs_tol = 1e-3
 
 # OSQP settings
 eps_abs = 1e-10
@@ -278,12 +280,12 @@ class derivative_tests(unittest.TestCase):
         
 
     def test_dl_dq_eq(self, verbose=False):
-        n, m = 40, 40
+        n, m = 50, 40
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
         P, q, A, l, u, true_x = prob
         # u = l
-        # l[0:10] = -osqp.constant('OSQP_INFTY')
+        l[20:40] = -osqp.constant('OSQP_INFTY')
         u[:20] = l[:20]
 
         
