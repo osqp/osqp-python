@@ -402,7 +402,6 @@ class OSQP:
         # print('derivative time', t1 - t0)
         
         # print('dl', dl)
-        print('JAJAJAJAJAJA')
         return dP, dq, dA, dl, du
 
 
