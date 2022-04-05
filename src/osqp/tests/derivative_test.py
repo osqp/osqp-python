@@ -16,8 +16,8 @@ npr.seed(1)
 
 # Tests settings
 grad_precision = 1e-5
-rel_tol = 1e-4
-abs_tol = 1e-4
+rel_tol = 1e-5
+abs_tol = 1e-5
 # rel_tol = 1e-3
 # abs_tol = 1e-3
 
@@ -161,7 +161,7 @@ class derivative_tests(unittest.TestCase):
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dl(self, verbose=False):
-        n, m = 10, 10
+        n, m = 30, 30
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
         P, q, A, l, u, true_x = prob
@@ -185,11 +185,12 @@ class derivative_tests(unittest.TestCase):
         dl_fd = approx_fprime(l, f, grad_precision)
 
         if verbose:
-            print('dl_fd: ', np.round(dl_fd, decimals=4))
-            print('dl: ', np.round(dl, decimals=4))
-
+            print('dl_fd: ', np.round(dl_fd, decimals=4).tolist())
+            print('dl: ', np.round(dl, decimals=4).tolist())
+        pdb.set_trace()
         npt.assert_allclose(dl_fd, dl,
                             rtol=rel_tol, atol=abs_tol)
+        
 
     def test_dl_du(self, verbose=False):
         n, m = 5, 5
@@ -222,6 +223,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du,
                             rtol=rel_tol, atol=abs_tol)
 
+    @unittest.skip
     def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
@@ -280,7 +282,7 @@ class derivative_tests(unittest.TestCase):
         
 
     def test_dl_dq_eq(self, verbose=False):
-        n, m = 50, 40
+        n, m = 5, 4
 
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
         P, q, A, l, u, true_x = prob
