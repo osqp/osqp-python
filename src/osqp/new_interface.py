@@ -172,7 +172,7 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter=5000, tol=1e-12):
         M = self._derivative_cache['M']
 
         # Prefactor
@@ -189,11 +189,12 @@ class OSQP:
 
         if k == max_iter - 1:
             warnings.warn("max_iter iterative refinement reached.")
+        print('num iterative refinement iters', k)
 
         return sol
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-                           P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-04):
+                           P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
         """
         Compute adjoint derivative after solve.
         """
@@ -330,4 +331,5 @@ class OSQP:
         dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
+
         return dP, dq, dA, dl, du

@@ -15,16 +15,16 @@ import pdb
 npr.seed(1)
 
 # Tests settings
-grad_precision = 1e-5
-rel_tol = 1e-5
-abs_tol = 1e-5
+grad_precision = 1e-4
+rel_tol = 1e-3
+abs_tol = 1e-3
 # rel_tol = 1e-3
 # abs_tol = 1e-3
 
 # OSQP settings
 eps_abs = 1e-10
 eps_rel = 1e-10
-max_iter = 10000
+max_iter = 50000
 
 
 class derivative_tests(unittest.TestCase):
@@ -187,7 +187,7 @@ class derivative_tests(unittest.TestCase):
         if verbose:
             print('dl_fd: ', np.round(dl_fd, decimals=4).tolist())
             print('dl: ', np.round(dl, decimals=4).tolist())
-        pdb.set_trace()
+
         npt.assert_allclose(dl_fd, dl,
                             rtol=rel_tol, atol=abs_tol)
         
@@ -223,7 +223,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du,
                             rtol=rel_tol, atol=abs_tol)
 
-    @unittest.skip
+
     def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
@@ -272,14 +272,13 @@ class derivative_tests(unittest.TestCase):
         dA_fd = sparse.csc_matrix((dA_fd_val, A_idx), shape=A.shape)
 
         # if verbose:
-        print('dA_fd: ', np.round(dA_fd.data, decimals=4))
-        print('dA: ', np.round(dA.data, decimals=4))
-        
-        pdb.set_trace()
+        print('dA_fd: ', np.round(dA_fd.data, decimals=6))
+        print('dA: ', np.round(dA.data, decimals=6))
 
         npt.assert_allclose(dA.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
         
+
 
     def test_dl_dq_eq(self, verbose=False):
         n, m = 5, 4
@@ -314,5 +313,5 @@ class derivative_tests(unittest.TestCase):
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq: ', np.round(dq, decimals=4))
-        pdb.set_trace()
+        
         npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
