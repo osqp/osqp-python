@@ -198,7 +198,6 @@ class OSQP:
         """
         Compute adjoint derivative after solve.
         """
-        t0 = time.time()
         P, q = self._derivative_cache['P'], self._derivative_cache['q']
         A = self._derivative_cache['A']
         l, u = self._derivative_cache['l'], self._derivative_cache['u']
@@ -273,7 +272,7 @@ class OSQP:
         ], format='csc')
         rhs = - np.concatenate([dx, dlambd, dnu])
         if mode == 'lsqr':
-            out = spa.linalg.lsqr(M2.T, rhs, atol=1e-12, btol=1e-12, iter_lim=10000, show=True)
+            out = spa.linalg.lsqr(M2.T, rhs, atol=1e-12, btol=1e-12, iter_lim=100000, show=True, conlim=1e12)
             primal = out[0]
         elif mode == 'qdldl':
             B = spa.bmat([
@@ -290,6 +289,8 @@ class OSQP:
             
             r_sol_b = self.derivative_iterative_refinement(rhs_b)
             dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
+        else:
+            raise RuntimeError(f"Unrecognized least squares solver mode")
             
         r_x_b, r_lambda_l_b, r_lambda_u_b, r_nu = np.split(primal, [n, n + l_non_inf.size, n + num_ineq])
         r_x, r_lambda_l, r_lambda_u = r_x_b, r_lambda_l_b, r_lambda_u_b
