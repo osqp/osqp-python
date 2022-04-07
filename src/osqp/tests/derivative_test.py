@@ -22,8 +22,8 @@ abs_tol = 1e-3
 # abs_tol = 1e-3
 
 # OSQP settings
-eps_abs = 1e-10
-eps_rel = 1e-10
+eps_abs = 1e-8
+eps_rel = 1e-8
 max_iter = 50000
 
 
