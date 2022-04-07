@@ -333,11 +333,9 @@ class derivative_tests(unittest.TestCase):
 
         prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
         P, q, A, l, u, true_x = prob
-        # u = l
+
         l[20:40] = -osqp.constant('OSQP_INFTY')
         u[:20] = l[:20]
-
-
         
         A_idx = A.nonzero()
 

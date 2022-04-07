@@ -260,8 +260,6 @@ class OSQP:
         dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
 
         # compute the derivative
-        # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
-        # to make the matrix symmetric
         dia_lambda = spa.diags(lambd)
         slacks = G @ x - h
         
@@ -335,3 +333,148 @@ class OSQP:
         # pdb.set_trace()
 
         return dP, dq, dA, dl, du
+
+
+    def forward_derivative(self, dP=None, dq=None, dA=None, dl=None, du=None,
+                           P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
+        """
+        Compute adjoint derivative after solve.
+        """
+        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        A = self._derivative_cache['A']
+        l, u = self._derivative_cache['l'], self._derivative_cache['u']
+
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError("Problem has not been solved. "
+                             "You cannot take derivatives. "
+                             "Please call the solve function.")
+
+        if results.info.status != "solved":
+            raise ValueError("Problem has not been solved to optimality. "
+                             "You cannot take derivatives")
+
+        m, n = A.shape
+        x = results.x
+        y = results.y
+        y_u = np.maximum(y, 0)
+        y_l = -np.minimum(y, 0)
+
+        if A_idx is None:
+            A_idx = A.nonzero()
+
+        if P_idx is None:
+            P_idx = P.nonzero()
+
+        if dP is None:
+            dP = np.zeros((n, n))
+        if dq is None:
+            dq = np.zeros(n)
+        if dA is None:
+            dP = np.zeros((m, n))
+        if dl is None:
+            dP = np.zeros(m)
+        if du is None:
+            dq = np.zeros(m)
+
+        # identify equality constraints
+        eq_indices = np.where(l == u)[0]
+        ineq_indices = np.where(l < u)[0]
+        num_eq = eq_indices.size
+        A_ineq = A[ineq_indices, :]
+        l_ineq = l[ineq_indices]
+        u_ineq = u[ineq_indices]
+        A_eq = A[eq_indices, :]
+        b = u[eq_indices]
+
+        dA_ineq = dA[ineq_indices, :]
+        dl_ineq = dl[ineq_indices]
+        du_ineq = du[ineq_indices]
+        dA_eq = dA[eq_indices, :]
+        db = du[eq_indices]
+
+
+        # switch to Gx <= h form
+        l_non_inf = np.where(l_ineq > -constant('OSQP_INFTY'))[0]
+        u_non_inf = np.where(u_ineq < constant('OSQP_INFTY'))[0]
+        
+        num_ineq = l_non_inf.size + u_non_inf.size
+        G = spa.bmat([
+            [-A_ineq[l_non_inf, :]],
+            [A_ineq[u_non_inf, :]],
+        ])
+        h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
+
+        dG = spa.bmat([
+            [-dA_ineq[l_non_inf, :]],
+            [dA_ineq[u_non_inf, :]],
+        ])
+        dh = np.concatenate([-dl_ineq[l_non_inf], du_ineq[u_non_inf]])
+
+        nu = y[eq_indices]
+        # dnu = -dy_l[eq_indices] + dy_u[eq_indices]
+        y_ineq = y[ineq_indices].copy()
+        y_u_ineq = np.maximum(y_ineq, 0)
+        y_l_ineq = -np.minimum(y_ineq, 0)
+        lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
+        # dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
+
+        # compute the derivative
+        dia_lambda = spa.diags(lambd)
+        slacks = G @ x - h
+        
+        M2 = spa.bmat([
+            [P, G.T, A_eq.T],
+            [dia_lambda @ G, spa.diags(slacks), None],
+            [A_eq, None, None]
+        ], format='csc')
+
+        # form g
+        g1 = dP @ x + dq + dG.T @ lambd + dA.T @ nu
+        g2 = dia_lambda @ (dG @ x - dh)
+        g3 = dA_eq @ x - db
+        g = np.concatenate([g1, g2, g3])
+        rhs = -g
+        if mode == 'lsqr':
+            out = spa.linalg.lsqr(M2, -g, atol=1e-12, btol=1e-12, iter_lim=100000, show=True, conlim=1e12)
+            primal = out[0]
+        elif mode == 'qdldl':
+            B = spa.bmat([
+                [spa.eye(n + num_ineq + num_eq), M2],
+                [M2.T, None]
+            ])
+            delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
+                                [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
+                                format='csc')
+            solver2 = qdldl.Solver(B + delta_B)
+            self._derivative_cache['M'] = B
+            self._derivative_cache['solver'] = solver2
+            rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
+            
+            r_sol_b = self.derivative_iterative_refinement(rhs_b)
+            dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
+        else:
+            raise RuntimeError(f"Unrecognized least squares solver mode")
+            
+        dx, dlambda_l, dlambda_u, dnu = np.split(primal, [n, n + l_non_inf.size, n + num_ineq])
+
+        dyl = np.zeros(m)
+        dyu = np.zeros(m)
+
+        # get eq part of dyl, dyu
+        dyl_eq = np.zeros(eq_indices.size)
+        dyl_eq[y < 0] = dnu[y < 0]
+        dyu_eq = np.zeros(eq_indices.size)
+        dyu_eq[y >= 0] = dnu[y >= 0]
+
+        # get ineq part of dyl, dyu
+        dyl_ineq = dlambda_l
+        dyu_ineq = dlambda_u
+
+        dyl[eq_indices] = dyl_eq
+        dyl[ineq_indices] = dyl_ineq
+        dyu[eq_indices] = dyu_eq
+        dyu[ineq_indices] = dyu_ineq
+
+        return dx, dyl, dyu
