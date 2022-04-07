@@ -273,7 +273,7 @@ class OSQP:
         ], format='csc')
         rhs = - np.concatenate([dx, dlambd, dnu])
         if mode == 'lsqr':
-            out = spa.linalg.lsqr(M2.T, rhs)
+            out = spa.linalg.lsqr(M2.T, rhs, atol=1e-12, btol=1e-12, iter_lim=10000, show=True)
             primal = out[0]
         elif mode == 'qdldl':
             B = spa.bmat([
@@ -331,5 +331,6 @@ class OSQP:
         dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
+        # pdb.set_trace()
 
         return dP, dq, dA, dl, du

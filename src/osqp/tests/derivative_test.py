@@ -32,7 +32,8 @@ class derivative_tests(unittest.TestCase):
     def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
         L = np.random.randn(n, n-1)
         # P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
-        P = sparse.csc_matrix(L.dot(L.T) - 0.01 * sparse.eye(n))
+        # P = sparse.csc_matrix(L.dot(L.T) + 0.01 * sparse.eye(n))
+        P = sparse.csc_matrix(L.dot(L.T))
         x_0 = npr.randn(n)
         s_0 = npr.rand(m)
         A = sparse.csc_matrix(npr.randn(m, n))
@@ -44,7 +45,7 @@ class derivative_tests(unittest.TestCase):
 
         return [P, q,  A, l, u, true_x]
 
-    def get_grads(self, P, q, A, l, u, true_x):
+    def get_grads(self, P, q, A, l, u, true_x, mode='qdldl'):
         # Get gradients by solving with osqp
         m = osqp.OSQP(eps_rel=1e-8, eps_abs=1e-8)
         m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
@@ -53,7 +54,7 @@ class derivative_tests(unittest.TestCase):
         if results.info.status != "solved":
             raise ValueError("Problem not solved!")
         x = results.x
-        grads = m.adjoint_derivative(dx=x - true_x)
+        grads = m.adjoint_derivative(dx=x - true_x, mode=mode)
         # grads = m.adjoint_derivative(dx=np.ones(x.size))
 
 
@@ -249,9 +250,9 @@ class derivative_tests(unittest.TestCase):
         
         A_idx = A.nonzero()
 
-        def grad(A_val):
+        def grad(A_val, mode):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            [dP, dq, dA, dl, du] = self.get_grads(P, q, A_qp, l, u, true_x)
+            [dP, dq, dA, dl, du] = self.get_grads(P, q, A_qp, l, u, true_x, mode=mode)
             return dA
 
         def f(A_val):
@@ -267,23 +268,26 @@ class derivative_tests(unittest.TestCase):
             return 0.5 * np.sum(np.square(x_hat - true_x))
             # return np.sum(x_hat)
 
-        dA = grad(A.data)
+        dA_lsqr = grad(A.data, 'lsqr')
+        dA_qdldl = grad(A.data, 'qdldl')
         dA_fd_val = approx_fprime(A.data, f, grad_precision)
         dA_fd = sparse.csc_matrix((dA_fd_val, A_idx), shape=A.shape)
 
-        # if verbose:
-        print('dA_fd: ', np.round(dA_fd.data, decimals=6))
-        print('dA: ', np.round(dA.data, decimals=6))
+        if verbose:
+            print('dA_fd: ', np.round(dA_fd.data, decimals=6))
+            print('dA_lsqr: ', np.round(dA_lsqr.data, decimals=6))
+            print('dA_qdldl: ', np.round(dA_qdldl.data, decimals=6))
 
-        npt.assert_allclose(dA.todense(), dA_fd.todense(),
+        npt.assert_allclose(dA_lsqr.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
-        
+        npt.assert_allclose(dA_qdldl.todense(), dA_fd.todense(),
+                            rtol=rel_tol, atol=abs_tol)
 
 
     def test_dl_dq_eq(self, verbose=False):
-        n, m = 5, 4
+        n, m = 20, 15
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
         P, q, A, l, u, true_x = prob
         # u = l
         l[20:40] = -osqp.constant('OSQP_INFTY')
@@ -292,8 +296,8 @@ class derivative_tests(unittest.TestCase):
         
         A_idx = A.nonzero()
 
-        def grad(q):
-            [dP, dq, dA, dl, du] = self.get_grads(P, q, A, l, u, true_x)
+        def grad(q, mode):
+            [dP, dq, dA, dl, du] = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return dq
 
         def f(q):
@@ -307,11 +311,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dq = grad(q)
+        dq_lsqr = grad(q, 'lsqr')
+        dq_qdldl = grad(q, 'qdldl')
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
-            print('dq: ', np.round(dq, decimals=4))
+            print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
+            print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
         
-        npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
