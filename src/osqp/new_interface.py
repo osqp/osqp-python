@@ -388,7 +388,7 @@ class OSQP:
         A_eq = A[eq_indices, :]
         b = u[eq_indices]
 
-        dA_ineq = spa.bmat(dA[ineq_indices, :], format='csc')
+        dA_ineq = spa.csc_matrix(dA[ineq_indices, :])
         dl_ineq = dl[ineq_indices]
         du_ineq = du[ineq_indices]
         dA_eq = dA[eq_indices, :]
@@ -464,20 +464,20 @@ class OSQP:
         dyu = np.zeros(m)
 
         # get eq part of dyl, dyu
-        # pdb.set_trace()
         dyl_eq = np.zeros(eq_indices.size)
         dyu_eq = np.zeros(eq_indices.size)
         if eq_indices.size > 0:
-            dyl_eq[y < 0] = dnu[y < 0]
-            dyu_eq[y >= 0] = dnu[y >= 0]
+            y_eq = y[eq_indices]
+            dyl_eq[y_eq < 0] = -dnu[y_eq < 0]
+            dyu_eq[y_eq >= 0] = dnu[y_eq >= 0]
 
         # get ineq part of dyl, dyu
         dyl_ineq = dlambda_l
         dyu_ineq = dlambda_u
 
         dyl[eq_indices] = dyl_eq
-        dyl[ineq_indices] = dyl_ineq
+        dyl[ineq_indices[l_non_inf]] = dyl_ineq
         dyu[eq_indices] = dyu_eq
-        dyu[ineq_indices] = dyu_ineq
+        dyu[ineq_indices[u_non_inf]] = dyu_ineq
 
         return dx, dyl, dyu
