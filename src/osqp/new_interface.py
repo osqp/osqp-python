@@ -372,11 +372,11 @@ class OSQP:
         if dq is None:
             dq = np.zeros(n)
         if dA is None:
-            dP = np.zeros((m, n))
+            dA = np.zeros((m, n))
         if dl is None:
-            dP = np.zeros(m)
+            dl = np.zeros(m)
         if du is None:
-            dq = np.zeros(m)
+            du = np.zeros(m)
 
         # identify equality constraints
         eq_indices = np.where(l == u)[0]
@@ -388,7 +388,7 @@ class OSQP:
         A_eq = A[eq_indices, :]
         b = u[eq_indices]
 
-        dA_ineq = dA[ineq_indices, :]
+        dA_ineq = spa.bmat(dA[ineq_indices, :], format='csc')
         dl_ineq = dl[ineq_indices]
         du_ineq = du[ineq_indices]
         dA_eq = dA[eq_indices, :]
@@ -405,7 +405,7 @@ class OSQP:
             [A_ineq[u_non_inf, :]],
         ])
         h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
-
+        
         dG = spa.bmat([
             [-dA_ineq[l_non_inf, :]],
             [dA_ineq[u_non_inf, :]],
@@ -417,6 +417,7 @@ class OSQP:
         y_ineq = y[ineq_indices].copy()
         y_u_ineq = np.maximum(y_ineq, 0)
         y_l_ineq = -np.minimum(y_ineq, 0)
+        # 
         lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
         # dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
 
@@ -431,7 +432,7 @@ class OSQP:
         ], format='csc')
 
         # form g
-        g1 = dP @ x + dq + dG.T @ lambd + dA.T @ nu
+        g1 = dP @ x + dq + dG.T @ lambd + dA_eq.T @ nu
         g2 = dia_lambda @ (dG @ x - dh)
         g3 = dA_eq @ x - db
         g = np.concatenate([g1, g2, g3])
@@ -463,10 +464,12 @@ class OSQP:
         dyu = np.zeros(m)
 
         # get eq part of dyl, dyu
+        # pdb.set_trace()
         dyl_eq = np.zeros(eq_indices.size)
-        dyl_eq[y < 0] = dnu[y < 0]
         dyu_eq = np.zeros(eq_indices.size)
-        dyu_eq[y >= 0] = dnu[y >= 0]
+        if eq_indices.size > 0:
+            dyl_eq[y < 0] = dnu[y < 0]
+            dyu_eq[y >= 0] = dnu[y >= 0]
 
         # get ineq part of dyl, dyu
         dyl_ineq = dlambda_l
