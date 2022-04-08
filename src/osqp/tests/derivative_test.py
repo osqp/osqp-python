@@ -16,7 +16,7 @@ import pdb
 npr.seed(1)
 
 # Tests settings
-grad_precision = 1e-4
+grad_precision = 1e-5
 rel_tol = 1e-3
 abs_tol = 1e-3
 # rel_tol = 1e-3
@@ -78,13 +78,14 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
         P, q, A, l, u, true_x = prob
 
-        def grad(dq):
+        def grad(dq, mode):
             [dx, dyl, dyu] = self.get_forward_grads(
-                P, q, A, l, u, None, dq, None, None, None)
+                P, q, A, l, u, None, dq, None, None, None, mode=mode)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
-        dx, dyl, dyu = grad(dq)
+        dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
+        dx_lsqr, dyl_lsqr, dyu_lsqr = grad(dq, 'lsqr')
         osqp_solver = osqp.OSQP()
         osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
                           max_iter=max_iter, verbose=False)
@@ -112,11 +113,15 @@ class derivative_tests(unittest.TestCase):
 
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
-            print('dx: ', np.round(dx, decimals=4))
+            print('dx: ', np.round(dx_qdldl, decimals=4))
 
-        npt.assert_allclose(dx_fd, dx, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
+
+        npt.assert_allclose(dx_fd, dx_lsqr, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyl_fd, dyl_lsqr, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyu_fd, dyu_lsqr, rtol=rel_tol, atol=abs_tol)
 
     def test_eq_inf_forward(self, verbose=False):
         n, m = 10, 10
@@ -417,7 +422,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du_lsqr,
                             rtol=rel_tol, atol=abs_tol)
 
-    @unittest.skip
     def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
@@ -502,7 +506,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
-    @unittest.skip
     def test_dl_dq_eq_large(self, verbose=False):
         n, m = 100, 120
 
