@@ -195,6 +195,8 @@ class OSQP:
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
                            P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
+    # def adjoint_derivative(self, dx=None, dy=None,
+    #                        P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
         """
         Compute adjoint derivative after solve.
         """
@@ -230,6 +232,7 @@ class OSQP:
         if dy_l is None:
             dy_l = np.zeros(m)
 
+
         # identify equality constraints
         eq_indices = np.where(l == u)[0]
         ineq_indices = np.where(l < u)[0]
@@ -253,11 +256,17 @@ class OSQP:
 
         nu = y[eq_indices]
         dnu = -dy_l[eq_indices] + dy_u[eq_indices]
+        
         y_ineq = y[ineq_indices].copy()
         y_u_ineq = np.maximum(y_ineq, 0)
         y_l_ineq = -np.minimum(y_ineq, 0)
         lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
-        dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
+
+        dy_l_ineq = dy_l[ineq_indices]
+        # dy_l_ineq[y_ineq >= 0] = 0
+        dy_u_ineq = dy_u[ineq_indices]
+        # dy_l_ineq[y_ineq <= 0] = 0
+        dlambd = np.concatenate([dy_l_ineq[l_non_inf], dy_u_ineq[u_non_inf]])
 
         # compute the derivative
         dia_lambda = spa.diags(lambd)
@@ -330,7 +339,7 @@ class OSQP:
         dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
-        # pdb.set_trace()
+        pdb.set_trace()
 
         return dP, dq, dA, dl, du
 
@@ -438,7 +447,7 @@ class OSQP:
         g = np.concatenate([g1, g2, g3])
         rhs = -g
         if mode == 'lsqr':
-            out = spa.linalg.lsqr(M2, -g, atol=1e-12, btol=1e-12, iter_lim=100000, show=True, conlim=1e12)
+            out = spa.linalg.lsqr(M2, -g, atol=1e-14, btol=1e-14, iter_lim=100000, show=True, conlim=1e13)
             primal = out[0]
         elif mode == 'qdldl':
             B = spa.bmat([
