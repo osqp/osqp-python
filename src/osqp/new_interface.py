@@ -193,8 +193,6 @@ class OSQP:
 
         return sol
 
-    # def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-    #                        P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
                            P_idx=None, A_idx=None, mode='qdldl', **kwargs):
         """
@@ -305,7 +303,7 @@ class OSQP:
             if 'max_iter' in kwargs:
                 max_iter = kwargs['max_iter']
             else:
-                max_iter = 20
+                max_iter = 100
             if 'tol' in kwargs:
                 tol = kwargs['tol']
             else:
