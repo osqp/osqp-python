@@ -43,7 +43,7 @@ class derivative_tests(unittest.TestCase):
         l = A.dot(x_0) - s_0
         q = npr.randn(n)
         true_x = npr.randn(n)
-        true_y = 0*npr.randn(m)
+        true_y = npr.randn(m)
         true_yl = -np.minimum(true_y, 0)
         true_yu = np.maximum(true_y, 0)
 
@@ -568,7 +568,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dal_dq_nonzero_dy(self, verbose=False):
-        n, m = 40, 40
+        n, m = 20, 20
 
         prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
@@ -595,7 +595,7 @@ class derivative_tests(unittest.TestCase):
             y_hat = res.y
             yu_hat = np.maximum(y_hat, 0)
             yl_hat = -np.minimum(y_hat, 0)
-
+            
             return 0.5 * (np.sum(np.square(x_hat - true_x)) + np.sum(np.square(yl_hat - true_yl)) + \
                 np.sum(np.square(yu_hat - true_yu)))
             # true_y = true_yu - true_yl

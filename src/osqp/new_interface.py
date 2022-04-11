@@ -255,16 +255,16 @@ class OSQP:
         h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
 
         nu = y[eq_indices]
-        dnu = -dy_l[eq_indices] + dy_u[eq_indices]
+        dnu = dy_l[eq_indices] + dy_u[eq_indices]
         
         y_ineq = y[ineq_indices].copy()
         y_u_ineq = np.maximum(y_ineq, 0)
         y_l_ineq = -np.minimum(y_ineq, 0)
         lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
 
-        dy_l_ineq = dy_l[ineq_indices]
+        dy_l_ineq = dy_l[ineq_indices].copy()
         # dy_l_ineq[y_ineq >= 0] = 0
-        dy_u_ineq = dy_u[ineq_indices]
+        dy_u_ineq = dy_u[ineq_indices].copy()
         # dy_l_ineq[y_ineq <= 0] = 0
         dlambd = np.concatenate([dy_l_ineq[l_non_inf], dy_u_ineq[u_non_inf]])
 
