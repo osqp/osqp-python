@@ -23,8 +23,8 @@ abs_tol = 1e-3
 # abs_tol = 1e-3
 
 # OSQP settings
-eps_abs = 1e-12
-eps_rel = 1e-12
+eps_abs = 1e-10
+eps_rel = 1e-10
 max_iter = 300000
 
 
@@ -236,7 +236,7 @@ class derivative_tests(unittest.TestCase):
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
             print('dx: ', np.round(dx_qdldl, decimals=4))
-        pdb.set_trace()
+        
         npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
@@ -444,7 +444,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du_lsqr,
                             rtol=rel_tol, atol=abs_tol)
 
-    @unittest.skip
+    # @unittest.skip
     def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
@@ -529,7 +529,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
-    @unittest.skip
     def test_dl_dq_eq_large(self, verbose=False):
         n, m = 100, 120
 
@@ -569,7 +568,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
-    def test_dal_dq_nonzero_dy(self, verbose=False):
+    def test_dl_dq_nonzero_dy(self, verbose=False):
         n, m = 20, 20
 
         prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
@@ -613,6 +612,5 @@ class derivative_tests(unittest.TestCase):
             print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
             print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
 
-        # npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
-        # pdb.set_trace()
+        npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)

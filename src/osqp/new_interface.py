@@ -345,7 +345,6 @@ class OSQP:
         dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
-        pdb.set_trace()
 
         return dP, dq, dA, dl, du
 
