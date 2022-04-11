@@ -444,7 +444,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(du_fd, du_lsqr,
                             rtol=rel_tol, atol=abs_tol)
 
-    # @unittest.skip
     def test_dl_dA_eq(self, verbose=False):
         n, m = 40, 40
 
@@ -473,7 +472,6 @@ class derivative_tests(unittest.TestCase):
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
-            # return np.sum(x_hat)
 
         dA_lsqr = grad(A.data, 'lsqr')
         dA_qdldl = grad(A.data, 'qdldl')

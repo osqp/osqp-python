@@ -172,7 +172,7 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def derivative_iterative_refinement(self, rhs, max_iter=5000, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter, tol):
         M = self._derivative_cache['M']
 
         # Prefactor
@@ -193,10 +193,10 @@ class OSQP:
 
         return sol
 
-    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-                           P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
-    # def adjoint_derivative(self, dx=None, dy=None,
+    # def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
     #                        P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
+    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
+                           P_idx=None, A_idx=None, mode='qdldl', **kwargs):
         """
         Compute adjoint derivative after solve.
         """
@@ -269,9 +269,7 @@ class OSQP:
         lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
 
         dy_l_ineq = dy_l[ineq_indices].copy()
-        # dy_l_ineq[y_ineq >= 0] = 0
         dy_u_ineq = dy_u[ineq_indices].copy()
-        # dy_l_ineq[y_ineq <= 0] = 0
         dlambd = np.concatenate([dy_l_ineq[l_non_inf], dy_u_ineq[u_non_inf]])
 
         # compute the derivative
@@ -285,9 +283,33 @@ class OSQP:
         ], format='csc')
         rhs = - np.concatenate([dx, dlambd, dnu])
         if mode == 'lsqr':
-            out = spa.linalg.lsqr(M2.T, rhs, atol=1e-12, btol=1e-12, iter_lim=100000, show=True, conlim=1e12)
+            if 'conlim' in kwargs:
+                conlim = kwargs['conlim']
+            else:
+                conlim = 1e13
+            if 'max_iter' in kwargs:
+                iter_lim = kwargs['iter_lim']
+            else:
+                iter_lim = 100000
+            if 'tol' in kwargs:
+                tol = kwargs['tol']
+            else:
+                tol = 1e-14
+            out = spa.linalg.lsqr(M2.T, rhs, atol=tol, btol=tol, iter_lim=iter_lim, conlim=conlim)
             primal = out[0]
         elif mode == 'qdldl':
+            if 'eps_iter_ref' in kwargs:
+                eps_iter_ref = kwargs['eps_iter_ref']
+            else:
+                eps_iter_ref = 1e-6
+            if 'max_iter' in kwargs:
+                max_iter = kwargs['max_iter']
+            else:
+                max_iter = 20
+            if 'tol' in kwargs:
+                tol = kwargs['tol']
+            else:
+                tol = 1e-12
             B = spa.bmat([
                 [spa.eye(n + num_ineq + num_eq), M2.T],
                 [M2, None]
@@ -300,7 +322,7 @@ class OSQP:
             self._derivative_cache['solver'] = solver2
             rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
             
-            r_sol_b = self.derivative_iterative_refinement(rhs_b)
+            r_sol_b = self.derivative_iterative_refinement(rhs_b, max_iter, tol)
             dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
         else:
             raise RuntimeError(f"Unrecognized least squares solver mode")
@@ -350,7 +372,7 @@ class OSQP:
 
 
     def forward_derivative(self, dP=None, dq=None, dA=None, dl=None, du=None,
-                           P_idx=None, A_idx=None, mode='qdldl', eps_iter_ref=1e-06):
+                           P_idx=None, A_idx=None, mode='qdldl', **kwargs):
         """
         Compute adjoint derivative after solve.
         """
@@ -427,13 +449,11 @@ class OSQP:
         dh = np.concatenate([-dl_ineq[l_non_inf], du_ineq[u_non_inf]])
 
         nu = y[eq_indices]
-        # dnu = -dy_l[eq_indices] + dy_u[eq_indices]
+
         y_ineq = y[ineq_indices].copy()
         y_u_ineq = np.maximum(y_ineq, 0)
         y_l_ineq = -np.minimum(y_ineq, 0)
-        # 
         lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
-        # dlambd = np.concatenate([-dy_l[l_non_inf], dy_u[u_non_inf]])
 
         # compute the derivative
         dia_lambda = spa.diags(lambd)
@@ -452,13 +472,37 @@ class OSQP:
         g = np.concatenate([g1, g2, g3])
         rhs = -g
         if mode == 'lsqr':
-            out = spa.linalg.lsqr(M2, -g, atol=1e-14, btol=1e-14, iter_lim=100000, show=True, conlim=1e13)
+            if 'conlim' in kwargs:
+                conlim = kwargs['conlim']
+            else:
+                conlim = 1e13
+            if 'max_iter' in kwargs:
+                iter_lim = kwargs['iter_lim']
+            else:
+                iter_lim = 100000
+            if 'tol' in kwargs:
+                tol = kwargs['tol']
+            else:
+                tol = 1e-14
+            out = spa.linalg.lsqr(M2, -g, atol=tol, btol=tol, iter_lim=iter_lim, conlim=conlim)
             primal = out[0]
         elif mode == 'qdldl':
             B = spa.bmat([
                 [spa.eye(n + num_ineq + num_eq), M2],
                 [M2.T, None]
             ])
+            if 'eps_iter_ref' in kwargs:
+                eps_iter_ref = kwargs['eps_iter_ref']
+            else:
+                eps_iter_ref = 1e-6
+            if 'max_iter' in kwargs:
+                max_iter = kwargs['max_iter']
+            else:
+                max_iter = 20
+            if 'tol' in kwargs:
+                tol = kwargs['tol']
+            else:
+                tol = 1e-12
             delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
                                 [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                                 format='csc')
@@ -467,7 +511,7 @@ class OSQP:
             self._derivative_cache['solver'] = solver2
             rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
             
-            r_sol_b = self.derivative_iterative_refinement(rhs_b)
+            r_sol_b = self.derivative_iterative_refinement(rhs_b, max_iter, tol)
             dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
         else:
             raise RuntimeError(f"Unrecognized least squares solver mode")
