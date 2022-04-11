@@ -255,7 +255,13 @@ class OSQP:
         h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
 
         nu = y[eq_indices]
-        dnu = dy_l[eq_indices] + dy_u[eq_indices]
+        dy_l_eq = dy_l[eq_indices]
+        dy_u_eq = dy_u[eq_indices]
+        dnu = np.zeros(eq_indices.size)
+        
+        if eq_indices.size > 0:
+            dnu[nu >= 0] = dy_u_eq[nu >= 0]
+            dnu[nu <= 0] = -dy_l_eq[nu < 0]
         
         y_ineq = y[ineq_indices].copy()
         y_u_ineq = np.maximum(y_ineq, 0)

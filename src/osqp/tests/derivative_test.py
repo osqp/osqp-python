@@ -67,6 +67,8 @@ class derivative_tests(unittest.TestCase):
         else:
             grads = m.adjoint_derivative(
                 dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu, mode=mode)
+            # grads = m.adjoint_derivative(
+            #     dx=x - true_x, dy_l=np.ones(y.size), dy_u=np.ones(y.size), mode=mode)
         # grads = m.adjoint_derivative(dx=np.ones(x.size))
 
         return grads
@@ -574,7 +576,7 @@ class derivative_tests(unittest.TestCase):
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
         # l[20:40] = -osqp.constant('OSQP_INFTY')
-        num_eq = 3
+        num_eq = 6
         u[:num_eq] = l[:num_eq]
 
         A_idx = A.nonzero()
@@ -596,6 +598,7 @@ class derivative_tests(unittest.TestCase):
             yu_hat = np.maximum(y_hat, 0)
             yl_hat = -np.minimum(y_hat, 0)
             
+            # return 0.5 * np.sum(np.square(x_hat - true_x)) + np.sum(yl_hat) + np.sum(yu_hat)
             return 0.5 * (np.sum(np.square(x_hat - true_x)) + np.sum(np.square(yl_hat - true_yl)) + \
                 np.sum(np.square(yu_hat - true_yu)))
             # true_y = true_yu - true_yl
@@ -611,5 +614,5 @@ class derivative_tests(unittest.TestCase):
             print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
 
         # npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
-        pdb.set_trace()
+        # pdb.set_trace()
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
