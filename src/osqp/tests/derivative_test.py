@@ -25,7 +25,7 @@ abs_tol = 1e-3
 # OSQP settings
 eps_abs = 1e-10
 eps_rel = 1e-10
-max_iter = 300000
+max_iter = 500000
 
 
 class derivative_tests(unittest.TestCase):
@@ -51,10 +51,9 @@ class derivative_tests(unittest.TestCase):
 
     def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
         # Get gradients by solving with osqp
-        # m = osqp.OSQP(eps_rel=1e-8, eps_abs=1e-8)
-        m = osqp.OSQP(eps_rel=eps_rel, eps_abs=eps_abs)
+        m = osqp.OSQP()
         m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                max_iter=max_iter, verbose=False)
+                max_iter=max_iter, verbose=True)
         results = m.solve()
         if results.info.status != "solved":
             raise ValueError("Problem not solved!")
