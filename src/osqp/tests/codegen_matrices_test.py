@@ -6,41 +6,59 @@ from scipy import sparse
 
 # Unit Test
 import unittest
+import pytest
 import numpy.testing as nptest
 import shutil as sh
+import sys
 
 
 class codegen_matrices_tests(unittest.TestCase):
 
-    def setUp(self):
-        # Simple QP problem
-        self.P = sparse.diags([11., 0.1], format='csc')
-        self.P_new = sparse.eye(2, format='csc')
-        self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix([[-1, 0], [0, -1], [-1, -3],
+    @classmethod
+    def setUpClass(cls):
+        P = sparse.diags([11., 0.1], format='csc')
+        P_new = sparse.eye(2, format='csc')
+        q = np.array([3, 4])
+        A = sparse.csc_matrix([[-1, 0], [0, -1], [-1, -3],
                                     [2, 5], [3, 4]])
-        self.A_new = sparse.csc_matrix([[-1, 0], [0, -1], [-2, -2],
+        A_new = sparse.csc_matrix([[-1, 0], [0, -1], [-2, -2],
                                         [2, 5], [3, 4]])
-        self.u = np.array([0, 0, -15, 100, 80])
-        self.l = -np.inf * np.ones(len(self.u))
-        self.n = self.P.shape[0]
-        self.m = self.A.shape[0]
-        self.opts = {'verbose': False,
+        u = np.array([0, 0, -15, 100, 80])
+        l = -np.inf * np.ones(len(u))
+        n = P.shape[0]
+        m = A.shape[0]
+        opts = {'verbose': False,
                      'eps_abs': 1e-08,
                      'eps_rel': 1e-08,
                      'alpha': 1.6,
                      'max_iter': 3000,
                      'warm_start': True}
+
+        model = osqp.OSQP()
+        model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
+
+        model_dir = model.codegen('code2', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
+        sh.rmtree('code2')
+        sys.path.append(model_dir)
+
+        cls.m = m
+        cls.n = n
+        cls.P = P
+        cls.P_new = P_new
+        cls.q = q
+        cls.A = A
+        cls.A_new = A_new
+        cls.l = l
+        cls.u = u
+        cls.opts = opts
+
+    def setUp(self):
+
         self.model = osqp.OSQP()
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
                          **self.opts)
 
     def test_solve(self):
-        # Generate the code
-        self.model.codegen('code2', python_ext_name='mat_emosqp',
-                           force_rewrite=True, parameters='matrices')
-
-        sh.rmtree('code2')
         import mat_emosqp
 
         # Solve problem
