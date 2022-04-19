@@ -17,8 +17,8 @@ npr.seed(1)
 
 # Tests settings
 grad_precision = 1e-5
-rel_tol = 2e-3
-abs_tol = 2e-3
+rel_tol = 5e-3
+abs_tol = 5e-3
 
 # OSQP settings
 eps_abs = 1e-9
