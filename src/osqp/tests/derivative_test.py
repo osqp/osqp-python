@@ -564,7 +564,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_nonzero_dy(self, verbose=False):
-        n, m = 10, 5
+        n, m = 6, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
