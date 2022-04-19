@@ -303,7 +303,7 @@ class OSQP:
             if 'max_iter' in kwargs:
                 max_iter = kwargs['max_iter']
             else:
-                max_iter = 100
+                max_iter = 200
             if 'tol' in kwargs:
                 tol = kwargs['tol']
             else:
