@@ -17,14 +17,12 @@ npr.seed(1)
 
 # Tests settings
 grad_precision = 1e-5
-rel_tol = 1e-3
-abs_tol = 1e-3
-# rel_tol = 1e-3
-# abs_tol = 1e-3
+rel_tol = 2e-3
+abs_tol = 2e-3
 
 # OSQP settings
-eps_abs = 1e-7
-eps_rel = 1e-7
+eps_abs = 1e-8
+eps_rel = 1e-8
 max_iter = 500000
 
 
@@ -33,7 +31,7 @@ class derivative_tests(unittest.TestCase):
     def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
         L = np.random.randn(n, n-1)
         # P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
-        P = sparse.csc_matrix(L.dot(L.T) + 0.1 * sparse.eye(n))
+        P = sparse.csc_matrix(L.dot(L.T) + 0.2 * sparse.eye(n))
         # P = sparse.csc_matrix(L.dot(L.T))
         x_0 = npr.randn(n)
         s_0 = npr.rand(m)
