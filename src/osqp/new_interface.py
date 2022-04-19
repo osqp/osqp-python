@@ -38,6 +38,7 @@ class OSQP:
         # The following attributes are populated on setup()
         self._solver = None
         self._derivative_cache = {}
+        self._derivative_cache['solver'] = None
 
     def __str__(self):
         return f'OSQP with algebra={self.algebra}'
@@ -122,6 +123,8 @@ class OSQP:
         # delete results from self._derivative_cache to prohibit
         # taking the derivative of unsolved problems
         self._derivative_cache.pop('results', None)
+        self._derivative_cache.pop('solver', None)
+        self._derivative_cache.pop('M', None)
 
     def setup(self, P, q, A, l, u, **settings):
         self.m = l.shape[0]
@@ -283,11 +286,11 @@ class OSQP:
             delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
                                 [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                                format='csc')
-            solver2 = qdldl.Solver(B + delta_B)
-            self._derivative_cache['M'] = B
-            self._derivative_cache['solver'] = solver2
+            if self._derivative_cache['solver'] is None:
+                solver = qdldl.Solver(B + delta_B)
+                self._derivative_cache['M'] = B
+                self._derivative_cache['solver'] = solver
             rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
-
             r_sol_b = self.derivative_iterative_refinement(
                 rhs_b, max_iter, tol)
             dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
@@ -434,9 +437,10 @@ class OSQP:
             delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
                                 [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                                format='csc')
-            solver2 = qdldl.Solver(B + delta_B)
+            
+            solver = qdldl.Solver(B + delta_B)
             self._derivative_cache['M'] = B
-            self._derivative_cache['solver'] = solver2
+            self._derivative_cache['solver'] = solver
             rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
 
             r_sol_b = self.derivative_iterative_refinement(
