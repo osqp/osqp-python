@@ -60,10 +60,10 @@ class derivative_tests(unittest.TestCase):
         yl = -np.minimum(y, 0)
         yu = np.maximum(y, 0)
         if true_yl is None and true_yu is None:
-            grads = m.adjoint_derivative(dx=x - true_x, mode=mode)
+            grads = m.adjoint_derivative(dx=x - true_x)
         else:
             grads = m.adjoint_derivative(
-                dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu, mode=mode)
+                dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
             # grads = m.adjoint_derivative(
             #     dx=x - true_x, dy_l=np.ones(y.size), dy_u=np.ones(y.size), mode=mode)
         # grads = m.adjoint_derivative(dx=np.ones(x.size))
@@ -95,7 +95,7 @@ class derivative_tests(unittest.TestCase):
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
-        dx_lsqr, dyl_lsqr, dyu_lsqr = grad(dq, 'lsqr')
+
         osqp_solver = osqp.OSQP()
         osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
                           max_iter=max_iter, verbose=False)
@@ -128,10 +128,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
-
-        npt.assert_allclose(dx_fd, dx_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_lsqr, rtol=rel_tol, atol=abs_tol)
 
     def test_eq_inf_forward(self, verbose=False):
         n, m = 10, 10
@@ -148,7 +144,6 @@ class derivative_tests(unittest.TestCase):
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
-        dx_lsqr, dyl_lsqr, dyu_lsqr = grad(dq, 'lsqr')
         osqp_solver = osqp.OSQP()
         osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
                           max_iter=max_iter, verbose=False)
@@ -181,10 +176,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
-
-        npt.assert_allclose(dx_fd, dx_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_lsqr, rtol=rel_tol, atol=abs_tol)
 
     def test_multiple_forward_derivative(self, verbose=False):
         n, m = 5, 5
@@ -204,7 +195,6 @@ class derivative_tests(unittest.TestCase):
         dL = np.random.normal(size=(n, n))
         dP = dL + dL.T
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dP, dq, dA, dl, du, 'qdldl')
-        dx_lsqr, dyl_lsqr, dyu_lsqr = grad(dP, dq, dA, dl, du, 'lsqr')
         osqp_solver = osqp.OSQP()
         osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
                           max_iter=max_iter, verbose=False)
@@ -237,10 +227,6 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
-
-        npt.assert_allclose(dx_fd, dx_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_lsqr, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_lsqr, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq(self, verbose=False):
         n, m = 5, 5
@@ -395,17 +381,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dl_lsqr = grad(l, 'lsqr')
         dl_qdldl = grad(l, 'qdldl')
         dl_fd = approx_fprime(l, f, grad_precision)
 
         if verbose:
             print('dl_fd: ', np.round(dl_fd, decimals=4).tolist())
-            print('dl_lsqr: ', np.round(dl_lsqr, decimals=4).tolist())
             print('dl_qdldl: ', np.round(dl_qdldl, decimals=4).tolist())
 
-        npt.assert_allclose(dl_fd, dl_lsqr,
-                            rtol=rel_tol, atol=abs_tol)
+
         npt.assert_allclose(dl_fd, dl_qdldl,
                             rtol=rel_tol, atol=abs_tol)
 
@@ -431,14 +414,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        du_lsqr = grad(u, 'lsqr')
+        du_qdldl = grad(u, 'qdldl')
         du_fd = approx_fprime(u, f, grad_precision)
 
         if verbose:
             print('du_fd: ', np.round(du_fd, decimals=4))
-            print('du: ', np.round(du_lsqr, decimals=4))
+            print('du: ', np.round(du_qdldl, decimals=4))
 
-        npt.assert_allclose(du_fd, du_lsqr,
+        npt.assert_allclose(du_fd, du_qdldl,
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA_eq(self, verbose=False):
@@ -470,18 +453,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dA_lsqr = grad(A.data, 'lsqr')
         dA_qdldl = grad(A.data, 'qdldl')
         dA_fd_val = approx_fprime(A.data, f, grad_precision)
         dA_fd = sparse.csc_matrix((dA_fd_val, A_idx), shape=A.shape)
 
         if verbose:
             print('dA_fd: ', np.round(dA_fd.data, decimals=6))
-            print('dA_lsqr: ', np.round(dA_lsqr.data, decimals=6))
             print('dA_qdldl: ', np.round(dA_qdldl.data, decimals=6))
 
-        # npt.assert_allclose(dA_lsqr.todense(), dA_fd.todense(),
-        #                     rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dA_qdldl.todense(), dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
@@ -512,16 +491,13 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dq_lsqr = grad(q, 'lsqr')
         dq_qdldl = grad(q, 'qdldl')
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
-            print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_eq_large(self, verbose=False):
@@ -551,16 +527,13 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dq_lsqr = grad(q, 'lsqr')
         dq_qdldl = grad(q, 'qdldl')
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
-            print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_nonzero_dy(self, verbose=False):
@@ -598,14 +571,11 @@ class derivative_tests(unittest.TestCase):
             # true_y = true_yu - true_yl
             # return 0.5 * (np.sum(np.square(x_hat - true_x)) + np.sum(np.square(y_hat - true_y)))
 
-        dq_lsqr = grad(q, 'lsqr')
         dq_qdldl = grad(q, 'qdldl')
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
-            print('dq_lsqr: ', np.round(dq_lsqr, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_lsqr, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
