@@ -19,6 +19,8 @@ npr.seed(1)
 grad_precision = 1e-5
 rel_tol = 5e-3
 abs_tol = 5e-3
+rel_tol_relaxed = 1e-2
+abs_tol_relaxed = 1e-2
 
 # OSQP settings
 eps_abs = 1e-9
@@ -534,7 +536,7 @@ class derivative_tests(unittest.TestCase):
             print('dq_fd: ', np.round(dq_fd, decimals=4))
             print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol_relaxed, atol=abs_tol_relaxed)
 
     def test_dl_dq_nonzero_dy(self, verbose=False):
         n, m = 6, 3

@@ -224,8 +224,15 @@ class OSQP:
         y_u = np.maximum(y, 0)
         y_l = -np.minimum(y, 0)
 
-        M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq = self.derivative_setup(
-            x, y)
+        out_dict = self.derivative_setup(x, y)
+        M, P, q, A = out_dict['M'], out_dict['P'], out_dict['q'], out_dict['A']
+        l, u, G, h = out_dict['l'], out_dict['u'], out_dict['G'], out_dict['h']
+        l_non_inf, u_non_inf = out_dict['l_non_inf'], out_dict['u_non_inf']
+        num_eq, num_ineq = out_dict['num_eq'], out_dict['num_ineq']
+        lambd, nu = out_dict['lambd'], out_dict['nu']
+        eq_indices, ineq_indices = out_dict['eq_indices'], out_dict['ineq_indices']
+        y_ineq, y_l_ineq, y_u_ineq = out_dict['y_ineq'], out_dict['y_l_ineq'], out_dict['y_u_ineq']
+
         m, n = A.shape
 
         if A_idx is None:
@@ -362,8 +369,16 @@ class OSQP:
         if du is None:
             du = np.zeros(m)
 
-        M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq = self.derivative_setup(
-            x, y)
+        # M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq = self.derivative_setup(
+        #     x, y)
+        out_dict = self.derivative_setup(x, y)
+        M, P, q, A = out_dict['M'], out_dict['P'], out_dict['q'], out_dict['A']
+        l, u, G, h = out_dict['l'], out_dict['u'], out_dict['G'], out_dict['h']
+        l_non_inf, u_non_inf = out_dict['l_non_inf'], out_dict['u_non_inf']
+        num_eq, num_ineq = out_dict['num_eq'], out_dict['num_ineq']
+        lambd, nu = out_dict['lambd'], out_dict['nu']
+        eq_indices, ineq_indices = out_dict['eq_indices'], out_dict['ineq_indices']
+        y_ineq, y_l_ineq, y_u_ineq = out_dict['y_ineq'], out_dict['y_l_ineq'], out_dict['y_u_ineq']
 
         dA_ineq = spa.csc_matrix(dA[ineq_indices, :])
         dl_ineq = dl[ineq_indices]
@@ -479,5 +494,10 @@ class OSQP:
             [dia_lambda @ G, spa.diags(slacks), None],
             [A_eq, None, None]
         ], format='csc')
-
-        return M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq
+        out_dict = {'M': M, 'P': P, 'q': q, 'A': A, 'l': l, 'u': u, 
+                    'A_eq': A_eq, 'b': b, 'G': G, 'h': h, 'l_non_inf': l_non_inf,
+                    'u_non_inf': u_non_inf, 'num_eq': num_eq, 'num_ineq': num_ineq,
+                    'lambd': lambd, 'nu': nu, 'eq_indices': eq_indices, 'ineq_indices': ineq_indices, 
+                    'y_ineq': y_ineq, 'y_l_ineq': y_l_ineq, 'y_u_ineq': y_u_ineq}
+        return out_dict
+        # return M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq
