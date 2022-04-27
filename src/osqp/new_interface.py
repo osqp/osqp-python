@@ -5,13 +5,10 @@ import warnings
 import numpy as np
 import scipy.sparse as spa
 import qdldl
-from osqp import constant
 from osqp import algebra_available, default_algebra
 from osqp.interface import constant, _ALGEBRA_MODULES
 import osqp.utils as utils
 import osqp.codegen as cg
-import pdb
-import time
 
 
 class OSQP:
@@ -38,7 +35,6 @@ class OSQP:
         # The following attributes are populated on setup()
         self._solver = None
         self._derivative_cache = {}
-        self._derivative_cache['solver'] = None
 
     def __str__(self):
         return f'OSQP with algebra={self.algebra}'
@@ -58,12 +54,10 @@ class OSQP:
     def update_settings(self, **kwargs):
 
         # Some setting names have changed. Support the old names for now, but warn the caller.
-        renamed_settings = {'polish': 'polishing',
-                            'warm_start': 'warm_starting'}
+        renamed_settings = {'polish': 'polishing', 'warm_start': 'warm_starting'}
         for k, v in renamed_settings.items():
             if k in kwargs:
-                warnings.warn(
-                    f'"{k}" is deprecated. Please use "{v}" instead.', DeprecationWarning)
+                warnings.warn(f'"{k}" is deprecated. Please use "{v}" instead.', DeprecationWarning)
                 kwargs[v] = kwargs[k]
                 del kwargs[k]
 
@@ -80,8 +74,7 @@ class OSQP:
                 self._solver.update_rho(kwargs.pop('rho'))
             if kwargs:
                 self._solver.update_settings(new_settings)
-            # TODO: Why isn't this just an attribute?
-            self.settings = self._solver.get_settings()
+            self.settings = self._solver.get_settings()  # TODO: Why isn't this just an attribute?
         else:
             self.settings = new_settings
 
@@ -117,8 +110,7 @@ class OSQP:
                 if kwargs.get(f'{_varx}_idx') is None:
                     self._derivative_cache[_var].data = kwargs[_varx]
                 else:
-                    self._derivative_cache[_var].data[kwargs[f'{_varx}_idx']
-                                                      ] = kwargs[_varx]
+                    self._derivative_cache[_var].data[kwargs[f'{_varx}_idx']] = kwargs[_varx]
 
         # delete results from self._derivative_cache to prohibit
         # taking the derivative of unsolved problems
@@ -137,8 +129,7 @@ class OSQP:
 
         self.update_settings(**settings)
 
-        self._solver = self.ext.OSQPSolver(
-            self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
+        self._solver = self.ext.OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
         self._derivative_cache.update({
             'P': P,
             'q': q,
@@ -163,8 +154,7 @@ class OSQP:
             raise ValueError('Problem not solved!')
 
         # Create a Namespace of OSQPInfo keys and associated values
-        _info = SimpleNamespace(
-            **{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
+        _info = SimpleNamespace(**{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
 
         # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
         # directly inside the returned object on solve(). This should be simplified!
@@ -198,7 +188,6 @@ class OSQP:
 
         if k == max_iter - 1:
             warnings.warn("max_iter iterative refinement reached.")
-        print('num iterative refinement iters', k)
 
         return sol
 
@@ -277,7 +266,7 @@ class OSQP:
         delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
                             [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
                             format='csc')
-        if self._derivative_cache['solver'] is None:
+        if self._derivative_cache.get('solver') is None:
             solver = qdldl.Solver(B + delta_B)
             self._derivative_cache['M'] = B
             self._derivative_cache['solver'] = solver
