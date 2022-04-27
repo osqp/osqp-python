@@ -115,6 +115,8 @@ class OSQP:
         # delete results from self._derivative_cache to prohibit
         # taking the derivative of unsolved problems
         self._derivative_cache.pop('results', None)
+        self._derivative_cache.pop('solver', None)
+        self._derivative_cache.pop('M', None)
 
     def setup(self, P, q, A, l, u, **settings):
         self.m = l.shape[0]
@@ -169,7 +171,7 @@ class OSQP:
                 FLOAT=False, LONG=True):
         return NotImplementedError
 
-    def derivative_iterative_refinement(self, rhs, max_iter=20, tol=1e-12):
+    def derivative_iterative_refinement(self, rhs, max_iter, tol):
         M = self._derivative_cache['M']
 
         # Prefactor
@@ -181,7 +183,6 @@ class OSQP:
             delta_sol = solver.solve(rhs - M @ sol)
             sol = sol + delta_sol
 
-            #  print("norm_iter_ref = %.4e\n" % np.linalg.norm(M @ sol - rhs))
             if np.linalg.norm(M @ sol - rhs) < tol:
                 break
 
@@ -191,14 +192,10 @@ class OSQP:
         return sol
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None,
-                           P_idx=None, A_idx=None, eps_iter_ref=1e-04):
+                           P_idx=None, A_idx=None, **kwargs):
         """
         Compute adjoint derivative after solve.
         """
-
-        P, q = self._derivative_cache['P'], self._derivative_cache['q']
-        A = self._derivative_cache['A']
-        l, u = self._derivative_cache['l'], self._derivative_cache['u']
 
         try:
             results = self._derivative_cache['results']
@@ -211,53 +208,108 @@ class OSQP:
             raise ValueError("Problem has not been solved to optimality. "
                              "You cannot take derivatives")
 
-        m, n = A.shape
         x = results.x
         y = results.y
         y_u = np.maximum(y, 0)
         y_l = -np.minimum(y, 0)
 
+        out_dict = self.derivative_setup(x, y)
+        M, P, q, A = out_dict['M'], out_dict['P'], out_dict['q'], out_dict['A']
+        l, u, G, h = out_dict['l'], out_dict['u'], out_dict['G'], out_dict['h']
+        l_non_inf, u_non_inf = out_dict['l_non_inf'], out_dict['u_non_inf']
+        num_eq, num_ineq = out_dict['num_eq'], out_dict['num_ineq']
+        lambd, nu = out_dict['lambd'], out_dict['nu']
+        eq_indices, ineq_indices = out_dict['eq_indices'], out_dict['ineq_indices']
+        y_ineq, y_l_ineq, y_u_ineq = out_dict['y_ineq'], out_dict['y_l_ineq'], out_dict['y_u_ineq']
+
+        m, n = A.shape
+
         if A_idx is None:
             A_idx = A.nonzero()
-
         if P_idx is None:
             P_idx = P.nonzero()
-
         if dy_u is None:
             dy_u = np.zeros(m)
         if dy_l is None:
             dy_l = np.zeros(m)
 
-        # Make sure M matrix exists
-        if 'M' not in self._derivative_cache:
-            # Multiply second-third row by diag(y_u)^-1 and diag(y_l)^-1
-            # to make the matrix symmetric
-            inv_dia_y_u = spa.diags(np.reciprocal(y_u + 1e-20))
-            inv_dia_y_l = spa.diags(np.reciprocal(y_l + 1e-20))
-            M = spa.bmat([
-                [P, A.T, -A.T],
-                [A, spa.diags(A @ x - u) @ inv_dia_y_u, None],
-                [-A, None, spa.diags(l - A @ x) @ inv_dia_y_l]
-            ], format='csc')
-            delta = spa.bmat([[eps_iter_ref * spa.eye(n), None],
-                              [None, -eps_iter_ref * spa.eye(2 * m)]],
-                             format='csc')
-            self._derivative_cache['M'] = M
-            self._derivative_cache['solver'] = qdldl.Solver(M + delta)
+        dy_l_ineq = dy_l[ineq_indices].copy()
+        dy_u_ineq = dy_u[ineq_indices].copy()
 
-        rhs = - np.concatenate([dx, dy_u, dy_l])
+        dy_l_eq = dy_l[eq_indices]
+        dy_u_eq = dy_u[eq_indices]
+        dnu = np.zeros(eq_indices.size)
 
-        r_sol = self.derivative_iterative_refinement(rhs)
+        if eq_indices.size > 0:
+            dnu[nu >= 0] = dy_u_eq[nu >= 0]
+            dnu[nu <= 0] = -dy_l_eq[nu < 0]
+        dlambd = np.concatenate([dy_l_ineq[l_non_inf], dy_u_ineq[u_non_inf]])
 
-        r_x, r_yu, r_yl = np.split(r_sol, [n, n + m])
+        rhs = - np.concatenate([dx, dlambd, dnu])
+        
+        if 'eps_iter_ref' in kwargs:
+            eps_iter_ref = kwargs['eps_iter_ref']
+        else:
+            eps_iter_ref = 1e-6
+        if 'max_iter' in kwargs:
+            max_iter = kwargs['max_iter']
+        else:
+            max_iter = 200
+        if 'tol' in kwargs:
+            tol = kwargs['tol']
+        else:
+            tol = 1e-12
+        B = spa.bmat([
+            [spa.eye(n + num_ineq + num_eq), M.T],
+            [M, None]
+        ])
+        delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
+                            [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
+                            format='csc')
+        if self._derivative_cache.get('solver') is None:
+            solver = qdldl.Solver(B + delta_B)
+            self._derivative_cache['M'] = B
+            self._derivative_cache['solver'] = solver
+        rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
+        r_sol_b = self.derivative_iterative_refinement(
+            rhs_b, max_iter, tol)
+        dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
+        
+
+        r_x_b, r_lambda_l_b, r_lambda_u_b, r_nu = np.split(
+            primal, [n, n + l_non_inf.size, n + num_ineq])
+        r_x, r_lambda_l, r_lambda_u = r_x_b, r_lambda_l_b, r_lambda_u_b
+
+        # revert back to y form
+        r_yu = np.zeros(m)
+        r_yl = np.zeros(m)
+        r_yu_ineq = np.zeros(m - num_eq)
+        r_yl_ineq = np.zeros(m - num_eq)
+        r_yu_ineq[u_non_inf] = r_lambda_u
+        r_yl_ineq[l_non_inf] = -r_lambda_l
+
+        r_yu[ineq_indices] = r_yu_ineq
+        r_yl[ineq_indices] = r_yl_ineq
+
+        # go from (r_nu, r_yu, r_yl) to (r_yu, r_yl)
+        r_yu_eq = r_nu.copy() / nu
+        r_yu_eq[nu < 0] = 0
+        r_yu[eq_indices] = r_yu_eq
+
+        r_yl_eq = -r_nu / (nu)
+        r_yl_eq[nu >= 0] = 0
+        r_yl[eq_indices] = r_yl_eq
 
         # Extract derivatives for the constraints
         rows, cols = A_idx
+        ryu = spa.diags(y_u) @ r_yu
+        ryl = -spa.diags(y_l) @ r_yl
         dA_vals = (y_u[rows] - y_l[rows]) * r_x[cols] + \
-                  (r_yu[rows] - r_yl[rows]) * x[cols]
+                  (ryu[rows] - ryl[rows]) * x[cols]
         dA = spa.csc_matrix((dA_vals, (rows, cols)), shape=A.shape)
-        du = - r_yu
-        dl = r_yl
+
+        du = -ryu
+        dl = ryl
 
         # Extract derivatives for the cost (P, q)
         rows, cols = P_idx
@@ -266,3 +318,175 @@ class OSQP:
         dq = r_x
 
         return dP, dq, dA, dl, du
+
+    def forward_derivative(self, dP=None, dq=None, dA=None, dl=None, du=None,
+                           P_idx=None, A_idx=None, **kwargs):
+        """
+        Compute forward derivative after solve.
+        """
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError("Problem has not been solved. "
+                             "You cannot take derivatives. "
+                             "Please call the solve function.")
+
+        if results.info.status != "solved":
+            raise ValueError("Problem has not been solved to optimality. "
+                             "You cannot take derivatives")
+        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        A = self._derivative_cache['A']
+        l, u = self._derivative_cache['l'], self._derivative_cache['u']
+
+        x = results.x
+        y = results.y
+
+        if A_idx is None:
+            A_idx = A.nonzero()
+        if P_idx is None:
+            P_idx = P.nonzero()
+        m, n = A.shape
+
+        if dP is None:
+            dP = np.zeros((n, n))
+        if dq is None:
+            dq = np.zeros(n)
+        if dA is None:
+            dA = np.zeros((m, n))
+        if dl is None:
+            dl = np.zeros(m)
+        if du is None:
+            du = np.zeros(m)
+
+        # M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq = self.derivative_setup(
+        #     x, y)
+        out_dict = self.derivative_setup(x, y)
+        M, P, q, A = out_dict['M'], out_dict['P'], out_dict['q'], out_dict['A']
+        l, u, G, h = out_dict['l'], out_dict['u'], out_dict['G'], out_dict['h']
+        l_non_inf, u_non_inf = out_dict['l_non_inf'], out_dict['u_non_inf']
+        num_eq, num_ineq = out_dict['num_eq'], out_dict['num_ineq']
+        lambd, nu = out_dict['lambd'], out_dict['nu']
+        eq_indices, ineq_indices = out_dict['eq_indices'], out_dict['ineq_indices']
+        y_ineq, y_l_ineq, y_u_ineq = out_dict['y_ineq'], out_dict['y_l_ineq'], out_dict['y_u_ineq']
+
+        dA_ineq = spa.csc_matrix(dA[ineq_indices, :])
+        dl_ineq = dl[ineq_indices]
+        du_ineq = du[ineq_indices]
+        dA_eq = dA[eq_indices, :]
+        db = du[eq_indices]
+
+        dG = spa.bmat([
+            [-dA_ineq[l_non_inf, :]],
+            [dA_ineq[u_non_inf, :]],
+        ])
+        dh = np.concatenate([-dl_ineq[l_non_inf], du_ineq[u_non_inf]])
+
+        # form g
+        dia_lambda = spa.diags(lambd)
+        g1 = dP @ x + dq + dG.T @ lambd + dA_eq.T @ nu
+        g2 = dia_lambda @ (dG @ x - dh)
+        g3 = dA_eq @ x - db
+        g = np.concatenate([g1, g2, g3])
+        rhs = -g
+
+        B = spa.bmat([
+            [spa.eye(n + num_ineq + num_eq), M],
+            [M.T, None]
+        ])
+        if 'eps_iter_ref' in kwargs:
+            eps_iter_ref = kwargs['eps_iter_ref']
+        else:
+            eps_iter_ref = 1e-6
+        if 'max_iter' in kwargs:
+            max_iter = kwargs['max_iter']
+        else:
+            max_iter = 20
+        if 'tol' in kwargs:
+            tol = kwargs['tol']
+        else:
+            tol = 1e-12
+        delta_B = spa.bmat([[eps_iter_ref * spa.eye(n + num_ineq + num_eq), None],
+                            [None, -eps_iter_ref * spa.eye(n + num_ineq + num_eq)]],
+                            format='csc')
+        
+        solver = qdldl.Solver(B + delta_B)
+        self._derivative_cache['M'] = B
+        self._derivative_cache['solver'] = solver
+        rhs_b = np.concatenate([rhs, np.zeros(n + num_ineq + num_eq)])
+
+        r_sol_b = self.derivative_iterative_refinement(
+            rhs_b, max_iter, tol)
+        dual, primal = np.split(r_sol_b, [n + num_ineq + num_eq])
+
+        dx, dlambda_l, dlambda_u, dnu = np.split(
+            primal, [n, n + l_non_inf.size, n + num_ineq])
+
+        dyl = np.zeros(m)
+        dyu = np.zeros(m)
+
+        # get eq part of dyl, dyu
+        dyl_eq = np.zeros(eq_indices.size)
+        dyu_eq = np.zeros(eq_indices.size)
+        if eq_indices.size > 0:
+            y_eq = y[eq_indices]
+            dyl_eq[y_eq < 0] = -dnu[y_eq < 0]
+            dyu_eq[y_eq >= 0] = dnu[y_eq >= 0]
+
+        # get ineq part of dyl, dyu
+        dyl_ineq = dlambda_l
+        dyu_ineq = dlambda_u
+
+        dyl[eq_indices] = dyl_eq
+        dyl[ineq_indices[l_non_inf]] = dyl_ineq
+        dyu[eq_indices] = dyu_eq
+        dyu[ineq_indices[u_non_inf]] = dyu_ineq
+
+        return dx, dyl, dyu
+
+    def derivative_setup(self, x, y):
+        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        A = self._derivative_cache['A']
+        l, u = self._derivative_cache['l'], self._derivative_cache['u']
+
+        # identify equality constraints
+        eq_indices = np.where(l == u)[0]
+        ineq_indices = np.where(l < u)[0]
+        num_eq = eq_indices.size
+        A_ineq = A[ineq_indices, :]
+        l_ineq = l[ineq_indices]
+        u_ineq = u[ineq_indices]
+        A_eq = A[eq_indices, :]
+        b = u[eq_indices]
+
+        # switch to Gx <= h form
+        l_non_inf = np.where(l_ineq > -constant('OSQP_INFTY'))[0]
+        u_non_inf = np.where(u_ineq < constant('OSQP_INFTY'))[0]
+
+        num_ineq = l_non_inf.size + u_non_inf.size
+        G = spa.bmat([
+            [-A_ineq[l_non_inf, :]],
+            [A_ineq[u_non_inf, :]],
+        ])
+        h = np.concatenate([-l_ineq[l_non_inf], u_ineq[u_non_inf]])
+
+        y_ineq = y[ineq_indices].copy()
+        y_u_ineq = np.maximum(y_ineq, 0)
+        y_l_ineq = -np.minimum(y_ineq, 0)
+        lambd = np.concatenate([y_l_ineq[l_non_inf], y_u_ineq[u_non_inf]])
+        nu = y[eq_indices]
+
+        dia_lambda = spa.diags(lambd)
+        slacks = G @ x - h
+
+        M = spa.bmat([
+            [P, G.T, A_eq.T],
+            [dia_lambda @ G, spa.diags(slacks), None],
+            [A_eq, None, None]
+        ], format='csc')
+        out_dict = {'M': M, 'P': P, 'q': q, 'A': A, 'l': l, 'u': u, 
+                    'A_eq': A_eq, 'b': b, 'G': G, 'h': h, 'l_non_inf': l_non_inf,
+                    'u_non_inf': u_non_inf, 'num_eq': num_eq, 'num_ineq': num_ineq,
+                    'lambd': lambd, 'nu': nu, 'eq_indices': eq_indices, 'ineq_indices': ineq_indices, 
+                    'y_ineq': y_ineq, 'y_l_ineq': y_l_ineq, 'y_u_ineq': y_u_ineq}
+        return out_dict
+        # return M, P, q, A, l, u, A_eq, b, G, h, l_non_inf, u_non_inf, num_eq, num_ineq, lambd, nu, eq_indices, ineq_indices, y_ineq, y_l_ineq, y_u_ineq
