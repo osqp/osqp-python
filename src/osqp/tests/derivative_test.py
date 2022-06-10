@@ -10,6 +10,7 @@ import numpy.testing as npt
 
 # Unit Test
 import unittest
+import pytest
 import pdb
 
 
@@ -26,7 +27,7 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
-
+@pytest.mark.skipif(osqp.default_algebra() not in ('legacy', 'default'), reason='Derivatives only supported for default/legacy algebras.')
 class derivative_tests(unittest.TestCase):
 
     def setUp(self):
