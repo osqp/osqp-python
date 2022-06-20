@@ -169,15 +169,15 @@ class OSQP:
             self._model.update_bounds(l, u)
 
         # update matrix P
-        if Px is not None and Ax is None:
+        if (Px is not None and Px.size > 0) and (Ax is None or Ax.size == 0):
             self._model.update_P(Px, Px_idx, len(Px))
 
         # update matrix A
-        if Ax is not None and Px is None:
+        if (Ax is not None and Ax.size > 0) and (Px is None or Px.size == 0):
             self._model.update_A(Ax, Ax_idx, len(Ax))
 
         # update matrices P and A
-        if Px is not None and Ax is not None:
+        if Px is not None and Px.size > 0 and Ax is not None and Ax.size > 0:
             self._model.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
 
 
@@ -209,10 +209,12 @@ class OSQP:
 
         # delete results from self._derivative_cache to prohibit
         # taking the derivative of unsolved problems
-        if "results" in self._derivative_cache.keys():
-            del self._derivative_cache["results"]
-            del self._derivative_cache["M"]
-            del self._derivative_cache["solver"]
+        if 'results' in self._derivative_cache.keys():
+            del self._derivative_cache['results']
+            if 'M' in self._derivative_cache:
+                del self._derivative_cache['M']
+            if 'solver' in self._derivative_cache:
+                del self._derivative_cache['solver']
 
     def update_settings(self, **kwargs):
         """
