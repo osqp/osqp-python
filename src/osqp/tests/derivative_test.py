@@ -10,6 +10,7 @@ import numpy.testing as npt
 
 # Unit Test
 import unittest
+import pytest
 import pdb
 
 
@@ -28,7 +29,11 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
+@pytest.mark.skipif(osqp.default_algebra() not in ('legacy', 'default'), reason='Derivatives only supported for default/legacy algebras.')
 class derivative_tests(unittest.TestCase):
+
+    def setUp(self):
+        npr.seed(1)
 
     def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
         L = np.random.randn(n, n-1)
@@ -53,7 +58,7 @@ class derivative_tests(unittest.TestCase):
         # Get gradients by solving with osqp
         m = osqp.OSQP()
         m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                max_iter=max_iter, verbose=True)
+                max_iter=max_iter, verbose=True, scaling=0)
         results = m.solve()
         if results.info.status != "solved":
             raise ValueError("Problem not solved!")
