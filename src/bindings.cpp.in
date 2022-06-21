@@ -119,6 +119,7 @@ class MyOSQPSolver {
         c_int warm_start(py::object, py::object);
         c_int solve();
         c_int adjoint_derivative(py::object, py::object, py::object, CSC&, py::object, CSC&, py::object, py::object);
+        c_int codegen(const char*, const char*, OSQPCodegenDefines&);
     private:
         c_int m;
         c_int n;
@@ -303,6 +304,10 @@ c_int MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_
     return osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u, &_dP, _dq, &_dA, _dl, _du);
 }
 
+c_int MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
+    return osqp_codegen(this->_solver, output_dir, file_prefix, &defines);
+}
+
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
 #ifdef DFLOAT
@@ -394,6 +399,16 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("delta", &OSQPSettings::delta)
     .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter);
 
+    py::class_<OSQPCodegenDefines>(m, "OSQPCodegenDefines", py::module_local())
+    .def(py::init([]() {
+        return new OSQPCodegenDefines;
+    }))
+    .def_readwrite("embedded_mode", &OSQPCodegenDefines::embedded_mode)
+    .def_readwrite("float_type", &OSQPCodegenDefines::float_type)
+    .def_readwrite("printing_enable", &OSQPCodegenDefines::printing_enable)
+    .def_readwrite("profiling_enable", &OSQPCodegenDefines::profiling_enable)
+    .def_readwrite("interrupt_enable", &OSQPCodegenDefines::interrupt_enable);
+
     m.def("osqp_set_default_settings", &osqp_set_default_settings);
 
     py::class_<MyOSQPSolution>(m, "OSQPSolution", py::module_local())
@@ -431,6 +446,9 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def("update_settings", &MyOSQPSolver::update_settings)
     .def("update_rho", &MyOSQPSolver::update_rho)
     .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference)
-    .def("adjoint_derivative", &MyOSQPSolver::adjoint_derivative, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true), "dP"_a, "dq"_a, "dA"_a, "dl"_a, "du"_a);
+
+    .def("adjoint_derivative", &MyOSQPSolver::adjoint_derivative, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true), "dP"_a, "dq"_a, "dA"_a, "dl"_a, "du"_a)
+
+    .def("codegen", &MyOSQPSolver::codegen, "output_dir"_a, "file_prefix"_a, "defines"_a);
 
 }
