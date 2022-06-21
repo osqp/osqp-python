@@ -118,6 +118,7 @@ class MyOSQPSolver {
         c_int update_data_mat(py::object, py::object, py::object, py::object);
         c_int warm_start(py::object, py::object);
         c_int solve();
+        c_int adjoint_derivative(py::object, py::object, py::object, CSC&, py::object, CSC&, py::object, py::object);
     private:
         c_int m;
         c_int n;
@@ -267,6 +268,41 @@ c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
+c_int MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_l, const py::object dy_u, CSC& dP, py::object dq, CSC& dA, py::object dl, py::object du) {
+    c_float* _dx;
+    c_float* _dy_l;
+    c_float* _dy_u;
+    c_float* _check2;
+
+    if (dx.is_none()) {
+        _dx = NULL;
+    } else {
+        auto _dx_array = py::array_t<c_float>(dx);
+        _dx = (c_float *)_dx_array.data();
+    }
+
+    if (dy_l.is_none()) {
+        _dy_l = NULL;
+    } else {
+        auto _dy_l_array = py::array_t<c_float>(dy_l);
+        _dy_l = (c_float *)_dy_l_array.data();
+    }
+
+    if (dy_u.is_none()) {
+        _dy_u = NULL;
+    } else {
+        auto _dy_u_array = py::array_t<c_float>(dy_u);
+        _dy_u = (c_float *)_dy_u_array.data();
+    }
+
+    csc& _dP = dP.getcsc();
+    c_float* _dq = (c_float *)py::array_t<c_float>(dq).data();
+    csc& _dA = dA.getcsc();
+    c_float* _dl = (c_float *)py::array_t<c_float>(dl).data();
+    c_float* _du = (c_float *)py::array_t<c_float>(du).data();
+    return osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u, &_dP, _dq, &_dA, _dl, _du);
+}
+
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
 #ifdef DFLOAT
@@ -394,6 +430,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def("update_data_mat", &MyOSQPSolver::update_data_mat, "P_x"_a.none(true), "P_i"_a.none(true), "A_x"_a.none(true), "A_i"_a.none(true))
     .def("update_settings", &MyOSQPSolver::update_settings)
     .def("update_rho", &MyOSQPSolver::update_rho)
-    .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference);
+    .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference)
+    .def("adjoint_derivative", &MyOSQPSolver::adjoint_derivative, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true), "dP"_a, "dq"_a, "dA"_a, "dl"_a, "du"_a);
 
 }

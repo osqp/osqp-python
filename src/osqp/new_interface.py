@@ -180,11 +180,10 @@ class OSQP:
         sol = solver.solve(rhs)
 
         for k in range(max_iter):
-            delta_sol = solver.solve(rhs - M @ sol)
-            sol = sol + delta_sol
-
             if np.linalg.norm(M @ sol - rhs) < tol:
                 break
+            delta_sol = solver.solve(M @ sol - rhs)
+            sol = sol - delta_sol
 
         if k == max_iter - 1:
             warnings.warn("max_iter iterative refinement reached.")
@@ -242,7 +241,7 @@ class OSQP:
 
         if eq_indices.size > 0:
             dnu[nu >= 0] = dy_u_eq[nu >= 0]
-            dnu[nu <= 0] = -dy_l_eq[nu < 0]
+            dnu[nu < 0] = -dy_l_eq[nu < 0]
         dlambd = np.concatenate([dy_l_ineq[l_non_inf], dy_u_ineq[u_non_inf]])
 
         rhs = - np.concatenate([dx, dlambd, dnu])
@@ -316,6 +315,28 @@ class OSQP:
         dP_vals = .5 * (r_x[rows] * x[cols] + r_x[cols] * x[rows])
         dP = spa.csc_matrix((dP_vals, P_idx), shape=P.shape)
         dq = r_x
+
+        # -------- CHECK ---------
+        _dP = self.ext.CSC(P.copy())
+        _dq = np.empty(n).astype(self._dtype)
+        _dA = self.ext.CSC(A.copy())
+        _dl = np.zeros(len(r_yl)).astype(self._dtype)
+        _du = np.zeros(len(r_yu)).astype(self._dtype)
+
+        # In the following call to the C extension, the first 3 are inputs, the remaining are outputs
+        self._solver.adjoint_derivative(dx, dy_l, dy_u, _dP, _dq, _dA, _dl, _du)
+
+        tol = 0.0001
+        assert np.allclose(_dl, dl, atol=tol)
+        assert np.allclose(_du, du, atol=tol)
+        assert np.allclose(_dq, dq, atol=tol)
+        assert np.all(_dP.i == dP.indices)
+        assert np.all(_dP.p == dP.indptr)
+        assert np.allclose(_dP.x, dP.data, atol=tol)
+        assert np.all(_dA.i == dA.indices)
+        assert np.all(_dA.p == dA.indptr)
+        assert np.allclose(_dA.x, dA.data, atol=tol)
+        # -------- CHECK ---------
 
         return dP, dq, dA, dl, du
 
