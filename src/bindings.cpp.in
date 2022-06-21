@@ -305,7 +305,11 @@ c_int MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_
 }
 
 c_int MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
+#ifdef OSQP_CODEGEN
     return osqp_codegen(this->_solver, output_dir, file_prefix, &defines);
+#else
+    return 1;
+#endif
 }
 
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
