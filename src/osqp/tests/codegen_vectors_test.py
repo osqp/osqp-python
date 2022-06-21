@@ -13,7 +13,7 @@ import shutil as sh
 import sys
 
 
-@pytest.mark.skipif(default_algebra() != 'legacy', reason='Codegen not implemented for non-legacy algebra.')
+@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason='Codegen only implemented for legacy/default algebra.')
 class codegen_vectors_tests(unittest.TestCase):
 
     @classmethod
@@ -39,7 +39,7 @@ class codegen_vectors_tests(unittest.TestCase):
 
         model_dir = model.codegen('code', python_ext_name='vec_emosqp',
                            force_rewrite=True)
-        sh.rmtree('code')
+        sh.rmtree('code', ignore_errors=True)
         sys.path.append(model_dir)
 
         cls.m = m
@@ -56,6 +56,8 @@ class codegen_vectors_tests(unittest.TestCase):
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
                          **self.opts)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_solve(self):
         import vec_emosqp
 
@@ -67,6 +69,8 @@ class codegen_vectors_tests(unittest.TestCase):
         nptest.assert_array_almost_equal(
             y, np.array([1.66666667, 0., 1.33333333, 0., 0.]), decimal=5)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_q(self):
         import vec_emosqp
 
@@ -83,6 +87,8 @@ class codegen_vectors_tests(unittest.TestCase):
         # Update linear cost to the original value
         vec_emosqp.update_lin_cost(self.q)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_l(self):
         import vec_emosqp
 
@@ -99,6 +105,8 @@ class codegen_vectors_tests(unittest.TestCase):
         # Update lower bound to the original value
         vec_emosqp.update_lower_bound(self.l)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_u(self):
         import vec_emosqp
 
@@ -116,6 +124,8 @@ class codegen_vectors_tests(unittest.TestCase):
         # Update upper bound to the original value
         vec_emosqp.update_upper_bound(self.u)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_bounds(self):
         import vec_emosqp
 
@@ -133,3 +143,7 @@ class codegen_vectors_tests(unittest.TestCase):
 
         # Update upper bound to the original value
         vec_emosqp.update_bounds(self.l, self.u)
+
+    def test_trivial(self):
+        # TODO: Dummy test just to let the classmethod run through for all cases
+        assert True
