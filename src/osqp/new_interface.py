@@ -1,15 +1,11 @@
-import sys
 import os
 import importlib
 from types import SimpleNamespace
 import warnings
 import numpy as np
 import scipy.sparse as spa
-import qdldl
 from osqp import algebra_available, default_algebra
 from osqp.interface import constant, _ALGEBRA_MODULES
-import osqp.utils as utils
-import osqp.codegen as cg
 
 
 class OSQP:
@@ -48,6 +44,11 @@ class OSQP:
     def solver_type(self, value):
         assert value in ('direct', 'indirect')
         self.settings.linsys_solver = self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER if value == 'direct' else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
+
+    def _as_dense(self, m):
+        assert isinstance(m, self.ext.CSC)
+        _m_csc = spa.csc_matrix((m.x, m.i, m.p))
+        return np.array(_m_csc.todense())
 
     def constant(self, which):
         return constant(which, algebra=self.algebra)
@@ -195,7 +196,7 @@ class OSQP:
         if compile:
             raise NotImplementedError
 
-    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None):
+    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None, as_dense=True):
         """
         Compute adjoint derivative after solve.
         """
@@ -220,13 +221,17 @@ class OSQP:
         if dy_l is None:
             dy_l = np.zeros(m)
 
-        _dP = self.ext.CSC(P.copy())
-        _dq = np.empty(n).astype(self._dtype)
-        _dA = self.ext.CSC(A.copy())
-        _dl = np.zeros(m).astype(self._dtype)
-        _du = np.zeros(m).astype(self._dtype)
+        dP = self.ext.CSC(P.copy())
+        dq = np.empty(n).astype(self._dtype)
+        dA = self.ext.CSC(A.copy())
+        dl = np.zeros(m).astype(self._dtype)
+        du = np.zeros(m).astype(self._dtype)
 
         # In the following call to the C extension, the first 3 are inputs, the remaining are outputs
-        self._solver.adjoint_derivative(dx, dy_l, dy_u, _dP, _dq, _dA, _dl, _du)
+        self._solver.adjoint_derivative(dx, dy_l, dy_u, dP, dq, dA, dl, du)
 
-        return _dP, _dq, _dA, _dl, _du
+        if as_dense:
+            dP = self._as_dense(dP)
+            dA = self._as_dense(dA)
+
+        return dP, dq, dA, dl, du

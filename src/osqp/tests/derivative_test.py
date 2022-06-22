@@ -29,7 +29,7 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
-@pytest.mark.skipif(osqp.default_algebra() not in ('legacy', 'default'), reason='Derivatives only supported for default/legacy algebras.')
+@pytest.mark.skipif(osqp.default_algebra()!='default', reason='Derivatives only supported for default algebra.')
 class derivative_tests(unittest.TestCase):
 
     def setUp(self):
@@ -89,6 +89,7 @@ class derivative_tests(unittest.TestCase):
             dP=dP, dq=dq, dA=dA, dl=dl, du=du, mode=mode)
         return grads
 
+    @pytest.mark.skip(reason="forward derivatives not implemented yet")
     def test_dsol_dq(self, verbose=False):
         n, m = 5, 5
 
@@ -136,6 +137,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
 
+    @pytest.mark.skip(reason="forward derivatives not implemented yet")
     def test_eq_inf_forward(self, verbose=False):
         n, m = 10, 10
 
@@ -184,6 +186,7 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
 
+    @pytest.mark.skip(reason="forward derivatives not implemented yet")
     def test_multiple_forward_derivative(self, verbose=False):
         n, m = 5, 5
 
@@ -328,7 +331,7 @@ class derivative_tests(unittest.TestCase):
             print('dP_fd: ', np.round(dP_fd.data, decimals=4))
             print('dA: ', np.round(dP.data, decimals=4))
 
-        npt.assert_allclose(dP.todense(), dP_fd.todense(),
+        npt.assert_allclose(dP, dP_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA(self, verbose=False):
@@ -363,7 +366,7 @@ class derivative_tests(unittest.TestCase):
             print('dA_fd: ', np.round(dA_fd.data, decimals=4))
             print('dA: ', np.round(dA.data, decimals=4))
 
-        npt.assert_allclose(dA.todense(), dA_fd.todense(),
+        npt.assert_allclose(dA, dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dl(self, verbose=False):
@@ -468,7 +471,7 @@ class derivative_tests(unittest.TestCase):
             print('dA_fd: ', np.round(dA_fd.data, decimals=6))
             print('dA_qdldl: ', np.round(dA_qdldl.data, decimals=6))
 
-        npt.assert_allclose(dA_qdldl.todense(), dA_fd.todense(),
+        npt.assert_allclose(dA_qdldl, dA_fd.todense(),
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_eq(self, verbose=False):
