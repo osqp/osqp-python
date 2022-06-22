@@ -180,9 +180,9 @@ class _OSQP(Function):
 
             m = solvers[i]
             dP, dq, dA, dl, du = m.adjoint_derivative(dx=dl_dx[i])
-            dP = torch.from_numpy(dP.todense()).flatten()
+            dP = torch.from_numpy(dP.data)
             dq = torch.from_numpy(dq)
-            dA = torch.from_numpy(dA.todense()).flatten()
+            dA = torch.from_numpy(dA.data)
             dl = torch.from_numpy(dl)
             du = torch.from_numpy(du)
 
