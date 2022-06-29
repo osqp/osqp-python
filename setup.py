@@ -8,6 +8,7 @@ from subprocess import call, check_output, check_call, CalledProcessError, STDOU
 
 from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
+from setuptools.command.build_py import build_py
 import distutils.sysconfig as sysconfig
 
 
@@ -163,6 +164,39 @@ class CMakeExtension(Extension):
         self.cmake_args = cmake_args
 
 
+class CustomBuildPy(build_py):
+    def run(self):
+        # Build all extensions first so that we generate codegen files in the build folder
+        # Note that each command like 'build_ext', is run once by setuptools, even if invoked multiple times.
+        self.run_command('build_ext')
+
+        codegen_build_dir = None
+        for data_file in self.data_files:
+            package, src_dir, build_dir, filename = data_file
+            if package == 'osqp.new_codegen':
+                codegen_build_dir = build_dir
+
+        if codegen_build_dir is not None:
+            for ext in self.distribution.ext_modules:
+                if hasattr(ext, 'codegen_dir'):
+                    src_dirs = []
+                    build_dirs = []
+                    filenames = []
+                    for filepath in glob(os.path.join(ext.codegen_dir, 'codegen_src/**'), recursive=True):
+                        if os.path.isfile(filepath):
+                            dirname = os.path.dirname(filepath)
+                            dirpath = os.path.relpath(dirname, ext.codegen_dir)
+                            src_dirs.append(os.path.join(ext.codegen_dir, dirpath))
+                            build_dirs.append(os.path.join(codegen_build_dir, dirpath))
+                            filenames.append(os.path.basename(filepath))
+
+                    if filenames:
+                        for src_dir, build_dir, filename in zip(src_dirs, build_dirs, filenames):
+                            self.data_files.append(('osqp.new_codegen', src_dir, build_dir, [filename]))
+
+        super().run()
+
+
 class CmdCMakeBuild(build_ext):
     def build_extension(self, ext):
         if ext.name == 'osqp._osqp':
@@ -226,6 +260,10 @@ class CmdCMakeBuild(build_ext):
             shutil.rmtree(self.build_temp)
         os.makedirs(self.build_temp)
 
+        # Save the build folder as a custom attribute in the extension object,
+        #   as we'll need it to package the codegen files as package_data later.
+        ext.codegen_dir = self.build_temp
+
         _ext_name = ext.name.split('.')[-1]
         cmake_args.extend([f'-DOSQP_EXT_MODULE_NAME={_ext_name}'])
 
@@ -243,7 +281,7 @@ class CmdCMakeBuild(build_ext):
         check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
 
-extras_require = {'dev': ['torch', 'numdifftools']}
+extras_require = {'dev': ['pytest', 'torch', 'numdifftools']}
 
 algebra = os.environ.get('OSQP_ALGEBRA', 'default')
 assert algebra in ('default', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
@@ -264,13 +302,18 @@ setup(
     description='OSQP: The Operator Splitting QP Solver',
     long_description=open('README.rst').read(),
     package_dir={'': 'src'},
+
+    # package_data for osqp.newcodegen is populated by CustomBuildPy to include codegen files
+    # after building all extensions
+    # package_data={'osqp.new_codegen': []},
+
     include_package_data=True,
     install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl'],
     python_requires='>=3.7',
     extras_require=extras_require,
     license='Apache 2.0',
     url="https://osqp.org/",
-    cmdclass={'build_ext': CmdCMakeBuild},
+    cmdclass={'build_ext': CmdCMakeBuild, 'build_py': CustomBuildPy},
     packages=find_namespace_packages(where='src'),
     ext_modules=ext_modules
 )
