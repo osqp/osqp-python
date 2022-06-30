@@ -37,9 +37,9 @@ class codegen_vectors_tests(unittest.TestCase):
         model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-        model_dir = model.codegen('code', python_ext_name='vec_emosqp',
+        model_dir = model.codegen('codegen_vec_out', python_ext_name='vec_emosqp',
                            force_rewrite=True)
-        sh.rmtree('code', ignore_errors=True)
+        sh.rmtree('codegen_vec_out', ignore_errors=True)
         sys.path.append(model_dir)
 
         cls.m = m

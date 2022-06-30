@@ -308,6 +308,7 @@ setup(
     # package_data={'osqp.new_codegen': []},
 
     include_package_data=True,
+    zip_safe=False,
     install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl'],
     python_requires='>=3.7',
     extras_require=extras_require,

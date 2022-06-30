@@ -13,7 +13,7 @@ import shutil as sh
 import sys
 
 
-@pytest.mark.skipif(default_algebra() != 'legacy', reason='Codegen not implemented for non-legacy algebra.')
+@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason='Codegen only implemented for legacy/default algebra.')
 class codegen_matrices_tests(unittest.TestCase):
 
     @classmethod
@@ -39,8 +39,8 @@ class codegen_matrices_tests(unittest.TestCase):
         model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-        model_dir = model.codegen('code2', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
-        sh.rmtree('code2')
+        model_dir = model.codegen('codegen_mat_out', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
+        sh.rmtree('codegen_mat_out', ignore_errors=True)
         sys.path.append(model_dir)
 
         cls.m = m
@@ -60,6 +60,8 @@ class codegen_matrices_tests(unittest.TestCase):
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
                          **self.opts)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_solve(self):
         import mat_emosqp
 
@@ -71,6 +73,8 @@ class codegen_matrices_tests(unittest.TestCase):
         nptest.assert_array_almost_equal(
             y, np.array([1.5, 0., 1.5, 0., 0.]), decimal=5)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P(self):
         import mat_emosqp
 
@@ -92,6 +96,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Px_idx = np.arange(self.P.nnz)
         mat_emosqp.update_P(Px, Px_idx, len(Px))
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_allind(self):
         import mat_emosqp
 
@@ -109,6 +115,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Px_idx = np.arange(self.P.nnz)
         mat_emosqp.update_P(Px, Px_idx, len(Px))
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_A(self):
         import mat_emosqp
 
@@ -131,6 +139,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax_idx = np.arange(self.A.nnz)
         mat_emosqp.update_A(Ax, Ax_idx, len(Ax))
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_A_allind(self):
         import mat_emosqp
 
@@ -150,6 +160,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax_idx = np.arange(self.A.nnz)
         mat_emosqp.update_A(Ax, Ax_idx, len(Ax))
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_indP_indA(self):
         import mat_emosqp
 
@@ -173,6 +185,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax = self.A.data
         mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_indP(self):
         import mat_emosqp
 
@@ -193,6 +207,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax = self.A.data
         mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_indA(self):
         import mat_emosqp
 
@@ -215,6 +231,8 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax_idx = np.arange(self.A.nnz)
         mat_emosqp.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
 
+    @pytest.mark.skipif(default_algebra() not in ('legacy',),
+                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_allind(self):
         import mat_emosqp
 
@@ -233,3 +251,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Px = self.P.data
         Ax = self.A.data
         mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
+
+    def test_trivial(self):
+        # TODO: Dummy test just to let the classmethod run through for all cases
+        assert True

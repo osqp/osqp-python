@@ -1,5 +1,6 @@
 import os
 import importlib
+import shutil
 from types import SimpleNamespace
 import warnings
 import numpy as np
@@ -9,6 +10,81 @@ from osqp.interface import constant, _ALGEBRA_MODULES
 
 
 class OSQP:
+
+    @staticmethod
+    def _infer_mnpqalu(P=None, q=None, A=None, l=None, u=None):
+        # infer as many parameters of the problems as we can, and return them as a tuple
+        if P is None:
+            if q is not None:
+                n = len(q)
+            elif A is not None:
+                n = A.shape[1]
+            else:
+                raise ValueError("The problem does not have any variables")
+        else:
+            n = P.shape[0]
+
+        m = 0 if A is None else A.shape[0]
+
+        if A is None:
+            assert (l is None) and (u is None), 'If A is unspecified, leave l/u unspecified too.'
+        else:
+            assert (l is not None) or (u is not None), 'If A is specified, specify at least one of l/u.'
+            if l is None:
+                l = -np.inf * np.ones(A.shape[0])
+            if u is None:
+                u = np.inf * np.ones(A.shape[0])
+
+        if P is None:
+            P = spa.csc_matrix(
+                (np.zeros((0,), dtype=np.double),    # data
+                 np.zeros((0,), dtype=np.int),       # indices
+                 np.zeros((n + 1,), dtype=np.int)),  # indptr
+                shape=(n, n)
+            )
+        if q is None:
+            q = np.zeros(n)
+
+        if A is None:
+            A = spa.csc_matrix(
+                (np.zeros((0,), dtype=np.double),    # data
+                 np.zeros((0,), dtype=np.int),       # indices
+                 np.zeros((n + 1,), dtype=np.int)),  # indptr
+                shape=(m, n)
+            )
+            l = np.zeros(A.shape[0])
+            u = np.zeros(A.shape[0])
+
+        assert len(q) == n, 'Incorrect dimension of q'
+        assert len(l) == m, 'Incorrect dimension of l'
+        assert len(u) == m, 'Incorrect dimension of u'
+
+        if not spa.issparse(P) and isinstance(P, np.ndarray) and P.ndim == 2:
+            raise TypeError('P is required to be a sparse matrix')
+        if not spa.issparse(A) and isinstance(A, np.ndarray) and A.ndim == 2:
+            raise TypeError('A is required to be a sparse matrix')
+
+        if spa.tril(P, -1).data.size > 0:
+            P = spa.triu(P, format='csc')
+
+        # Convert matrices in CSC form and to individual pointers
+        if not spa.isspmatrix_csc(P):
+            warnings.warn('Converting sparse P to a CSC matrix. This may take a while...')
+            P = P.tocsc()
+        if not spa.isspmatrix_csc(A):
+            warnings.warn('Converting sparse A to a CSC matrix. This may take a while...')
+            A = A.tocsc()
+
+        if not P.has_sorted_indices:
+            P.sort_indices()
+        if not A.has_sorted_indices:
+            A.sort_indices()
+
+        u = np.minimum(u, constant('OSQP_INFTY'))
+        l = np.maximum(l, -constant('OSQP_INFTY'))
+
+        return m, n, P, q, A, l, u
+
     def __init__(self, *args, **kwargs):
         self.m = None
         self.n = None
@@ -121,9 +197,10 @@ class OSQP:
         self._derivative_cache.pop('M', None)
 
     def setup(self, P, q, A, l, u, **settings):
-        self.m = l.shape[0]
-        self.n = q.shape[0]
-        self.P = self.ext.CSC(spa.triu(P.astype(self._dtype), format='csc'))
+        m, n, P, q, A, l, u = self._infer_mnpqalu(P=P, q=q, A=A, l=l, u=u)
+        self.m = m
+        self.n = n
+        self.P = self.ext.CSC(P.astype(self._dtype))
         self.q = q.astype(self._dtype)
         self.A = self.ext.CSC(A.astype(self._dtype))
         self.l = l.astype(self._dtype)
@@ -183,9 +260,11 @@ class OSQP:
         defines.profiling_enable = 0
         defines.interrupt_enable = 0
 
-        # The C codegen call expects the folder to exist and have a trailing slash
         folder = os.path.abspath(folder)
-        os.makedirs(folder, exist_ok=force_rewrite)
+        with importlib.resources.path('osqp.new_codegen', 'codegen_src') as codegen_src_path:
+            shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
+
+        # The C codegen call expects the folder to exist and have a trailing slash
         if not folder.endswith(os.path.sep):
             folder += os.path.sep
 
