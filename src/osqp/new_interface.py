@@ -68,7 +68,7 @@ class OSQP:
         if spa.tril(P, -1).data.size > 0:
             P = spa.triu(P, format='csc')
 
-        # Convert matrices in CSC form and to individual pointers
+        # Convert matrices in CSC form to individual pointers
         if not spa.isspmatrix_csc(P):
             warnings.warn('Converting sparse P to a CSC matrix. This may take a while...')
             P = P.tocsc()
@@ -126,6 +126,12 @@ class OSQP:
         assert isinstance(m, self.ext.CSC)
         _m_csc = spa.csc_matrix((m.x, m.i, m.p))
         return np.array(_m_csc.todense())
+
+    def _csc_triu_as_csc_full(self, m):
+        _m_triu_dense = self._as_dense(m)
+        _m_full_dense = np.tril(_m_triu_dense.T, -1) + _m_triu_dense
+        _m_full_csc = spa.csc_matrix(_m_full_dense)
+        return self.ext.CSC(_m_full_csc)
 
     def constant(self, which):
         return constant(which, algebra=self.algebra)
@@ -276,7 +282,7 @@ class OSQP:
         if compile:
             raise NotImplementedError
 
-    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None, as_dense=True):
+    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None, as_dense=True, dP_as_triu=True):
         """
         Compute adjoint derivative after solve.
         """
@@ -309,6 +315,9 @@ class OSQP:
 
         # In the following call to the C extension, the first 3 are inputs, the remaining are outputs
         self._solver.adjoint_derivative(dx, dy_l, dy_u, dP, dq, dA, dl, du)
+
+        if not dP_as_triu:
+            dP = self._csc_triu_as_csc_full(dP)
 
         if as_dense:
             dP = self._as_dense(dP)

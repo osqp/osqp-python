@@ -331,7 +331,7 @@ class derivative_tests(unittest.TestCase):
             print('dP_fd: ', np.round(dP_fd.data, decimals=4))
             print('dA: ', np.round(dP.data, decimals=4))
 
-        npt.assert_allclose(dP, dP_fd.todense(),
+        npt.assert_allclose(np.triu(dP), np.triu(dP_fd.todense()),
                             rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA(self, verbose=False):

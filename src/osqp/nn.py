@@ -179,7 +179,7 @@ class _OSQP(Function):
         for i in range(ctx.n_batch):
 
             m = solvers[i]
-            dP, dq, dA, dl, du = m.adjoint_derivative(dx=dl_dx[i], as_dense=False)
+            dP, dq, dA, dl, du = m.adjoint_derivative(dx=dl_dx[i], as_dense=False, dP_as_triu=False)
             dP = torch.from_numpy(dP.x)
             dq = torch.from_numpy(dq)
             dA = torch.from_numpy(dA.x)
