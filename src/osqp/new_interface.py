@@ -1,5 +1,6 @@
 import os
 import importlib
+import importlib.resources
 import shutil
 from types import SimpleNamespace
 import warnings
