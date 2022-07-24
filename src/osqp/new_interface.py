@@ -254,22 +254,26 @@ class OSQP:
         return results
 
     def codegen(self, folder, project_type='', parameters='vectors', python_ext_name='emosqp', force_rewrite=False,
-                FLOAT=False, LONG=False, prefix='', compile=False):
+                use_float=False, printing_enable=False, profiling_enable=False, interrupt_enable=False,
+                include_codegen_src=False, use_long=False, prefix='', compile=False):
 
-        assert project_type in (None, ''), 'project_type should be blank/None, and is only provided for backwards API compatibility'
+        assert project_type in (None, ''), 'project_type should be blank/None, and is only provided for backwards API' \
+                                           'compatibility'
         assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
-        assert not LONG, 'Long ("long long" in C) is no longer supported in codegen. We only support C89 compliant version of the long ints'
+        assert not use_long, 'Long ("long long" in C) is no longer supported in codegen.' \
+                             'We only support C89 compliant version of the long ints'
 
         defines = self.ext.OSQPCodegenDefines()
         defines.embedded_mode = 1 if parameters == 'vectors' else 2
-        defines.float_type = 1 if FLOAT else 0
-        defines.printing_enable = 0
-        defines.profiling_enable = 0
-        defines.interrupt_enable = 0
+        defines.float_type = 1 if use_float else 0
+        defines.printing_enable = 1 if printing_enable else 0
+        defines.profiling_enable = 1 if profiling_enable else 0
+        defines.interrupt_enable = 1 if interrupt_enable else 0
 
         folder = os.path.abspath(folder)
-        with importlib.resources.path('osqp.new_codegen', 'codegen_src') as codegen_src_path:
-            shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
+        if include_codegen_src:
+            with importlib.resources.path('osqp.new_codegen', 'codegen_src') as codegen_src_path:
+                shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
         if not folder.endswith(os.path.sep):
