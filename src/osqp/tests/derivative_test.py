@@ -58,7 +58,7 @@ class derivative_tests(unittest.TestCase):
         # Get gradients by solving with osqp
         m = osqp.OSQP()
         m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                max_iter=max_iter, verbose=True, scaling=0)
+                max_iter=max_iter, verbose=True)
         results = m.solve()
         if results.info.status != "solved":
             raise ValueError("Problem not solved!")
