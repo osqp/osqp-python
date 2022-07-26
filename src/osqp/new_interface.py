@@ -276,6 +276,7 @@ class OSQP:
                 shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
+        os.makedirs(folder, exist_ok=True)
         if not folder.endswith(os.path.sep):
             folder += os.path.sep
 
