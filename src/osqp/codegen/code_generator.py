@@ -116,6 +116,8 @@ def codegen(work, target_dir, python_ext_name, project_type, compile_python_ext,
                      'linsys_solver':   work['linsys_solver'],
                      'scaling':         work['scaling'],
                      'embedded_flag':   embedded,
+                     'float_flag':      float_flag,
+                     'long_flag':       long_flag,
                      'python_ext_name': python_ext_name}
 
     # Add cmake args

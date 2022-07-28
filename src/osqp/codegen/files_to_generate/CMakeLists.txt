@@ -55,11 +55,11 @@ endif()
 message(STATUS "Profiling is ${PROFILING}")
 
 # Use floats instead of integers
-option (DFLOAT "Use float numbers instead of doubles" OFF)
+option (DFLOAT "Use float numbers instead of doubles" FLOAT_FLAG)
 message(STATUS "Floats are ${DFLOAT}")
 
 # Use long integers for indexing
-option (DLONG "Use long integers (64bit) for indexing" ON)
+option (DLONG "Use long integers (64bit) for indexing" LONG_FLAG)
 if (NOT (CMAKE_SIZEOF_VOID_P EQUAL 8))
 	message(STATUS "Disabling long integers (64bit) on 32bit machine")
 	set(DLONG OFF)

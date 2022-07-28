@@ -475,6 +475,8 @@ def render_setuppy(variables, output):
     """
 
     embedded_flag = variables['embedded_flag']
+    float_flag    = variables['float_flag']
+    long_flag     = variables['long_flag']
     python_ext_name = variables['python_ext_name']
 
     f = open(os.path.join(files_to_generate_path, 'setup.py'))
@@ -482,6 +484,8 @@ def render_setuppy(variables, output):
     f.close()
 
     filedata = filedata.replace("EMBEDDED_FLAG", str(embedded_flag))
+    filedata = filedata.replace("FLOAT_FLAG", str(float_flag))
+    filedata = filedata.replace("LONG_FLAG", str(long_flag))
     filedata = filedata.replace("PYTHON_EXT_NAME", str(python_ext_name))
 
     f = open(output, 'w')
@@ -495,12 +499,16 @@ def render_cmakelists(variables, output):
     """
 
     embedded_flag = variables['embedded_flag']
+    float_flag    = variables['float_flag']
+    long_flag     = variables['long_flag']
 
     f = open(os.path.join(files_to_generate_path, 'CMakeLists.txt'))
     filedata = f.read()
     f.close()
 
     filedata = filedata.replace("EMBEDDED_FLAG", str(embedded_flag))
+    filedata = filedata.replace("FLOAT_FLAG", str(float_flag))
+    filedata = filedata.replace("LONG_FLAG", str(long_flag))
 
     f = open(output, 'w')
     f.write(filedata)
