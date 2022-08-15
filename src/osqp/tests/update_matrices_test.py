@@ -13,7 +13,7 @@ import numpy.testing as nptest
 def self(request):
     self = SimpleNamespace()
 
-    sp.random.seed(1)
+    np.random.seed(1)
 
     self.n = 5
     self.m = 8

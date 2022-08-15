@@ -14,7 +14,7 @@ from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, 
 def self(request):
     self = SimpleNamespace()
 
-    sp.random.seed(4)
+    np.random.seed(4)
 
     self.n = 30
     self.m = 30

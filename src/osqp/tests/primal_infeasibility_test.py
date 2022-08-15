@@ -26,7 +26,7 @@ def self(request):
 def test_primal_infeasible_problem(self):
 
     # Simple QP problem
-    sp.random.seed(4)
+    np.random.seed(4)
 
     self.n = 50
     self.m = 500

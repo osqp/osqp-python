@@ -28,7 +28,7 @@ def self(request):
 def test_warm_start(self):
 
     # Big problem
-    sp.random.seed(2)
+    np.random.seed(2)
     self.n = 100
     self.m = 200
     self.A = sparse.random(self.m, self.n, density=0.9, format='csc')

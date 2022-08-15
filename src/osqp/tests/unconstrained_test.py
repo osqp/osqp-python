@@ -10,7 +10,7 @@ import numpy.testing as nptest
 
 @pytest.fixture(params=SOLVER_TYPES)
 def self(request):
-    sp.random.seed(4)
+    np.random.seed(4)
 
     self.n = 30
     self.m = 0

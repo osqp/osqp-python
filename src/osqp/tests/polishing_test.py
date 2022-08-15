@@ -55,7 +55,7 @@ def test_polish_simple(self):
 def test_polish_unconstrained(self):
 
     # Unconstrained QP problem
-    sp.random.seed(4)
+    np.random.seed(4)
 
     self.n = 30
     self.m = 0
@@ -81,7 +81,7 @@ def test_polish_unconstrained(self):
 def test_polish_random(self):
 
     # Random QP problem
-    sp.random.seed(6)
+    np.random.seed(6)
 
     self.n = 30
     self.m = 50
