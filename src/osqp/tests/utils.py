@@ -10,7 +10,7 @@ decimal_tol = 4
 
 _algebra = default_algebra()
 SOLVER_TYPES = []
-if _algebra in ('default', 'legacy'):
+if _algebra == 'builtin':
     SOLVER_TYPES = ['direct']
 elif _algebra == 'mkl':
     SOLVER_TYPES = ['direct', 'indirect']

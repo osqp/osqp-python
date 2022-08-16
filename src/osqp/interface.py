@@ -9,12 +9,12 @@ import numpy as np
 import scipy.sparse as spa
 
 
-_ALGEBRAS = ('cuda', 'mkl', 'default')   # Highest->Lowest priority of algebras that are tried in turn
+_ALGEBRAS = ('cuda', 'mkl', 'builtin')   # Highest->Lowest priority of algebras that are tried in turn
 # Mapping from algebra to loadable module
 _ALGEBRA_MODULES = {
     'cuda': 'osqp_cuda',
     'mkl': 'osqp_mkl',
-    'default': 'osqp.ext_default'
+    'builtin': 'osqp.ext_builtin'
 }
 OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
 

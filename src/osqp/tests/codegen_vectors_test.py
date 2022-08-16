@@ -13,7 +13,7 @@ import shutil as sh
 import sys
 
 
-@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason='Codegen only implemented for legacy/default algebra.')
+@pytest.mark.skipif(default_algebra() != 'builtin', reason='Codegen only implemented for builtin algebra.')
 class codegen_vectors_tests(unittest.TestCase):
 
     @classmethod

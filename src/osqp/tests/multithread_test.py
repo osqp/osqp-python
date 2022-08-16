@@ -9,7 +9,7 @@ import unittest
 import pytest
 
 
-@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason="threading improvements expected for legacy/default algebra")
+@pytest.mark.skipif(default_algebra() != 'builtin', reason="threading improvements expected for builtin algebra")
 class multithread_tests(unittest.TestCase):
 
     def test_multithread(self):

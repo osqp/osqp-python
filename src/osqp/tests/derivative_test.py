@@ -29,7 +29,7 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
-@pytest.mark.skipif(osqp.default_algebra()!='default', reason='Derivatives only supported for default algebra.')
+@pytest.mark.skipif(osqp.default_algebra() != 'builtin', reason='Derivatives only supported for builtin algebra.')
 class derivative_tests(unittest.TestCase):
 
     def setUp(self):
