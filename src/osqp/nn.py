@@ -21,177 +21,174 @@ class OSQP(Module):
                  eps_rel=1e-5, eps_abs=1e-5, verbose=False,
                  max_iter=10000):
         super().__init__()
-        self.eps_abs = eps_abs
-        self.eps_rel = eps_rel
-        self.verbose = verbose
-        self.max_iter = max_iter
         self.P_idx, self.P_shape = P_idx, P_shape
         self.A_idx, self.A_shape = A_idx, A_shape
+        self.eps_rel, self.eps_abs = eps_rel, eps_abs
+        self.verbose = verbose
+        self.max_iter = max_iter
 
     def forward(self, P_val, q_val, A_val, l_val, u_val):
-        return _OSQP.apply(
-            P_val, q_val, A_val, l_val, u_val,
-            self.P_idx, self.P_shape,
-            self.A_idx, self.A_shape,
-            self.eps_rel, self.eps_abs,
-            self.verbose, self.max_iter
-        )
+        return _OSQP_Fn(
+            P_idx=self.P_idx,
+            P_shape=self.P_shape,
+            A_idx=self.A_idx,
+            A_shape=self.A_shape,
+            eps_rel=self.eps_rel,
+            eps_abs=self.eps_abs,
+            verbose=self.verbose,
+            max_iter=self.max_iter,
+        )(P_val, q_val, A_val, l_val, u_val)
 
 
-class _OSQP(Function):
-    @staticmethod
-    def forward(ctx, P_val, q_val, A_val, l_val, u_val,
-                P_idx, P_shape, A_idx, A_shape,
-                eps_rel, eps_abs, verbose, max_iter):
-        """Solve a batch of QPs using OSQP.
+def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs,
+             verbose, max_iter):
+    solvers = []
 
-        This function solves a batch of QPs, each optimizing over
-        `n` variables and having `m` constraints.
+    m, n = A_shape   # Problem size
 
-        The optimization problem for each instance in the batch
-        (dropping indexing from the notation) is of the form
+    class _OSQP_FnFn(Function):
+        @staticmethod
+        def forward(ctx, P_val, q_val, A_val, l_val, u_val):
+            """Solve a batch of QPs using OSQP.
 
-            \\hat x =   argmin_x 1/2 x' P x + q' x
-                       subject to l <= Ax <= u
+            This function solves a batch of QPs, each optimizing over
+            `n` variables and having `m` constraints.
 
-        where P \\in S^{n,n},
-              S^{n,n} is the set of all positive semi-definite matrices,
-              q \\in R^{n}
-              A \\in R^{m,n}
-              l \\in R^{m}
-              u \\in R^{m}
+            The optimization problem for each instance in the batch
+            (dropping indexing from the notation) is of the form
 
-        These parameters should all be passed to this function as
-        Variable- or Parameter-wrapped Tensors.
-        (See torch.autograd.Variable and torch.nn.parameter.Parameter)
+                \\hat x =   argmin_x 1/2 x' P x + q' x
+                        subject to l <= Ax <= u
 
-        If you want to solve a batch of QPs where `n` and `m`
-        are the same, but some of the contents differ across the
-        minibatch, you can pass in tensors in the standard way
-        where the first dimension indicates the batch example.
-        This can be done with some or all of the coefficients.
+            where P \\in S^{n,n},
+                S^{n,n} is the set of all positive semi-definite matrices,
+                q \\in R^{n}
+                A \\in R^{m,n}
+                l \\in R^{m}
+                u \\in R^{m}
 
-        You do not need to add an extra dimension to coefficients
-        that will not change across all of the minibatch examples.
-        This function is able to infer such cases.
+            These parameters should all be passed to this function as
+            Variable- or Parameter-wrapped Tensors.
+            (See torch.autograd.Variable and torch.nn.parameter.Parameter)
 
-        If you don't want to use any constraints, you can set the
-        appropriate values to:
+            If you want to solve a batch of QPs where `n` and `m`
+            are the same, but some of the contents differ across the
+            minibatch, you can pass in tensors in the standard way
+            where the first dimension indicates the batch example.
+            This can be done with some or all of the coefficients.
 
-            e = Variable(torch.Tensor())
+            You do not need to add an extra dimension to coefficients
+            that will not change across all of the minibatch examples.
+            This function is able to infer such cases.
 
-        """
+            If you don't want to use any constraints, you can set the
+            appropriate values to:
 
-        ctx.eps_abs = eps_abs
-        ctx.eps_rel = eps_rel
-        ctx.verbose = verbose
-        ctx.max_iter = max_iter
-        ctx.P_idx, ctx.P_shape = P_idx, P_shape
-        ctx.A_idx, ctx.A_shape = A_idx, A_shape
+                e = Variable(torch.Tensor())
 
-        params = [P_val, q_val, A_val, l_val, u_val]
+            """
 
-        for p in params:
-            assert p.ndimension() <= 2, 'Unexpected number of dimensions'
+            params = [P_val, q_val, A_val, l_val, u_val]
 
-        # Convert batches to sparse matrices/vectors
-        batch_mode = np.all([t.ndimension() == 1 for t in params])
-        if batch_mode:
-            ctx.n_batch = 1
-        else:
-            batch_sizes = [t.size(0) if t.ndimension() == 2 else 1 for t in params]
-            ctx.n_batch = max(batch_sizes)
-        ctx.m, ctx.n = ctx.A_shape   # Problem size
+            for p in params:
+                assert p.ndimension() <= 2, 'Unexpected number of dimensions'
 
-        dtype = P_val.dtype
-        device = P_val.device
+            batch_mode = np.any([t.ndimension() > 1 for t in params])
+            if not batch_mode:
+                n_batch = 1
+            else:
+                batch_sizes = [t.size(0) if t.ndimension() == 2 else 1 for t in params]
+                n_batch = max(batch_sizes)
 
-        # Convert P and A to sparse matrices
-        # TODO (Bart): create CSC matrix during initialization. Then
-        # just reassign the mat.data vector with A_val and P_val
+            dtype = P_val.dtype
+            device = P_val.device
 
-        for i, p in enumerate(params):
-            if p.ndimension() == 1:
-                params[i] = p.unsqueeze(0).expand(ctx.n_batch, p.size(0))
+            # TODO (Bart): create CSC matrix during initialization. Then
+            # just reassign the mat.data vector with A_val and P_val
 
-        [P_val, q_val, A_val, l_val, u_val] = params
+            for i, p in enumerate(params):
+                if p.ndimension() == 1:
+                    params[i] = p.unsqueeze(0).expand(n_batch, p.size(0))
 
-        P = [spa.csc_matrix((to_numpy(P_val[i]), ctx.P_idx), shape=ctx.P_shape)
-             for i in range(ctx.n_batch)]
-        q = [to_numpy(q_val[i]) for i in range(ctx.n_batch)]
-        A = [spa.csc_matrix((to_numpy(A_val[i]), ctx.A_idx), shape=ctx.A_shape)
-             for i in range(ctx.n_batch)]
-        l = [to_numpy(l_val[i]) for i in range(ctx.n_batch)]
-        u = [to_numpy(u_val[i]) for i in range(ctx.n_batch)]
+            [P_val, q_val, A_val, l_val, u_val] = params
+            assert A_val.size(1) == len(A_idx[0]), "Unexpected size of A"
+            assert P_val.size(1) == len(P_idx[0]), "Unexpected size of P"
 
-        # Perform forward step solving the QPs
-        x_torch = torch.zeros((ctx.n_batch, ctx.n), dtype=dtype, device=device)
+            P = [spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
+                for i in range(n_batch)]
+            q = [to_numpy(q_val[i]) for i in range(n_batch)]
+            A = [spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
+                for i in range(n_batch)]
+            l = [to_numpy(l_val[i]) for i in range(n_batch)]
+            u = [to_numpy(u_val[i]) for i in range(n_batch)]
 
-        solvers = []
-        for i in range(ctx.n_batch):
-            # Solve QP
-            m = osqp.OSQP()
-            m.setup(P[i], q[i], A[i], l[i], u[i], verbose=ctx.verbose, scaling=0)
-            result = m.solve()
-            status = result.info.status
-            if status != 'solved':
-                # TODO: We can replace this with something calmer and
-                # add some more options around potentially ignoring this.
-                raise RuntimeError(f"Unable to solve QP, status: {status}")
-            solvers.append(m)
+            # Perform forward step solving the QPs
+            x_torch = torch.zeros((n_batch, n), dtype=dtype, device=device)
 
-            # This is silently converting result.x to the same
-            # dtype and device as x_torch.
-            x_torch[i] = torch.from_numpy(result.x)
+            x = []
+            for i in range(n_batch):
+                # Solve QP
+                # TODO: Cache solver object in between
+                solver = osqp.OSQP()
+                solver.setup(P[i], q[i], A[i], l[i], u[i], verbose=verbose,
+                             eps_abs=eps_abs, eps_rel=eps_rel)
+                result = solver.solve()
+                solvers.append(solver)
+                status = result.info.status
+                if status != 'solved':
+                    # TODO: We can replace this with something calmer and
+                    # add some more options around potentially ignoring this.
+                    raise RuntimeError(f"Unable to solve QP, status: {status}")
+                x.append(result.x)
 
-        # Save solvers for backpropagation
-        ctx.solvers = solvers
+                # This is silently converting result.x to the same
+                # dtype and device as x_torch.
+                x_torch[i] = torch.from_numpy(result.x)
 
-        # Return solutions
-        if not batch_mode:
-            x_torch = x_torch.squeeze(0)
-        return x_torch
+            # Return solutions
+            if not batch_mode:
+                x_torch = x_torch.squeeze(0)
 
-    @staticmethod
-    def backward(ctx, dl_dx_val):
-        dtype = dl_dx_val.dtype
-        device = dl_dx_val.device
+            return x_torch
 
-        batch_mode = dl_dx_val.ndimension() == 2
-        if not batch_mode:
-            dl_dx_val = dl_dx_val.unsqueeze(0)
+        @staticmethod
+        def backward(ctx, dl_dx_val):
+            dtype = dl_dx_val.dtype
+            device = dl_dx_val.device
 
-        # Convert dl_dx to numpy
-        dl_dx = to_numpy(dl_dx_val)
+            batch_mode = dl_dx_val.ndimension() == 2
 
-        # Extract data from forward pass
-        solvers = ctx.solvers
+            if not batch_mode:
+                dl_dx_val = dl_dx_val.unsqueeze(0)
 
-        # Convert to torch tensors
-        nnz_P = len(ctx.P_idx[0])
-        nnz_A = len(ctx.A_idx[0])
-        dP = torch.zeros((ctx.n_batch, nnz_P), dtype=dtype, device=device)
-        dq = torch.zeros((ctx.n_batch, ctx.n), dtype=dtype, device=device)
-        dA = torch.zeros((ctx.n_batch, nnz_A), dtype=dtype, device=device)
-        dl = torch.zeros((ctx.n_batch, ctx.m), dtype=dtype, device=device)
-        du = torch.zeros((ctx.n_batch, ctx.m), dtype=dtype, device=device)
+            n_batch = dl_dx_val.size(0)
+            dtype = dl_dx_val.dtype
+            device = dl_dx_val.device
 
-        for i in range(ctx.n_batch):
+            # Convert dl_dx to numpy
+            dl_dx = to_numpy(dl_dx_val)
 
-            m = solvers[i]
-            dP, dq, dA, dl, du = m.adjoint_derivative(dx=dl_dx[i], as_dense=False, dP_as_triu=False)
-            dP = torch.from_numpy(dP.x)
-            dq = torch.from_numpy(dq)
-            dA = torch.from_numpy(dA.x)
-            dl = torch.from_numpy(dl)
-            du = torch.from_numpy(du)
+            # Convert to torch tensors
+            nnz_P = len(P_idx[0])
+            nnz_A = len(A_idx[0])
+            dP = torch.zeros((n_batch, nnz_P), dtype=dtype, device=device)
+            dq = torch.zeros((n_batch, n), dtype=dtype, device=device)
+            dA = torch.zeros((n_batch, nnz_A), dtype=dtype, device=device)
+            dl = torch.zeros((n_batch, m), dtype=dtype, device=device)
+            du = torch.zeros((n_batch, m), dtype=dtype, device=device)
 
-        grads = [dP, dq, dA, dl, du]
+            for i in range(n_batch):
+                derivatives_np = solvers[i].adjoint_derivative(dx=dl_dx[i], as_dense=False, dP_as_triu=False)
+                dPi_np, dqi_np, dAi_np, dli_np, dui_np = derivatives_np
+                dq[i], dl[i], du[i] = [torch.from_numpy(d) for d in [dqi_np, dli_np, dui_np]]
+                dP[i], dA[i] = [torch.from_numpy(d.x) for d in [dPi_np, dAi_np]]
 
-        if not batch_mode:
-            for i, g in enumerate(grads):
-                grads[i] = g.squeeze()
+            grads = [dP, dq, dA, dl, du]
 
-        grads += [None]*9
+            if not batch_mode:
+                for i, g in enumerate(grads):
+                    grads[i] = g.squeeze()
 
-        return tuple(grads)
+            return tuple(grads)
+
+    return _OSQP_FnFn.apply
