@@ -7,7 +7,7 @@ import scipy.sparse as spa
 import pytest
 
 import osqp
-from osqp.nn import OSQP
+from osqp.nn.torch import OSQP
 
 ATOL = 1e-2
 RTOL = 1e-4
