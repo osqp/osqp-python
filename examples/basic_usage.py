@@ -19,5 +19,5 @@ if __name__ == '__main__':
     prob.setup(P, q, A, l, u, alpha=1.0)
 
     # Solve problem
-    res = prob.solve(
+    res = prob.solve()
 
