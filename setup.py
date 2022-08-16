@@ -5,6 +5,7 @@ from glob import glob
 from platform import system
 from subprocess import check_call
 
+from distutils.sysconfig import get_python_inc
 from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
 from setuptools.command.build_py import build_py
@@ -53,9 +54,17 @@ class CustomBuildPy(build_py):
 class CmdCMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        thisdir = os.path.dirname(os.path.abspath(__file__))
         cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+                      '-DPYTHON=ON',
                       '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      '-DBUILD_TESTING=OFF']
+                      f'-DPYTHON_INCLUDE_DIRS={get_python_inc()}',
+                      '-DOSQP_BUILD_UNITTESTS=OFF',
+                      '-DDLONG=OFF',  # https://github.com/numpy/numpy/issues/5906
+                                      # https://github.com/ContinuumIO/anaconda-issues/issues/3823
+                      f'-DOSQP_CUSTOM_PRINTING={thisdir}/cmake/printing.h',
+                      f'-DOSQP_CUSTOM_MEMORY={thisdir}/cmake/memory.h',
+                      ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
