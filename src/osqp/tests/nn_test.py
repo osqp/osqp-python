@@ -7,7 +7,7 @@ import scipy.sparse as spa
 import pytest
 
 import osqp
-from osqp.nn import OSQP
+from osqp.nn.torch import OSQP
 
 ATOL = 1e-2
 RTOL = 1e-4
@@ -28,7 +28,7 @@ def get_grads(n_batch=1, n=10, m=3, P_scale=1.,
     u = A.dot(x_0) + A_scale * s_0
     l = - 10 * A_scale * npr.rand(m)
     q = npr.randn(n)
-    true_x = npr.randn(n_batch, n)
+    true_x = npr.randn(n)
 
     P, q, A, l, u, true_x = [x.astype(np.float64) for x in
                              [P, q, A, l, u, true_x]]
