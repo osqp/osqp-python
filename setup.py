@@ -26,7 +26,7 @@ class CustomBuildPy(build_py):
         codegen_build_dir = None
         for data_file in self.data_files:
             package, src_dir, build_dir, filename = data_file
-            if package == 'osqp.new_codegen':
+            if package == 'osqp.codegen':
                 codegen_build_dir = build_dir
 
         if codegen_build_dir is not None:
@@ -45,7 +45,7 @@ class CustomBuildPy(build_py):
 
                     if filenames:
                         for src_dir, build_dir, filename in zip(src_dirs, build_dirs, filenames):
-                            self.data_files.append(('osqp.new_codegen', src_dir, build_dir, [filename]))
+                            self.data_files.append(('osqp.codegen', src_dir, build_dir, [filename]))
 
         super().run()
 
@@ -124,9 +124,9 @@ setup(
     long_description=open('README.rst').read(),
     package_dir={'': 'src'},
 
-    # package_data for osqp.newcodegen is populated by CustomBuildPy to include codegen files
+    # package_data for osqp.codegen is populated by CustomBuildPy to include codegen files
     # after building all extensions
-    # package_data={'osqp.new_codegen': []},
+    # package_data={'osqp.codegen': []},
 
     include_package_data=True,
     zip_safe=False,

@@ -272,7 +272,7 @@ class OSQP:
 
         folder = os.path.abspath(folder)
         if include_codegen_src:
-            with importlib.resources.path('osqp.new_codegen', 'codegen_src') as codegen_src_path:
+            with importlib.resources.path('osqp.codegen', 'codegen_src') as codegen_src_path:
                 shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
