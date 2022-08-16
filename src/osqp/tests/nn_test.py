@@ -63,7 +63,7 @@ def get_grads_torch(P, q, A, l, u, true_x):
     return grads
 
 
-@pytest.mark.skipif(osqp.default_algebra()!='default', reason='Derivatives only supported for default algebra.')
+@pytest.mark.skipif(osqp.default_algebra() != 'builtin', reason='Derivatives only supported for builtin algebra.')
 def test_dl_dp():
     n, m = 5, 5
 

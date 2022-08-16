@@ -1,4 +1,4 @@
-from osqp.new_interface import OSQP as _OSQP
+from osqp.interface import OSQP as _OSQP
 
 
 class OSQP(_OSQP):

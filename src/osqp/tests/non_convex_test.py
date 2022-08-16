@@ -23,7 +23,7 @@ def self(request):
     return self
 
 
-@pytest.mark.skipif(default_algebra() not in ('legacy', 'default'), reason='Only applicable for legacy/default algebra')
+@pytest.mark.skipif(default_algebra() != 'builtin', reason='Only applicable for builtin algebra')
 def test_non_convex_small_sigma(self):
     opts = {'verbose': False, 'sigma': 1e-6}
     try:
