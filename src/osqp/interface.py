@@ -16,7 +16,7 @@ _ALGEBRA_MODULES = {
     'mkl': 'osqp_mkl',
     'builtin': 'osqp.ext_builtin'
 }
-OSQP_ALGEBRA = os.environ.get('OSQP_ALGEBRA')      # If envvar is set, that algebra is used by default
+OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')      # If envvar is set, that algebra is used by default
 
 
 @functools.lru_cache(maxsize=4)
@@ -39,8 +39,8 @@ def algebras_available():
 
 @functools.lru_cache(maxsize=1)
 def default_algebra():
-    if OSQP_ALGEBRA is not None:
-        return OSQP_ALGEBRA
+    if OSQP_ALGEBRA_BACKEND is not None:
+        return OSQP_ALGEBRA_BACKEND
     for algebra in _ALGEBRAS:
         if algebra_available(algebra):
             return algebra
@@ -63,11 +63,6 @@ def constant(which, algebra=None):
         if which == 'OSQP_NAN':
             return np.nan
 
-        solvers = ('QDLDL_SOLVER', 'MKL_PARDISO_SOLVER', 'CUDA_PCG_SOLVER')
-        if which in solvers:
-            warnings.warn(f"The constant {which} is provided only for backward compatibility."
-                 "Please use OSQP_ALGEBRA directly.")
-            return solvers.index(which)
         raise RuntimeError(f"Unknown constant {which}")
 
 

@@ -113,16 +113,16 @@ class CmdCMakeBuild(build_ext):
 
 extras_require = {'dev': ['pytest', 'torch', 'numdifftools']}
 
-algebra = os.environ.get('OSQP_ALGEBRA', 'builtin')
+algebra = os.environ.get('OSQP_ALGEBRA_BACKEND', 'builtin')
 assert algebra in ('builtin', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
 if algebra == 'builtin':
     package_name = 'osqp'
-    ext_modules = [CMakeExtension(f'osqp.ext_builtin', cmake_args=['-DALGEBRA=default'])]
+    ext_modules = [CMakeExtension(f'osqp.ext_builtin', cmake_args=['-DOSQP_ALGEBRA_BACKEND=builtin'])]
     extras_require['mkl'] = ['osqp-mkl']
     extras_require['cuda'] = ['osqp-cuda']
 else:
     package_name = f'osqp_{algebra}'
-    ext_modules = [CMakeExtension(f'osqp_{algebra}', cmake_args=[f'-DALGEBRA={algebra}'])]
+    ext_modules = [CMakeExtension(f'osqp_{algebra}', cmake_args=[f'-DOSQP_ALGEBRA_BACKEND={algebra}'])]
 
 
 setup(

@@ -22,11 +22,11 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} src/bindings.cpp)
 
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
-if(${ALGEBRA} STREQUAL "default")
+if(${OSQP_ALGEBRA_BACKEND} STREQUAL "builtin")
     target_link_libraries(ext_builtin PUBLIC pybind11::module osqpstatic)
-elseif(${ALGEBRA} STREQUAL "mkl")
+elseif(${OSQP_ALGEBRA_BACKEND} STREQUAL "mkl")
     target_link_libraries(osqp_mkl PUBLIC pybind11::module osqpstatic $<LINK_ONLY:MKL::MKL>)
-elseif(${ALGEBRA} STREQUAL "cuda")
+elseif(${OSQP_ALGEBRA_BACKEND} STREQUAL "cuda")
     enable_language(CUDA)
     find_package(CUDA)
     include_directories(${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
