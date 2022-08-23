@@ -2,7 +2,6 @@ import os
 from types import SimpleNamespace
 import shutil
 import warnings
-import functools
 import importlib
 import importlib.resources
 import numpy as np
@@ -19,7 +18,6 @@ _ALGEBRA_MODULES = {
 OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')      # If envvar is set, that algebra is used by default
 
 
-@functools.lru_cache(maxsize=4)
 def algebra_available(algebra):
     assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
     module = _ALGEBRA_MODULES[algebra]
@@ -32,12 +30,10 @@ def algebra_available(algebra):
         return True
 
 
-@functools.lru_cache(maxsize=1)
 def algebras_available():
     return [algebra for algebra in _ALGEBRAS if algebra_available(algebra)]
 
 
-@functools.lru_cache(maxsize=1)
 def default_algebra():
     if OSQP_ALGEBRA_BACKEND is not None:
         return OSQP_ALGEBRA_BACKEND
@@ -328,7 +324,7 @@ class OSQP:
 
         folder = os.path.abspath(folder)
         if include_codegen_src:
-            with importlib.resources.path('osqp.codegen', 'codegen_src') as codegen_src_path:
+            with importlib.resources.files('osqp.codegen').joinpath('codegen_src') as codegen_src_path:
                 shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
