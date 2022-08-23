@@ -1,11 +1,9 @@
 cmake_minimum_required(VERSION 3.13)
-project(foo_ext)
+project(osqp_ext_{{extension_name}})
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON) # -fPIC
+set(EMBEDDED "1")
 
-# --------------
-# osqpstatic
-# --------------
 file(
   GLOB
   OSQP_SOURCES
@@ -19,9 +17,6 @@ add_library(osqpstatic
 target_include_directories(osqpstatic PUBLIC inc/public inc/private .)
 target_include_directories(osqpstatic PRIVATE inc/private .)
 
-# --------------
-# foo
-# --------------
 include(FetchContent)
 FetchContent_Declare(
   pybind11
@@ -30,11 +25,10 @@ FetchContent_MakeAvailable(pybind11)
 
 file(
   GLOB
-  FOO_SOURCES
+  EXT_SOURCES
   workspace.c
   workspace.h
   bindings.cpp)
 
-pybind11_add_module(foo ${FOO_SOURCES})
-
-target_link_libraries(foo PUBLIC pybind11::module osqpstatic)
+pybind11_add_module({{extension_name}} ${EXT_SOURCES})
+target_link_libraries({{extension_name}} PUBLIC pybind11::module osqpstatic)
