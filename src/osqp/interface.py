@@ -352,13 +352,17 @@ class OSQP:
             folder += os.path.sep
 
         status = self._solver.codegen(folder, prefix, defines)
-        if status != 0:
-            raise RuntimeError(f'Codegen failed with error code {status}')
+        assert status == 0, f'Codegen failed with error code {status}'
 
         if extension_name is not None:
-            self._render_pywrapper_files(folder, extension_name=extension_name, embedded_mode=defines.embedded_mode)
+            template_vars = dict(
+                prefix=prefix,
+                extension_name=extension_name,
+                embedded_mode=defines.embedded_mode
+            )
+            self._render_pywrapper_files(folder, **template_vars)
             if compile:
-                subprocess.call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'], cwd=folder)
+                subprocess.check_call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'], cwd=folder)
 
         return folder
 

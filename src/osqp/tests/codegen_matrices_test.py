@@ -40,7 +40,7 @@ class codegen_matrices_tests(unittest.TestCase):
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model_dir = model.codegen('codegen_mat_out', extension_name='mat_emosqp', include_codegen_src=True,
-                                  force_rewrite=True, parameters='matrices', compile=True)
+                                  force_rewrite=True, parameters='matrices', prefix='bar', compile=True)
         sys.path.append(model_dir)
 
         cls.m = m

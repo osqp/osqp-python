@@ -38,7 +38,7 @@ class codegen_vectors_tests(unittest.TestCase):
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model_dir = model.codegen('codegen_vec_out', extension_name='vec_emosqp', include_codegen_src=True,
-                           force_rewrite=True, compile=True)
+                           force_rewrite=True, prefix='foo', compile=True)
         sys.path.append(model_dir)
 
         cls.m = m

@@ -7,23 +7,23 @@ using namespace pybind11::literals;
 
 #include "osqp_api_functions.h"
 #include "osqp_api_types.h"
-#include "workspace.h"
+#include "{{prefix}}workspace.h"
 
 py::tuple solve() {
     py::gil_scoped_release release;
-    c_int status = osqp_solve(&solver);
+    c_int status = osqp_solve(&{{prefix}}solver);
     py::gil_scoped_acquire acquire;
 
     if (status != 0) throw std::runtime_error("Solve failed");
 
     c_int m;
     c_int n;
-    osqp_get_dimensions(&solver, &m, &n);
+    osqp_get_dimensions(&{{prefix}}solver, &m, &n);
 
-    auto x = py::array_t<c_float>({n}, {sizeof(c_float)}, (&solver)->solution->x);
-    auto y = py::array_t<c_float>({m}, {sizeof(c_float)}, (&solver)->solution->y);
+    auto x = py::array_t<c_float>({n}, {sizeof(c_float)}, (&{{prefix}}solver)->solution->x);
+    auto y = py::array_t<c_float>({m}, {sizeof(c_float)}, (&{{prefix}}solver)->solution->y);
 
-    py::tuple results = py::make_tuple(x, y, status, (&solver)->info->iter, (&solver)->info->run_time);
+    py::tuple results = py::make_tuple(x, y, status, (&{{prefix}}solver)->info->iter, (&{{prefix}}solver)->info->run_time);
     return results;
 }
 
@@ -48,7 +48,7 @@ c_int update_data_vec(py::object q, py::object l, py::object u) {
         _u = (c_float *)py::array_t<c_float>(u).data();
     }
 
-    return osqp_update_data_vec(&solver, _q, _l, _u);
+    return osqp_update_data_vec(&{{prefix}}solver, _q, _l, _u);
 }
 
 #if EMBEDDED == 2
@@ -92,7 +92,7 @@ c_int update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object
         _A_n = _A_i_array.size();
     }
 
-    return osqp_update_data_mat(&solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
+    return osqp_update_data_mat(&{{prefix}}solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 #endif
 

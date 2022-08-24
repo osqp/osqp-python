@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15)
 project(osqp_ext_{{extension_name}})
 
-set(CMAKE_POSITION_INDEPENDENT_CODE ON) # -fPIC
+set(CMAKE_VERBOSE_MAKEFILE ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)  # -fPIC
 set(EMBEDDED "1")
 
 file(
@@ -26,9 +27,9 @@ FetchContent_MakeAvailable(pybind11)
 file(
   GLOB
   EXT_SOURCES
-  workspace.c
-  workspace.h
+  {{prefix}}workspace.c
+  {{prefix}}workspace.h
   bindings.cpp)
 
-pybind11_add_module({{extension_name}} ${EXT_SOURCES})
+pybind11_add_module({{extension_name}} ${OSQP_SOURCES} ${EXT_SOURCES})
 target_link_libraries({{extension_name}} PUBLIC pybind11::module osqpstatic)
