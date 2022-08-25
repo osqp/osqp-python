@@ -1,23 +1,22 @@
 from types import SimpleNamespace
-import osqp
-from osqp.tests.utils import SOLVER_TYPES
-# import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-import scipy as sp
-
 import pytest
+import osqp
+from osqp.tests.utils import SOLVER_TYPES
 
 
 @pytest.fixture(params=SOLVER_TYPES)
 def self(request):
     self = SimpleNamespace()
-    self.opts = {'verbose': False,
-                 'adaptive_rho': False,
-                 'eps_abs': 1e-08,
-                 'eps_rel': 1e-08,
-                 'polish': False,
-                 'check_termination': 1}
+    self.opts = {
+        'verbose': False,
+        'adaptive_rho': False,
+        'eps_abs': 1e-08,
+        'eps_rel': 1e-08,
+        'polish': False,
+        'check_termination': 1,
+    }
 
     self.model = osqp.OSQP()
     self.model.solver_type = request.param
@@ -32,16 +31,15 @@ def test_warm_start(self):
     self.n = 100
     self.m = 200
     self.A = sparse.random(self.m, self.n, density=0.9, format='csc')
-    self.l = -np.random.rand(self.m) * 2.
-    self.u = np.random.rand(self.m) * 2.
+    self.l = -np.random.rand(self.m) * 2.0
+    self.u = np.random.rand(self.m) * 2.0
 
     P = sparse.random(self.n, self.n, density=0.9)
     self.P = sparse.triu(P.dot(P.T), format='csc')
     self.q = np.random.randn(self.n)
 
     # Setup solver
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                     **self.opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     # Solve problem with OSQP
     res = self.model.solve()

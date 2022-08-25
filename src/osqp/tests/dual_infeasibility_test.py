@@ -2,6 +2,7 @@ from types import SimpleNamespace
 import osqp
 from osqp import constant
 from osqp.tests.utils import SOLVER_TYPES
+
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
@@ -12,16 +13,18 @@ import pytest
 @pytest.fixture(params=SOLVER_TYPES)
 def self(request):
     self = SimpleNamespace()
-    self.opts = {'verbose': False,
-                 'eps_abs': 1e-05,
-                 'eps_rel': 1e-05,
-                 'eps_prim_inf': 1e-15,  # Focus only on dual infeasibility
-                 'eps_dual_inf': 1e-6,
-                 'scaling': 3,
-                 'max_iter': 2500,
-                 'polish': False,
-                 'check_termination': 1,
-                 'polish_refine_iter': 4}
+    self.opts = {
+        'verbose': False,
+        'eps_abs': 1e-05,
+        'eps_rel': 1e-05,
+        'eps_prim_inf': 1e-15,  # Focus only on dual infeasibility
+        'eps_dual_inf': 1e-6,
+        'scaling': 3,
+        'max_iter': 2500,
+        'polish': False,
+        'check_termination': 1,
+        'polish_refine_iter': 4,
+    }
 
     self.model = osqp.OSQP()
     self.model.solver_type = request.param
@@ -34,11 +37,10 @@ def test_dual_infeasible_lp(self):
     self.P = sparse.csc_matrix((2, 2))
     self.q = np.array([2, -1])
     self.A = sparse.eye(2, format='csc')
-    self.l = np.array([0., 0.])
+    self.l = np.array([0.0, 0.0])
     self.u = np.array([np.inf, np.inf])
 
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                     **self.opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     # Solve problem with OSQP
     res = self.model.solve()
@@ -49,14 +51,13 @@ def test_dual_infeasible_lp(self):
 def test_dual_infeasible_qp(self):
 
     # Dual infeasible example
-    self.P = sparse.diags([4., 0.], format='csc')
+    self.P = sparse.diags([4.0, 0.0], format='csc')
     self.q = np.array([0, 2])
-    self.A = sparse.csc_matrix([[1., 1.], [-1., 1.]])
+    self.A = sparse.csc_matrix([[1.0, 1.0], [-1.0, 1.0]])
     self.l = np.array([-np.inf, -np.inf])
-    self.u = np.array([2., 3.])
+    self.u = np.array([2.0, 3.0])
 
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                     **self.opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     # Solve problem with OSQP
     res = self.model.solve()
@@ -69,17 +70,16 @@ def test_primal_and_dual_infeasible_problem(self):
     self.n = 2
     self.m = 4
     self.P = sparse.csc_matrix((2, 2))
-    self.q = np.array([-1., -1.])
-    self.A = sparse.csc_matrix([[1., -1.], [-1., 1.], [1., 0.], [0., 1.]])
-    self.l = np.array([1., 1., 0., 0.])
+    self.q = np.array([-1.0, -1.0])
+    self.A = sparse.csc_matrix([[1.0, -1.0], [-1.0, 1.0], [1.0, 0.0], [0.0, 1.0]])
+    self.l = np.array([1.0, 1.0, 0.0, 0.0])
     self.u = np.inf * np.ones(self.m)
 
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                     **self.opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     # Warm start to avoid infeasibility detection at first step
-    x0 = 25.*np.ones(self.n)
-    y0 = -2.*np.ones(self.m)
+    x0 = 25.0 * np.ones(self.n)
+    y0 = -2.0 * np.ones(self.m)
     self.model.warm_start(x=x0, y=y0)
 
     # Solve
