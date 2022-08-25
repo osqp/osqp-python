@@ -458,7 +458,7 @@ class derivative_tests(unittest.TestCase):
         u[:20] = l[:20]
 
         def grad(q, mode):
-            dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return dq
 
         def f(q):
