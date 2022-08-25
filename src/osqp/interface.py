@@ -1,11 +1,15 @@
+import sys
 import os
 from types import SimpleNamespace
 import shutil
+import subprocess
 import warnings
 import importlib
 import importlib.resources
+import setuptools
 import numpy as np
 import scipy.sparse as spa
+from jinja2 import Environment, PackageLoader, select_autoescape
 
 
 _ALGEBRAS = ('cuda', 'mkl', 'builtin')   # Highest->Lowest priority of algebras that are tried in turn
@@ -305,15 +309,24 @@ class OSQP:
         self._derivative_cache['results'] = results
         return results
 
-    def codegen(self, folder, project_type='', parameters='vectors', python_ext_name='emosqp', force_rewrite=False,
-                use_float=False, printing_enable=False, profiling_enable=False, interrupt_enable=False,
-                include_codegen_src=False, use_long=False, prefix='', compile=False):
+    def _render_pywrapper_files(self, output_folder, **kwargs):
+        env = Environment(
+            loader=PackageLoader("osqp.codegen.pywrapper", package_path=""),
+            autoescape=select_autoescape()
+        )
 
-        assert project_type in (None, ''), 'project_type should be blank/None, and is only provided for backwards API' \
-                                           'compatibility'
+        for template_name in env.list_templates(extensions='.jinja'):
+            template = env.get_template(template_name)
+            template_base_name = os.path.splitext(template_name)[0]
+
+            with open(os.path.join(output_folder, template_base_name), 'w') as f:
+                f.write(template.render(**kwargs))
+
+    def codegen(self, folder, parameters='vectors', extension_name='emosqp', force_rewrite=False,
+                use_float=False, printing_enable=False, profiling_enable=False, interrupt_enable=False,
+                include_codegen_src=False, prefix='', compile=False):
+
         assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
-        assert not use_long, 'Long ("long long" in C) is no longer supported in codegen.' \
-                             'We only support C89 compliant version of the long ints'
 
         defines = self.ext.OSQPCodegenDefines()
         defines.embedded_mode = 1 if parameters == 'vectors' else 2
@@ -324,7 +337,13 @@ class OSQP:
 
         folder = os.path.abspath(folder)
         if include_codegen_src:
-            with importlib.resources.files('osqp.codegen').joinpath('codegen_src') as codegen_src_path:
+            # https://github.com/python/importlib_resources/issues/85
+            try:
+                handle = importlib.resources.files('osqp.codegen').joinpath('codegen_src')
+            except AttributeError:
+                handle = importlib.resources.path('osqp.codegen', 'codegen_src')
+
+            with handle as codegen_src_path:
                 shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
@@ -333,11 +352,19 @@ class OSQP:
             folder += os.path.sep
 
         status = self._solver.codegen(folder, prefix, defines)
-        if status != 0:
-            raise RuntimeError(f'Codegen failed with error code {status}')
+        assert status == 0, f'Codegen failed with error code {status}'
 
-        if compile:
-            raise NotImplementedError
+        if extension_name is not None:
+            template_vars = dict(
+                prefix=prefix,
+                extension_name=extension_name,
+                embedded_mode=defines.embedded_mode
+            )
+            self._render_pywrapper_files(folder, **template_vars)
+            if compile:
+                subprocess.check_call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'], cwd=folder)
+
+        return folder
 
     def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None, as_dense=True, dP_as_triu=True):
         """

@@ -133,13 +133,14 @@ setup(
     long_description=open('README.rst').read(),
     package_dir={'': 'src'},
 
-    # package_data for osqp.codegen is populated by CustomBuildPy to include codegen files
-    # after building all extensions
-    # package_data={'osqp.codegen': []},
+    # package_data for 'osqp.codegen' is populated by CustomBuildPy to include codegen_src files
+    #   after building extensions, so it should not be included here.
+    # It is however ok to specify package_data for submodules of 'osqp.codegen'.
+    package_data={'osqp.codegen.pywrapper': ['*.jinja']},
 
     include_package_data=True,
     zip_safe=False,
-    install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl'],
+    install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl', 'jinja2'],
     python_requires='>=3.7',
     extras_require=extras_require,
     license='Apache 2.0',

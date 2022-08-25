@@ -39,8 +39,8 @@ class codegen_matrices_tests(unittest.TestCase):
         model = osqp.OSQP()
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
-        model_dir = model.codegen('codegen_mat_out', python_ext_name='mat_emosqp', force_rewrite=True, parameters='matrices')
-        sh.rmtree('codegen_mat_out', ignore_errors=True)
+        model_dir = model.codegen('codegen_mat_out', extension_name='mat_emosqp', include_codegen_src=True,
+                                  force_rewrite=True, parameters='matrices', prefix='bar', compile=True)
         sys.path.append(model_dir)
 
         cls.m = m
@@ -54,14 +54,16 @@ class codegen_matrices_tests(unittest.TestCase):
         cls.u = u
         cls.opts = opts
 
+    @classmethod
+    def tearDownClass(cls):
+        sh.rmtree('codegen_mat_out', ignore_errors=True)
+
     def setUp(self):
 
         self.model = osqp.OSQP()
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
                          **self.opts)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_solve(self):
         import mat_emosqp
 
@@ -73,15 +75,13 @@ class codegen_matrices_tests(unittest.TestCase):
         nptest.assert_array_almost_equal(
             y, np.array([1.5, 0., 1.5, 0., 0.]), decimal=5)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P(self):
         import mat_emosqp
 
         # Update matrix P
         Px = self.P_new.data
         Px_idx = np.arange(self.P_new.nnz)
-        mat_emosqp.update_P(Px, Px_idx, len(Px))
+        mat_emosqp.update_data_mat(P_x=Px)
 
         # Solve problem
         x, y, _, _, _ = mat_emosqp.solve()
@@ -94,16 +94,14 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrix P to the original value
         Px = self.P.data
         Px_idx = np.arange(self.P.nnz)
-        mat_emosqp.update_P(Px, Px_idx, len(Px))
+        mat_emosqp.update_data_mat(P_x=Px, P_i=Px_idx)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_allind(self):
         import mat_emosqp
 
         # Update matrix P
         Px = self.P_new.data
-        mat_emosqp.update_P(Px, None, 0)
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None)
         x, y, _, _, _ = mat_emosqp.solve()
 
         # Assert close
@@ -113,17 +111,15 @@ class codegen_matrices_tests(unittest.TestCase):
 
         # Update matrix P to the original value
         Px_idx = np.arange(self.P.nnz)
-        mat_emosqp.update_P(Px, Px_idx, len(Px))
+        mat_emosqp.update_data_mat(P_x=Px, P_i=Px_idx)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_A(self):
         import mat_emosqp
 
         # Update matrix A
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
-        mat_emosqp.update_A(Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(A_x=Ax, A_i=Ax_idx)
 
         # Solve problem
         x, y, _, _, _ = mat_emosqp.solve()
@@ -137,16 +133,14 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrix A to the original value
         Ax = self.A.data
         Ax_idx = np.arange(self.A.nnz)
-        mat_emosqp.update_A(Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(A_x=Ax, A_i=Ax_idx)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_A_allind(self):
         import mat_emosqp
 
         # Update matrix A
         Ax = self.A_new.data
-        mat_emosqp.update_A(Ax, None, 0)
+        mat_emosqp.update_data_mat(A_x=Ax, A_i=None)
         x, y, _, _, _ = mat_emosqp.solve()
 
         # Assert close
@@ -158,11 +152,9 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrix A to the original value
         Ax = self.A.data
         Ax_idx = np.arange(self.A.nnz)
-        mat_emosqp.update_A(Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(A_x=Ax, A_i=Ax_idx)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
-    def test_update_P_A_indP_indA(self):
+    def _test_update_P_A_indP_indA(self):
         import mat_emosqp
 
         # Update matrices P and A
@@ -170,7 +162,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Px_idx = np.arange(self.P_new.nnz)
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
-        mat_emosqp.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(P_x=Px, P_i=Px_idx, A_x=Ax, A_i=Ax_idx)
 
         # Solve problem
         x, y, _, _, _ = mat_emosqp.solve()
@@ -183,10 +175,8 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrices P and A to the original values
         Px = self.P.data
         Ax = self.A.data
-        mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None, A_x=Ax, A_i=None)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_indP(self):
         import mat_emosqp
 
@@ -194,7 +184,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Px = self.P_new.data
         Px_idx = np.arange(self.P_new.nnz)
         Ax = self.A_new.data
-        mat_emosqp.update_P_A(Px, Px_idx, len(Px), Ax, None, 0)
+        mat_emosqp.update_data_mat(P_x=Px, P_i=Px_idx, A_x=Ax, A_i=None)
         x, y, _, _, _ = mat_emosqp.solve()
 
         # Assert close
@@ -205,10 +195,8 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrices P and A to the original values
         Px = self.P.data
         Ax = self.A.data
-        mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None, A_x=Ax, A_i=None)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_indA(self):
         import mat_emosqp
 
@@ -216,7 +204,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Px = self.P_new.data
         Ax = self.A_new.data
         Ax_idx = np.arange(self.A_new.nnz)
-        mat_emosqp.update_P_A(Px, None, 0, Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None, A_x=Ax, A_i=Ax_idx)
         x, y, _, _, _ = mat_emosqp.solve()
 
         # Assert close
@@ -229,17 +217,15 @@ class codegen_matrices_tests(unittest.TestCase):
         Px_idx = np.arange(self.P.nnz)
         Ax = self.A.data
         Ax_idx = np.arange(self.A.nnz)
-        mat_emosqp.update_P_A(Px, Px_idx, len(Px), Ax, Ax_idx, len(Ax))
+        mat_emosqp.update_data_mat(P_x=Px, P_i=Px_idx, A_x=Ax, A_i=Ax_idx)
 
-    @pytest.mark.skipif(default_algebra() not in ('legacy',),
-                        reason='Codegen compilation only implemented for legacy algebra.')
     def test_update_P_A_allind(self):
         import mat_emosqp
 
         # Update matrices P and A
         Px = self.P_new.data
         Ax = self.A_new.data
-        mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None, A_x=Ax, A_i=None)
         x, y, _, _, _ = mat_emosqp.solve()
 
         # Assert close
@@ -250,8 +236,4 @@ class codegen_matrices_tests(unittest.TestCase):
         # Update matrices P and A to the original values
         Px = self.P.data
         Ax = self.A.data
-        mat_emosqp.update_P_A(Px, None, 0, Ax, None, 0)
-
-    def test_trivial(self):
-        # TODO: Dummy test just to let the classmethod run through for all cases
-        assert True
+        mat_emosqp.update_data_mat(P_x=Px, P_i=None, A_x=Ax, A_i=None)
