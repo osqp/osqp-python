@@ -7,7 +7,9 @@ using namespace pybind11::literals;
 
 #include "osqp_api_functions.h"
 #include "osqp_api_types.h"
-extern "C" {#include "{{prefix}}workspace.h"}
+extern "C" {
+    #include "{{prefix}}workspace.h"
+}
 
 py::tuple solve() {
     py::gil_scoped_release release;
