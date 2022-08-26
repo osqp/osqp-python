@@ -61,7 +61,7 @@ class CmdCMakeBuild(build_ext):
             '-DPYTHON_EXECUTABLE=' + sys.executable,
             f'-DPYTHON_INCLUDE_DIRS={get_python_inc()}',
             '-DOSQP_BUILD_UNITTESTS=OFF',
-            '-DDLONG=OFF',  # https://github.com/numpy/numpy/issues/5906
+            '-DOSQP_USE_LONG=OFF',  # https://github.com/numpy/numpy/issues/5906
             # https://github.com/ContinuumIO/anaconda-issues/issues/3823
             f'-DOSQP_CUSTOM_PRINTING={thisdir}/cmake/printing.h',
             f'-DOSQP_CUSTOM_MEMORY={thisdir}/cmake/memory.h',

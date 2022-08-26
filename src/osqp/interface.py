@@ -157,8 +157,8 @@ class OSQP:
         self.settings = self.ext.OSQPSettings()
         self.ext.osqp_set_default_settings(self.settings)
 
-        self._dtype = np.float32 if self.ext.OSQP_DFLOAT == 1 else np.float64
-        self._itype = np.int64 if self.ext.OSQP_DLONG == 1 else np.int32
+        self._dtype = np.float32 if self.ext.OSQP_USE_FLOAT == 1 else np.float64
+        self._itype = np.int64 if self.ext.OSQP_USE_LONG == 1 else np.int32
 
         # The following attributes are populated on setup()
         self._solver = None

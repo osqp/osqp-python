@@ -61,7 +61,7 @@ setup(
     setup_requires=["numpy >= 1.7"],
     install_requires=['numpy >= 1.7'],
 
-    ext_modules=[CMakeExtension('{{extension_name}}', cmake_args=['-DEMBEDDED={{embedded_mode}}'])],
+    ext_modules=[CMakeExtension('{{extension_name}}', cmake_args=['-DOSQP_EMBEDDED_MODE={{embedded_mode}}'])],
     cmdclass={'build_ext': CmdCMakeBuild},
     zip_safe=False
 )

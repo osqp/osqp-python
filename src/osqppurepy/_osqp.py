@@ -228,7 +228,7 @@ class info(object):
     ----------
     iter            - number of iterations taken
     status          - status string, e.g. 'Solved'
-    status_val      - status as c_int, defined in constants.h
+    status_val      - status as OSQPInt, defined in constants.h
     status_polish   - polish status: successful (1), not (0)
     obj_val         - primal objective
     pri_res         - norm of primal residual
