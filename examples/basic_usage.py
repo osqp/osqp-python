@@ -20,4 +20,3 @@ if __name__ == '__main__':
 
     # Solve problem
     res = prob.solve()
-

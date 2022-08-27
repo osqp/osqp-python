@@ -19,22 +19,23 @@ if __name__ == '__main__':
     prob.setup(P, q, A, l, u, alpha=1.0)
 
     # Generate C code
+    # fmt: off
     prob.codegen(
         'out',                     # Output folder for auto-generated code
         prefix='prob1_',           # Prefix for filenames and C variables; useful if generating multiple problems
-        force_rewrite=True,        # Force rewrite if output folder exists
-
+        force_rewrite=True,        # Force rewrite if output folder exists?
         parameters='vectors',      # What do we wish to update in the generated code?
-                                   # One of 'vectors' (allowing update of q/l/u)
-                                   # or 'matrices' (allowing update of P/A/q/l/u)
-
+                                   # One of 'vectors' (allowing update of q/l/u through prob.update_data_vec)
+                                   # or 'matrices' (allowing update of P/A/q/l/u
+                                   # through prob.update_data_vec or prob.update_data_mat)
         use_float=False,           # Use single precision in generated code?
         printing_enable=False,     # Enable solver printing?
         profiling_enable=False,    # Enable solver profiling?
         interrupt_enable=False,    # Enable user interrupt (Ctrl-C)?
         include_codegen_src=True,  # Include headers/sources/Makefile in the output folder,
                                    # creating a self-contained compilable folder?
-
         extension_name='pyosqp',   # Name of the generated python extension; generates a setup.py; Set None to skip
-        compile=False,             # Compile the above python extension into an importable module (allowing "import pyosqp")?
+        compile=False,             # Compile the above python extension into an importable module
+                                   # (allowing "import pyosqp")?
     )
+    # fmt: on

@@ -1,17 +1,11 @@
-# Test osqp python module
-from collections import deque
 import osqp
-# import osqppurepy as osqp
 import numpy as np
 import numpy.random as npr
 from scipy import sparse
 from scipy.optimize import approx_fprime
 import numpy.testing as npt
-
-# Unit Test
 import unittest
 import pytest
-import pdb
 
 
 npr.seed(1)
@@ -31,12 +25,11 @@ max_iter = 500000
 
 @pytest.mark.skipif(osqp.default_algebra() != 'builtin', reason='Derivatives only supported for builtin algebra.')
 class derivative_tests(unittest.TestCase):
-
     def setUp(self):
         npr.seed(1)
 
-    def get_prob(self, n=10, m=3, P_scale=1., A_scale=1.):
-        L = np.random.randn(n, n-1)
+    def get_prob(self, n=10, m=3, P_scale=1.0, A_scale=1.0):
+        L = np.random.randn(n, n - 1)
         # P = sparse.csc_matrix(L.dot(L.T) + 5. * sparse.eye(n))
         P = sparse.csc_matrix(L.dot(L.T) + 0.1 * sparse.eye(n))
         # P = sparse.csc_matrix(L.dot(L.T))
@@ -52,16 +45,15 @@ class derivative_tests(unittest.TestCase):
         true_yl = -np.minimum(true_y, 0)
         true_yu = np.maximum(true_y, 0)
 
-        return [P, q,  A, l, u, true_x, true_yl, true_yu]
+        return [P, q, A, l, u, true_x, true_yl, true_yu]
 
     def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
         # Get gradients by solving with osqp
         m = osqp.OSQP()
-        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                max_iter=max_iter, verbose=True)
+        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=True)
         results = m.solve()
-        if results.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if results.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x = results.x
         y = results.y
         yl = -np.minimum(y, 0)
@@ -69,61 +61,52 @@ class derivative_tests(unittest.TestCase):
         if true_yl is None and true_yu is None:
             grads = m.adjoint_derivative(dx=x - true_x)
         else:
-            grads = m.adjoint_derivative(
-                dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
-            # grads = m.adjoint_derivative(
-            #     dx=x - true_x, dy_l=np.ones(y.size), dy_u=np.ones(y.size), mode=mode)
-        # grads = m.adjoint_derivative(dx=np.ones(x.size))
+            grads = m.adjoint_derivative(dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
 
         return grads
 
     def get_forward_grads(self, P, q, A, l, u, dP, dq, dA, dl, du, mode='qdldl'):
         # Get gradients by solving with osqp
         m = osqp.OSQP(eps_rel=eps_rel, eps_abs=eps_abs)
-        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                max_iter=max_iter, verbose=False)
+        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         results = m.solve()
-        if results.info.status != "solved":
-            raise ValueError("Problem not solved!")
-        grads = m.forward_derivative(
-            dP=dP, dq=dq, dA=dA, dl=dl, du=du, mode=mode)
+        if results.info.status != 'solved':
+            raise ValueError('Problem not solved!')
+        grads = m.forward_derivative(dP=dP, dq=dq, dA=dA, dl=dl, du=du, mode=mode)
         return grads
 
-    @pytest.mark.skip(reason="forward derivatives not implemented yet")
+    @pytest.mark.skip(reason='forward derivatives not implemented yet')
     def test_dsol_dq(self, verbose=False):
         n, m = 5, 5
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         def grad(dq, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(
-                P, q, A, l, u, None, dq, None, None, None, mode=mode)
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
 
         osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
 
         eps = grad_precision
-        osqp_solver.setup(P, q + eps*dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(P, q + eps * dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
 
-        dx_fd = (x2-x1)/eps
-        dy_fd = (y2-y1)/eps
+        dx_fd = (x2 - x1) / eps
+        dy_fd = (y2 - y1) / eps
         dyl_fd = np.zeros(m)
         dyl_fd[y1 < 0] = -dy_fd[y1 < 0]
         dyu_fd = np.zeros(m)
@@ -137,42 +120,39 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
 
-    @pytest.mark.skip(reason="forward derivatives not implemented yet")
+    @pytest.mark.skip(reason='forward derivatives not implemented yet')
     def test_eq_inf_forward(self, verbose=False):
         n, m = 10, 10
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         l[:5] = u[:5]
         l[5:] = -osqp.constant('OSQP_INFTY')
 
         def grad(dq, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(
-                P, q, A, l, u, None, dq, None, None, None, mode=mode)
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
         osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
 
         eps = grad_precision
-        osqp_solver.setup(P, q + eps*dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(P, q + eps * dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
 
-        dx_fd = (x2-x1)/eps
-        dy_fd = (y2-y1)/eps
+        dx_fd = (x2 - x1) / eps
+        dy_fd = (y2 - y1) / eps
         dyl_fd = np.zeros(m)
         dyl_fd[y1 < 0] = -dy_fd[y1 < 0]
         dyu_fd = np.zeros(m)
@@ -186,16 +166,15 @@ class derivative_tests(unittest.TestCase):
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
 
-    @pytest.mark.skip(reason="forward derivatives not implemented yet")
+    @pytest.mark.skip(reason='forward derivatives not implemented yet')
     def test_multiple_forward_derivative(self, verbose=False):
         n, m = 5, 5
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         def grad(dP, dq, dA, dl, du, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(
-                P, q, A, l, u, dP, dq, dA, dl, du, mode=mode)
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, dP, dq, dA, dl, du, mode=mode)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
@@ -206,25 +185,33 @@ class derivative_tests(unittest.TestCase):
         dP = dL + dL.T
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dP, dq, dA, dl, du, 'qdldl')
         osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
 
         eps = grad_precision
-        osqp_solver.setup(P + eps*dP, q + eps*dq, A + eps*dA, l + eps*dl, u + eps*du, eps_abs=eps_abs, eps_rel=eps_rel,
-                          max_iter=max_iter, verbose=False)
+        osqp_solver.setup(
+            P + eps * dP,
+            q + eps * dq,
+            A + eps * dA,
+            l + eps * dl,
+            u + eps * du,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
-        if res.info.status != "solved":
-            raise ValueError("Problem not solved!")
+        if res.info.status != 'solved':
+            raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
 
-        dx_fd = (x2-x1)/eps
-        dy_fd = (y2-y1)/eps
+        dx_fd = (x2 - x1) / eps
+        dy_fd = (y2 - y1) / eps
         dyl_fd = np.zeros(m)
         dyl_fd[y1 < 0] = -dy_fd[y1 < 0]
         dyu_fd = np.zeros(m)
@@ -233,7 +220,7 @@ class derivative_tests(unittest.TestCase):
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
             print('dx: ', np.round(dx_qdldl, decimals=4))
-        
+
         npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
         npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
@@ -241,50 +228,19 @@ class derivative_tests(unittest.TestCase):
     def test_dl_dq(self, verbose=False):
         n, m = 5, 5
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         def grad(q):
-            [dP, dq, dA, dl, du] = self.get_grads(P, q, A, l, u, true_x)
+            dP, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x)
             return dq
 
         def f(q):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
-            x_hat = res.x
-
-            return 0.5 * np.sum(np.square(x_hat - true_x))
-
-        dq = grad(q)
-        dq_fd = approx_fprime(q, f, grad_precision)
-
-        if verbose:
-            print('dq_fd: ', np.round(dq_fd, decimals=4))
-            print('dq: ', np.round(dq, decimals=4))
-
-        npt.assert_allclose(dq_fd, dq, rtol=rel_tol, atol=abs_tol)
-
-    def test_dl_dq(self, verbose=False):
-        n, m = 5, 5
-
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
-
-        def grad(q):
-            [dP, dq, dA, dl, du] = self.get_grads(P, q, A, l, u, true_x)
-            return dq
-
-        def f(q):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
-            res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -301,23 +257,22 @@ class derivative_tests(unittest.TestCase):
     def test_dl_dP(self, verbose=False):
         n, m = 3, 3
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         P_idx = P.nonzero()
 
         def grad(P_val):
             P_qp = sparse.csc_matrix((P_val, P_idx), shape=P.shape)
-            [dP, dq, dA, dl, du] = self.get_grads(P_qp, q, A, l, u, true_x)
+            dP, _, _, _, _ = self.get_grads(P_qp, q, A, l, u, true_x)
             return dP
 
         def f(P_val):
             P_qp = sparse.csc_matrix((P_val, P_idx), shape=P.shape)
             m = osqp.OSQP()
-            m.setup(P_qp, q, A, l, u, eps_abs=eps_abs,
-                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P_qp, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -325,35 +280,33 @@ class derivative_tests(unittest.TestCase):
         dP = grad(P.data)
         dP_fd_val = approx_fprime(P.data, f, grad_precision)
         dP_fd = sparse.csc_matrix((dP_fd_val, P_idx), shape=P.shape)
-        dP_fd = (dP_fd + dP_fd.T)/2
+        dP_fd = (dP_fd + dP_fd.T) / 2
 
         if verbose:
             print('dP_fd: ', np.round(dP_fd.data, decimals=4))
             print('dA: ', np.round(dP.data, decimals=4))
 
-        npt.assert_allclose(np.triu(dP), np.triu(dP_fd.todense()),
-                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(np.triu(dP), np.triu(dP_fd.todense()), rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA(self, verbose=False):
         n, m = 3, 3
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         A_idx = A.nonzero()
 
         def grad(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            [dP, dq, dA, dl, du] = self.get_grads(P, q, A_qp, l, u, true_x)
+            _, _, dA, _, _ = self.get_grads(P, q, A_qp, l, u, true_x)
             return dA
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
             m = osqp.OSQP()
-            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs,
-                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -366,27 +319,24 @@ class derivative_tests(unittest.TestCase):
             print('dA_fd: ', np.round(dA_fd.data, decimals=4))
             print('dA: ', np.round(dA.data, decimals=4))
 
-        npt.assert_allclose(dA, dA_fd.todense(),
-                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dA, dA_fd.todense(), rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dl(self, verbose=False):
         n, m = 30, 30
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         def grad(l, mode):
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A, l, u, true_x, mode=mode)
+            _, _, _, dl, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return dl
 
         def f(l):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -398,28 +348,24 @@ class derivative_tests(unittest.TestCase):
             print('dl_fd: ', np.round(dl_fd, decimals=4).tolist())
             print('dl_qdldl: ', np.round(dl_qdldl, decimals=4).tolist())
 
-
-        npt.assert_allclose(dl_fd, dl_qdldl,
-                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dl_fd, dl_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_du(self, verbose=False):
         n, m = 10, 20
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         def grad(u, mode):
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A, l, u, true_x, mode=mode)
+            _, _, _, _, du = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return du
 
         def f(u):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -431,13 +377,12 @@ class derivative_tests(unittest.TestCase):
             print('du_fd: ', np.round(du_fd, decimals=4))
             print('du: ', np.round(du_qdldl, decimals=4))
 
-        npt.assert_allclose(du_fd, du_qdldl,
-                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(du_fd, du_qdldl, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA_eq(self, verbose=False):
         n, m = 30, 20
 
-        prob = self.get_prob(n=n, m=m, P_scale=100., A_scale=100.)
+        prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
         # l[10:20] = -osqp.constant('OSQP_INFTY')
@@ -447,18 +392,16 @@ class derivative_tests(unittest.TestCase):
 
         def grad(A_val, mode):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A_qp, l, u, true_x, mode=mode)
+            _, _, dA, _, _ = self.get_grads(P, q, A_qp, l, u, true_x, mode=mode)
             return dA
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
             m = osqp.OSQP()
-            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs,
-                    eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -471,32 +414,27 @@ class derivative_tests(unittest.TestCase):
             print('dA_fd: ', np.round(dA_fd.data, decimals=6))
             print('dA_qdldl: ', np.round(dA_qdldl.data, decimals=6))
 
-        npt.assert_allclose(dA_qdldl, dA_fd.todense(),
-                            rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dA_qdldl, dA_fd.todense(), rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_eq(self, verbose=False):
         n, m = 20, 15
 
-        prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
+        prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
         # l[20:40] = -osqp.constant('OSQP_INFTY')
         u[:20] = l[:20]
 
-        A_idx = A.nonzero()
-
         def grad(q, mode):
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A, l, u, true_x, mode=mode)
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return dq
 
         def f(q):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -513,26 +451,22 @@ class derivative_tests(unittest.TestCase):
     def test_dl_dq_eq_large(self, verbose=False):
         n, m = 100, 120
 
-        prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
+        prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
         l[20:40] = -osqp.constant('OSQP_INFTY')
         u[:20] = l[:20]
 
-        A_idx = A.nonzero()
-
         def grad(q, mode):
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A, l, u, true_x, mode=mode)
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
             return dq
 
         def f(q):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
@@ -549,37 +483,34 @@ class derivative_tests(unittest.TestCase):
     def test_dl_dq_nonzero_dy(self, verbose=False):
         n, m = 6, 3
 
-        prob = self.get_prob(n=n, m=m, P_scale=1., A_scale=1.)
+        prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
         # l[20:40] = -osqp.constant('OSQP_INFTY')
         num_eq = 2
         u[:num_eq] = l[:num_eq]
 
-        A_idx = A.nonzero()
-
         def grad(q, mode):
-            [dP, dq, dA, dl, du] = self.get_grads(
-                P, q, A, l, u, true_x, true_yl, true_yu, mode=mode)
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, true_yl, true_yu, mode=mode)
             return dq
 
         def f(q):
             m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel,
-                    max_iter=max_iter, verbose=False)
+            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
             res = m.solve()
-            if res.info.status != "solved":
-                raise ValueError("Problem not solved!")
+            if res.info.status != 'solved':
+                raise ValueError('Problem not solved!')
             x_hat = res.x
             y_hat = res.y
             yu_hat = np.maximum(y_hat, 0)
             yl_hat = -np.minimum(y_hat, 0)
-            
+
             # return 0.5 * np.sum(np.square(x_hat - true_x)) + np.sum(yl_hat) + np.sum(yu_hat)
-            return 0.5 * (np.sum(np.square(x_hat - true_x)) + np.sum(np.square(yl_hat - true_yl)) + \
-                np.sum(np.square(yu_hat - true_yu)))
-            # true_y = true_yu - true_yl
-            # return 0.5 * (np.sum(np.square(x_hat - true_x)) + np.sum(np.square(y_hat - true_y)))
+            return 0.5 * (
+                np.sum(np.square(x_hat - true_x))
+                + np.sum(np.square(yl_hat - true_yl))
+                + np.sum(np.square(yu_hat - true_yu))
+            )
 
         dq_qdldl = grad(q, 'qdldl')
         dq_fd = approx_fprime(q, f, grad_precision)

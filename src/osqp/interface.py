@@ -6,7 +6,6 @@ import subprocess
 import warnings
 import importlib
 import importlib.resources
-import setuptools
 import numpy as np
 import scipy.sparse as spa
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -14,11 +13,7 @@ from jinja2 import Environment, PackageLoader, select_autoescape
 
 _ALGEBRAS = ('cuda', 'mkl', 'builtin')   # Highest->Lowest priority of algebras that are tried in turn
 # Mapping from algebra to loadable module
-_ALGEBRA_MODULES = {
-    'cuda': 'osqp_cuda',
-    'mkl': 'osqp_mkl',
-    'builtin': 'osqp.ext_builtin'
-}
+_ALGEBRA_MODULES = {'cuda': 'osqp_cuda', 'mkl': 'osqp_mkl', 'builtin': 'osqp.ext_builtin'}
 OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')      # If envvar is set, that algebra is used by default
 
 
@@ -63,11 +58,10 @@ def constant(which, algebra=None):
         if which == 'OSQP_NAN':
             return np.nan
 
-        raise RuntimeError(f"Unknown constant {which}")
+        raise RuntimeError(f'Unknown constant {which}')
 
 
 class OSQP:
-
     @staticmethod
     def _infer_mnpqalu(P=None, q=None, A=None, l=None, u=None):
         # infer as many parameters of the problems as we can, and return them as a tuple
@@ -77,7 +71,7 @@ class OSQP:
             elif A is not None:
                 n = A.shape[1]
             else:
-                raise ValueError("The problem does not have any variables")
+                raise ValueError('The problem does not have any variables')
         else:
             n = P.shape[0]
 
@@ -94,20 +88,24 @@ class OSQP:
 
         if P is None:
             P = spa.csc_matrix(
-                (np.zeros((0,), dtype=np.double),    # data
-                 np.zeros((0,), dtype=np.int),       # indices
-                 np.zeros((n + 1,), dtype=np.int)),  # indptr
-                shape=(n, n)
+                (
+                    np.zeros((0,), dtype=np.double),  # data
+                    np.zeros((0,), dtype=np.int),  # indices
+                    np.zeros((n + 1,), dtype=np.int),
+                ),  # indptr
+                shape=(n, n),
             )
         if q is None:
             q = np.zeros(n)
 
         if A is None:
             A = spa.csc_matrix(
-                (np.zeros((0,), dtype=np.double),    # data
-                 np.zeros((0,), dtype=np.int),       # indices
-                 np.zeros((n + 1,), dtype=np.int)),  # indptr
-                shape=(m, n)
+                (
+                    np.zeros((0,), dtype=np.double),  # data
+                    np.zeros((0,), dtype=np.int),  # indices
+                    np.zeros((n + 1,), dtype=np.int),
+                ),  # indptr
+                shape=(m, n),
             )
             l = np.zeros(A.shape[0])
             u = np.zeros(A.shape[0])
@@ -159,8 +157,8 @@ class OSQP:
         self.settings = self.ext.OSQPSettings()
         self.ext.osqp_set_default_settings(self.settings)
 
-        self._dtype = np.float32 if self.ext.OSQP_DFLOAT == 1 else np.float64
-        self._itype = np.int64 if self.ext.OSQP_DLONG == 1 else np.int32
+        self._dtype = np.float32 if self.ext.OSQP_USE_FLOAT == 1 else np.float64
+        self._itype = np.int64 if self.ext.OSQP_USE_LONG == 1 else np.int32
 
         # The following attributes are populated on setup()
         self._solver = None
@@ -171,12 +169,20 @@ class OSQP:
 
     @property
     def solver_type(self):
-        return 'direct' if self.settings.linsys_solver == self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER else 'indirect'
+        return (
+            'direct'
+            if self.settings.linsys_solver == self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER
+            else 'indirect'
+        )
 
     @solver_type.setter
     def solver_type(self, value):
         assert value in ('direct', 'indirect')
-        self.settings.linsys_solver = self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER if value == 'direct' else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
+        self.settings.linsys_solver = (
+            self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER
+            if value == 'direct'
+            else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
+        )
 
     def _as_dense(self, m):
         assert isinstance(m, self.ext.CSC)
@@ -272,13 +278,7 @@ class OSQP:
         self.update_settings(**settings)
 
         self._solver = self.ext.OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
-        self._derivative_cache.update({
-            'P': P,
-            'q': q,
-            'A': A,
-            'l': l,
-            'u': u
-        })
+        self._derivative_cache.update({'P': P, 'q': q, 'A': A, 'l': l, 'u': u})
 
     def warm_start(self, x=None, y=None):
         # TODO: sanity checks on types/dimensions
@@ -300,19 +300,14 @@ class OSQP:
 
         # TODO: The following structure is only to maintain backward compatibility, where x/y are attributes
         # directly inside the returned object on solve(). This should be simplified!
-        results = SimpleNamespace(
-            x=self._solver.solution.x,
-            y=self._solver.solution.y,
-            info=_info
-        )
+        results = SimpleNamespace(x=self._solver.solution.x, y=self._solver.solution.y, info=_info)
 
         self._derivative_cache['results'] = results
         return results
 
     def _render_pywrapper_files(self, output_folder, **kwargs):
         env = Environment(
-            loader=PackageLoader("osqp.codegen.pywrapper", package_path=""),
-            autoescape=select_autoescape()
+            loader=PackageLoader('osqp.codegen.pywrapper', package_path=''), autoescape=select_autoescape()
         )
 
         for template_name in env.list_templates(extensions='.jinja'):
@@ -322,9 +317,20 @@ class OSQP:
             with open(os.path.join(output_folder, template_base_name), 'w') as f:
                 f.write(template.render(**kwargs))
 
-    def codegen(self, folder, parameters='vectors', extension_name='emosqp', force_rewrite=False,
-                use_float=False, printing_enable=False, profiling_enable=False, interrupt_enable=False,
-                include_codegen_src=False, prefix='', compile=False):
+    def codegen(
+        self,
+        folder,
+        parameters='vectors',
+        extension_name='emosqp',
+        force_rewrite=False,
+        use_float=False,
+        printing_enable=False,
+        profiling_enable=False,
+        interrupt_enable=False,
+        include_codegen_src=True,
+        prefix='',
+        compile=False,
+    ):
 
         assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
 
@@ -355,11 +361,8 @@ class OSQP:
         assert status == 0, f'Codegen failed with error code {status}'
 
         if extension_name is not None:
-            template_vars = dict(
-                prefix=prefix,
-                extension_name=extension_name,
-                embedded_mode=defines.embedded_mode
-            )
+            assert include_codegen_src, 'If generating python wrappers, include_codegen_src must be True'
+            template_vars = dict(prefix=prefix, extension_name=extension_name, embedded_mode=defines.embedded_mode)
             self._render_pywrapper_files(folder, **template_vars)
             if compile:
                 subprocess.check_call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'], cwd=folder)
@@ -374,15 +377,14 @@ class OSQP:
         try:
             results = self._derivative_cache['results']
         except KeyError:
-            raise ValueError("Problem has not been solved. "
-                             "You cannot take derivatives. "
-                             "Please call the solve function.")
+            raise ValueError(
+                'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
+            )
 
-        if results.info.status != "solved":
-            raise ValueError("Problem has not been solved to optimality. "
-                             "You cannot take derivatives")
+        if results.info.status != 'solved':
+            raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
-        P, q = self._derivative_cache['P'], self._derivative_cache['q']
+        P, _ = self._derivative_cache['P'], self._derivative_cache['q']
         A = self._derivative_cache['A']
         m, n = A.shape
 

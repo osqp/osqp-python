@@ -12,11 +12,10 @@ import numpy.testing as nptest
 @pytest.fixture(params=SOLVER_TYPES)
 def self(request):
     self = SimpleNamespace()
-    self.P = sparse.triu([[2., 5.], [5., 1.]], format='csc')
+    self.P = sparse.triu([[2.0, 5.0], [5.0, 1.0]], format='csc')
     self.q = np.array([3, 4])
-    self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.],
-                                [-1., 3.], [2., 5.], [3., 4]])
-    self.u = np.array([0., 0., -15, 100, 80])
+    self.A = sparse.csc_matrix([[-1.0, 0.0], [0.0, -1.0], [-1.0, 3.0], [2.0, 5.0], [3.0, 4]])
+    self.u = np.array([0.0, 0.0, -15, 100, 80])
     self.l = -np.inf * np.ones(len(self.u))
     self.model = osqp.OSQP()
     self.model.solver_type = request.param
@@ -30,8 +29,7 @@ def test_non_convex_small_sigma(self):
         # Setup should fail due to (P + sigma I) having a negative
         # eigenvalue
         test_setup = 1
-        self.model.setup(P=self.P, q=self.q, A=self.A,
-                         l=self.l, u=self.u, **opts)
+        self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
     except ValueError:
         test_setup = 0
 
@@ -41,8 +39,7 @@ def test_non_convex_small_sigma(self):
 def test_non_convex_big_sigma(self):
     # Setup workspace with new sigma
     opts = {'verbose': False, 'sigma': 5}
-    self.model.setup(P=self.P, q=self.q, A=self.A,
-                     l=self.l, u=self.u, **opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **opts)
 
     # Solve problem
     res = self.model.solve()

@@ -55,21 +55,22 @@ class CmdCMakeBuild(build_ext):
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         thisdir = os.path.dirname(os.path.abspath(__file__))
-        cmake_args = ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
-                      '-DPYTHON=ON',
-                      '-DPYTHON_EXECUTABLE=' + sys.executable,
-                      f'-DPYTHON_INCLUDE_DIRS={get_python_inc()}',
-                      '-DOSQP_BUILD_UNITTESTS=OFF',
-                      '-DDLONG=OFF',  # https://github.com/numpy/numpy/issues/5906
-                                      # https://github.com/ContinuumIO/anaconda-issues/issues/3823
-                      f'-DOSQP_CUSTOM_PRINTING={thisdir}/cmake/printing.h',
-                      f'-DOSQP_CUSTOM_MEMORY={thisdir}/cmake/memory.h',
-                      ]
+        cmake_args = [
+            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+            '-DPYTHON=ON',
+            '-DPYTHON_EXECUTABLE=' + sys.executable,
+            f'-DPYTHON_INCLUDE_DIRS={get_python_inc()}',
+            '-DOSQP_BUILD_UNITTESTS=OFF',
+            '-DOSQP_USE_LONG=OFF',  # https://github.com/numpy/numpy/issues/5906
+            # https://github.com/ContinuumIO/anaconda-issues/issues/3823
+            f'-DOSQP_CUSTOM_PRINTING={thisdir}/cmake/printing.h',
+            f'-DOSQP_CUSTOM_MEMORY={thisdir}/cmake/memory.h',
+        ]
 
         cfg = 'Debug' if self.debug else 'Release'
         build_args = ['--config', cfg]
 
-        if system() == "Windows":
+        if system() == 'Windows':
             cmake_args += ['-G', 'Visual Studio 17 2022']
             # Finding the CUDA Toolkit on Windows seems to work reliably only if BOTH
             # CMAKE_GENERATOR_TOOLSET (-T) and CUDA_TOOLKIT_ROOT_DIR are supplied to cmake
@@ -104,20 +105,20 @@ class CmdCMakeBuild(build_ext):
 
         if ext.cmake_args is not None:
             cmake_args.extend(ext.cmake_args)
-            
+
         check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
         check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
 
         super().build_extension(ext)
 
 
-extras_require = {'dev': ['pytest', 'torch', 'numdifftools']}
+extras_require = {'dev': ['pytest>=6', 'torch', 'numdifftools', 'pre-commit']}
 
 algebra = os.environ.get('OSQP_ALGEBRA_BACKEND', 'builtin')
 assert algebra in ('builtin', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
 if algebra == 'builtin':
     package_name = 'osqp'
-    ext_modules = [CMakeExtension(f'osqp.ext_builtin', cmake_args=['-DOSQP_ALGEBRA_BACKEND=builtin'])]
+    ext_modules = [CMakeExtension('osqp.ext_builtin', cmake_args=['-DOSQP_ALGEBRA_BACKEND=builtin'])]
     extras_require['mkl'] = ['osqp-mkl']
     extras_require['cuda'] = ['osqp-cuda']
 else:
@@ -132,20 +133,18 @@ setup(
     description='OSQP: The Operator Splitting QP Solver',
     long_description=open('README.rst').read(),
     package_dir={'': 'src'},
-
     # package_data for 'osqp.codegen' is populated by CustomBuildPy to include codegen_src files
     #   after building extensions, so it should not be included here.
     # It is however ok to specify package_data for submodules of 'osqp.codegen'.
     package_data={'osqp.codegen.pywrapper': ['*.jinja']},
-
     include_package_data=True,
     zip_safe=False,
     install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl', 'jinja2'],
     python_requires='>=3.7',
     extras_require=extras_require,
     license='Apache 2.0',
-    url="https://osqp.org/",
+    url='https://osqp.org/',
     cmdclass={'build_ext': CmdCMakeBuild, 'build_py': CustomBuildPy},
     packages=find_namespace_packages(where='src'),
-    ext_modules=ext_modules
+    ext_modules=ext_modules,
 )

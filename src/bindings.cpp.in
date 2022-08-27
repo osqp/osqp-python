@@ -12,16 +12,16 @@ class CSC {
     public:
         CSC(py::object A);
         ~CSC();
-        csc& getcsc() const;
-        py::array_t<c_int> _p;
-        py::array_t<c_int> _i;
-        py::array_t<c_float> _x;
-        c_int m;
-        c_int n;
-        c_int nz;
-        c_int nzmax;
+        OSQPCscMatrix& getcsc() const;
+        py::array_t<OSQPInt> _p;
+        py::array_t<OSQPInt> _i;
+        py::array_t<OSQPFloat> _x;
+        OSQPInt m;
+        OSQPInt n;
+        OSQPInt nz;
+        OSQPInt nzmax;
     private:
-        csc* _csc;
+        OSQPCscMatrix* _csc;
 };
 
 CSC::CSC(py::object A) {
@@ -33,16 +33,16 @@ CSC::CSC(py::object A) {
 
     if (!spa.attr("isspmatrix_csc")(A)) A = spa.attr("csc_matrix")(A);
 
-    this->_p = A.attr("indptr").cast<py::array_t<c_int, py::array::c_style>>();
-    this->_i = A.attr("indices").cast<py::array_t<c_int, py::array::c_style>>();
-    this->_x = A.attr("data").cast<py::array_t<c_float, py::array::c_style>>();
+    this->_p = A.attr("indptr").cast<py::array_t<OSQPInt, py::array::c_style>>();
+    this->_i = A.attr("indices").cast<py::array_t<OSQPInt, py::array::c_style>>();
+    this->_x = A.attr("data").cast<py::array_t<OSQPFloat, py::array::c_style>>();
 
-    this->_csc = new csc();
+    this->_csc = new OSQPCscMatrix();
     this->_csc->m = m;
     this->_csc->n = n;
-    this->_csc->p = (c_int *)this->_p.data();
-    this->_csc->i = (c_int *)this->_i.data();
-    this->_csc->x = (c_float *)this->_x.data();
+    this->_csc->p = (OSQPInt *)this->_p.data();
+    this->_csc->i = (OSQPInt *)this->_i.data();
+    this->_csc->x = (OSQPFloat *)this->_x.data();
     this->_csc->nzmax = A.attr("nnz").cast<int>();
     this->_csc->nz = -1;
 
@@ -52,7 +52,7 @@ CSC::CSC(py::object A) {
     this->nz = this->_csc->nz;
 }
 
-csc& CSC::getcsc() const {
+OSQPCscMatrix& CSC::getcsc() const {
     return *this->_csc;
 }
 
@@ -62,83 +62,83 @@ CSC::~CSC() {
 
 class MyOSQPSolution {
     public:
-        MyOSQPSolution(OSQPSolution&, c_int, c_int);
-        py::array_t<c_float> get_x();
-        py::array_t<c_float> get_y();
-        py::array_t<c_float> get_prim_inf_cert();
-        py::array_t<c_float> get_dual_inf_cert();
+        MyOSQPSolution(OSQPSolution&, OSQPInt, OSQPInt);
+        py::array_t<OSQPFloat> get_x();
+        py::array_t<OSQPFloat> get_y();
+        py::array_t<OSQPFloat> get_prim_inf_cert();
+        py::array_t<OSQPFloat> get_dual_inf_cert();
     private:
-        c_int _m;
-        c_int _n;
+        OSQPInt _m;
+        OSQPInt _n;
         OSQPSolution& _solution;
 };
 
-MyOSQPSolution::MyOSQPSolution(OSQPSolution& solution, c_int m, c_int n): _m(m), _n(n), _solution(solution) {}
+MyOSQPSolution::MyOSQPSolution(OSQPSolution& solution, OSQPInt m, OSQPInt n): _m(m), _n(n), _solution(solution) {}
 
-py::array_t<c_float> MyOSQPSolution::get_x() {
-    return py::array_t<c_float>(
+py::array_t<OSQPFloat> MyOSQPSolution::get_x() {
+    return py::array_t<OSQPFloat>(
             { this->_n },
-            { sizeof(c_float) },
+            { sizeof(OSQPFloat) },
             this->_solution.x);
 }
 
-py::array_t<c_float> MyOSQPSolution::get_y() {
-    return py::array_t<c_float>(
+py::array_t<OSQPFloat> MyOSQPSolution::get_y() {
+    return py::array_t<OSQPFloat>(
             { this->_m },
-            { sizeof(c_float) },
+            { sizeof(OSQPFloat) },
             this->_solution.y);
 }
 
-py::array_t<c_float> MyOSQPSolution::get_prim_inf_cert() {
-    return py::array_t<c_float>(
+py::array_t<OSQPFloat> MyOSQPSolution::get_prim_inf_cert() {
+    return py::array_t<OSQPFloat>(
             { this->_m },
-            { sizeof(c_float) },
+            { sizeof(OSQPFloat) },
             this->_solution.prim_inf_cert);
 }
 
-py::array_t<c_float> MyOSQPSolution::get_dual_inf_cert() {
-    return py::array_t<c_float>(
+py::array_t<OSQPFloat> MyOSQPSolution::get_dual_inf_cert() {
+    return py::array_t<OSQPFloat>(
             { this->_n },
-            { sizeof(c_float) },
+            { sizeof(OSQPFloat) },
             this->_solution.dual_inf_cert);
 }
 
 class MyOSQPSolver {
     public:
-        MyOSQPSolver(const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*);
+        MyOSQPSolver(const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*);
         ~MyOSQPSolver();
 
         OSQPSettings* get_settings();
         MyOSQPSolution& get_solution();
         OSQPInfo* get_info();
 
-        c_int update_settings(const OSQPSettings&);
-        c_int update_rho(c_float);
-        c_int update_data_vec(py::object, py::object, py::object);
-        c_int update_data_mat(py::object, py::object, py::object, py::object);
-        c_int warm_start(py::object, py::object);
-        c_int solve();
-        c_int adjoint_derivative(py::object, py::object, py::object, CSC&, py::object, CSC&, py::object, py::object);
-        c_int codegen(const char*, const char*, OSQPCodegenDefines&);
+        OSQPInt update_settings(const OSQPSettings&);
+        OSQPInt update_rho(OSQPFloat);
+        OSQPInt update_data_vec(py::object, py::object, py::object);
+        OSQPInt update_data_mat(py::object, py::object, py::object, py::object);
+        OSQPInt warm_start(py::object, py::object);
+        OSQPInt solve();
+        OSQPInt adjoint_derivative(py::object, py::object, py::object, CSC&, py::object, CSC&, py::object, py::object);
+        OSQPInt codegen(const char*, const char*, OSQPCodegenDefines&);
     private:
-        c_int m;
-        c_int n;
+        OSQPInt m;
+        OSQPInt n;
         const CSC& _P;
-        py::array_t<c_float> _q;
-        py::array_t<c_float> _l;
+        py::array_t<OSQPFloat> _q;
+        py::array_t<OSQPFloat> _l;
         const CSC& _A;
-        py::array_t<c_float> _u;
+        py::array_t<OSQPFloat> _u;
         OSQPSolver *_solver;
 };
 
 MyOSQPSolver::MyOSQPSolver(
         const CSC& P,
-        const py::array_t<c_float> q,
+        const py::array_t<OSQPFloat> q,
         const CSC& A,
-        const py::array_t<c_float> l,
-        const py::array_t<c_float> u,
-        c_int m,
-        c_int n,
+        const py::array_t<OSQPFloat> l,
+        const py::array_t<OSQPFloat> u,
+        OSQPInt m,
+        OSQPInt n,
         const OSQPSettings *settings
 ): m(m), n(n), _P(P), _A(A) {
     this->_solver = new OSQPSolver();
@@ -146,7 +146,7 @@ MyOSQPSolver::MyOSQPSolver(
     this->_l = l;
     this->_u = u;
 
-    c_int status = osqp_setup(&this->_solver, &this->_P.getcsc(), (c_float *)this->_q.data(), &this->_A.getcsc(), (c_float *)this->_l.data(), (c_float *)this->_u.data(), m, n, settings);
+    OSQPInt status = osqp_setup(&this->_solver, &this->_P.getcsc(), (OSQPFloat *)this->_q.data(), &this->_A.getcsc(), (OSQPFloat *)this->_l.data(), (OSQPFloat *)this->_u.data(), m, n, settings);
     if (status) {
         throw pybind11::value_error("Setup error");
     }
@@ -169,142 +169,142 @@ OSQPInfo* MyOSQPSolver::get_info() {
     return this->_solver->info;
 }
 
-c_int MyOSQPSolver::warm_start(py::object x, py::object y) {
-    c_float* _x;
-    c_float* _y;
+OSQPInt MyOSQPSolver::warm_start(py::object x, py::object y) {
+    OSQPFloat* _x;
+    OSQPFloat* _y;
 
     if (x.is_none()) {
         _x = NULL;
     } else {
-        _x = (c_float *)py::array_t<c_float>(x).data();
+        _x = (OSQPFloat *)py::array_t<OSQPFloat>(x).data();
     }
     if (y.is_none()) {
         _y = NULL;
     } else {
-        _y = (c_float *)py::array_t<c_float>(y).data();
+        _y = (OSQPFloat *)py::array_t<OSQPFloat>(y).data();
     }
 
     return osqp_warm_start(this->_solver, _x, _y);
 }
 
-c_int MyOSQPSolver::solve() {
+OSQPInt MyOSQPSolver::solve() {
     py::gil_scoped_release release;
-    c_int results = osqp_solve(this->_solver);
+    OSQPInt results = osqp_solve(this->_solver);
     py::gil_scoped_acquire acquire;
     return results;
 }
 
-c_int MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
+OSQPInt MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
     return osqp_update_settings(this->_solver, &new_settings);
 }
 
-c_int MyOSQPSolver::update_rho(c_float rho_new) {
+OSQPInt MyOSQPSolver::update_rho(OSQPFloat rho_new) {
     return osqp_update_rho(this->_solver, rho_new);
 }
 
-c_int MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
-    c_float* _q;
-    c_float* _l;
-    c_float* _u;
+OSQPInt MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
+    OSQPFloat* _q;
+    OSQPFloat* _l;
+    OSQPFloat* _u;
 
     if (q.is_none()) {
         _q = NULL;
     } else {
-        _q = (c_float *)py::array_t<c_float>(q).data();
+        _q = (OSQPFloat *)py::array_t<OSQPFloat>(q).data();
     }
     if (l.is_none()) {
         _l = NULL;
     } else {
-        _l = (c_float *)py::array_t<c_float>(l).data();
+        _l = (OSQPFloat *)py::array_t<OSQPFloat>(l).data();
     }
     if (u.is_none()) {
         _u = NULL;
     } else {
-        _u = (c_float *)py::array_t<c_float>(u).data();
+        _u = (OSQPFloat *)py::array_t<OSQPFloat>(u).data();
     }
 
     return osqp_update_data_vec(this->_solver, _q, _l, _u);
 }
 
-c_int MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
-    c_float* _P_x;
-    c_int* _P_i;
-    c_int _P_n = 0;
-    c_float* _A_x;
-    c_int* _A_i;
-    c_int _A_n = 0;
+OSQPInt MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
+    OSQPFloat* _P_x;
+    OSQPInt* _P_i;
+    OSQPInt _P_n = 0;
+    OSQPFloat* _A_x;
+    OSQPInt* _A_i;
+    OSQPInt _A_n = 0;
 
     if (P_x.is_none()) {
         _P_x = NULL;
     } else {
-        auto _P_x_array = py::array_t<c_float>(P_x);
-        _P_x = (c_float *)_P_x_array.data();
+        auto _P_x_array = py::array_t<OSQPFloat>(P_x);
+        _P_x = (OSQPFloat *)_P_x_array.data();
         _P_n = _P_x_array.size();
     }
 
     if (P_i.is_none()) {
         _P_i = NULL;
     } else {
-        auto _P_i_array = py::array_t<c_int>(P_i);
-        _P_i = (c_int *)_P_i_array.data();
+        auto _P_i_array = py::array_t<OSQPInt>(P_i);
+        _P_i = (OSQPInt *)_P_i_array.data();
         _P_n = _P_i_array.size();
     }
 
     if (A_x.is_none()) {
         _A_x = NULL;
     } else {
-        auto _A_x_array = py::array_t<c_float>(A_x);
-        _A_x = (c_float *)_A_x_array.data();
+        auto _A_x_array = py::array_t<OSQPFloat>(A_x);
+        _A_x = (OSQPFloat *)_A_x_array.data();
         _A_n = _A_x_array.size();
     }
 
     if (A_i.is_none()) {
         _A_i = NULL;
     } else {
-        auto _A_i_array = py::array_t<c_int>(A_i);
-        _A_i = (c_int *)_A_i_array.data();
+        auto _A_i_array = py::array_t<OSQPInt>(A_i);
+        _A_i = (OSQPInt *)_A_i_array.data();
         _A_n = _A_i_array.size();
     }
 
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
-c_int MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_l, const py::object dy_u, CSC& dP, py::object dq, CSC& dA, py::object dl, py::object du) {
-    c_float* _dx;
-    c_float* _dy_l;
-    c_float* _dy_u;
-    c_float* _check2;
+OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_l, const py::object dy_u, CSC& dP, py::object dq, CSC& dA, py::object dl, py::object du) {
+    OSQPFloat* _dx;
+    OSQPFloat* _dy_l;
+    OSQPFloat* _dy_u;
+    OSQPFloat* _check2;
 
     if (dx.is_none()) {
         _dx = NULL;
     } else {
-        auto _dx_array = py::array_t<c_float>(dx);
-        _dx = (c_float *)_dx_array.data();
+        auto _dx_array = py::array_t<OSQPFloat>(dx);
+        _dx = (OSQPFloat *)_dx_array.data();
     }
 
     if (dy_l.is_none()) {
         _dy_l = NULL;
     } else {
-        auto _dy_l_array = py::array_t<c_float>(dy_l);
-        _dy_l = (c_float *)_dy_l_array.data();
+        auto _dy_l_array = py::array_t<OSQPFloat>(dy_l);
+        _dy_l = (OSQPFloat *)_dy_l_array.data();
     }
 
     if (dy_u.is_none()) {
         _dy_u = NULL;
     } else {
-        auto _dy_u_array = py::array_t<c_float>(dy_u);
-        _dy_u = (c_float *)_dy_u_array.data();
+        auto _dy_u_array = py::array_t<OSQPFloat>(dy_u);
+        _dy_u = (OSQPFloat *)_dy_u_array.data();
     }
 
-    csc& _dP = dP.getcsc();
-    c_float* _dq = (c_float *)py::array_t<c_float>(dq).data();
-    csc& _dA = dA.getcsc();
-    c_float* _dl = (c_float *)py::array_t<c_float>(dl).data();
-    c_float* _du = (c_float *)py::array_t<c_float>(du).data();
+    OSQPCscMatrix& _dP = dP.getcsc();
+    OSQPFloat* _dq = (OSQPFloat *)py::array_t<OSQPFloat>(dq).data();
+    OSQPCscMatrix& _dA = dA.getcsc();
+    OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
+    OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
     return osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u, &_dP, _dq, &_dA, _dl, _du);
 }
 
-c_int MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
+OSQPInt MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
 #ifdef OSQP_CODEGEN
     return osqp_codegen(this->_solver, output_dir, file_prefix, &defines);
 #else
@@ -314,16 +314,16 @@ c_int MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQ
 
 PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
-#ifdef DFLOAT
-    m.attr("OSQP_DFLOAT") = 1;
+#ifdef OSQP_USE_FLOAT
+    m.attr("OSQP_USE_FLOAT") = 1;
 #else
-    m.attr("OSQP_DFLOAT") = 0;
+    m.attr("OSQP_USE_FLOAT") = 0;
 #endif
 
-#ifdef DLONG
-    m.attr("OSQP_DLONG") = 1;
+#ifdef OSQP_USE_LONG
+    m.attr("OSQP_USE_LONG") = 1;
 #else
-    m.attr("OSQP_DLONG") = 0;
+    m.attr("OSQP_USE_LONG") = 0;
 #endif
 
     // Any constants that we wish to make directly accessible in the extension module
@@ -438,7 +438,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("run_time", &OSQPInfo::run_time);
 
     py::class_<MyOSQPSolver>(m, "OSQPSolver", py::module_local())
-    .def(py::init<const CSC&, const py::array_t<c_float>, const CSC&, const py::array_t<c_float>, const py::array_t<c_float>, c_int, c_int, const OSQPSettings*>(),
+    .def(py::init<const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
     .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
     .def_property_readonly("info", &MyOSQPSolver::get_info)

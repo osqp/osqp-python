@@ -17,9 +17,7 @@ def to_numpy(t):
 
 
 class OSQP(Module):
-    def __init__(self, P_idx, P_shape, A_idx, A_shape,
-                 eps_rel=1e-5, eps_abs=1e-5, verbose=False,
-                 max_iter=10000):
+    def __init__(self, P_idx, P_shape, A_idx, A_shape, eps_rel=1e-5, eps_abs=1e-5, verbose=False, max_iter=10000):
         super().__init__()
         self.P_idx, self.P_shape = P_idx, P_shape
         self.A_idx, self.A_shape = A_idx, A_shape
@@ -40,8 +38,7 @@ class OSQP(Module):
         )(P_val, q_val, A_val, l_val, u_val)
 
 
-def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs,
-             verbose, max_iter):
+def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs, verbose, max_iter):
     solvers = []
 
     m, n = A_shape   # Problem size
@@ -111,14 +108,12 @@ def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs,
                     params[i] = p.unsqueeze(0).expand(n_batch, p.size(0))
 
             [P_val, q_val, A_val, l_val, u_val] = params
-            assert A_val.size(1) == len(A_idx[0]), "Unexpected size of A"
-            assert P_val.size(1) == len(P_idx[0]), "Unexpected size of P"
+            assert A_val.size(1) == len(A_idx[0]), 'Unexpected size of A'
+            assert P_val.size(1) == len(P_idx[0]), 'Unexpected size of P'
 
-            P = [spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
-                for i in range(n_batch)]
+            P = [spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape) for i in range(n_batch)]
             q = [to_numpy(q_val[i]) for i in range(n_batch)]
-            A = [spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
-                for i in range(n_batch)]
+            A = [spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape) for i in range(n_batch)]
             l = [to_numpy(l_val[i]) for i in range(n_batch)]
             u = [to_numpy(u_val[i]) for i in range(n_batch)]
 
@@ -130,15 +125,14 @@ def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs,
                 # Solve QP
                 # TODO: Cache solver object in between
                 solver = osqp.OSQP()
-                solver.setup(P[i], q[i], A[i], l[i], u[i], verbose=verbose,
-                             eps_abs=eps_abs, eps_rel=eps_rel)
+                solver.setup(P[i], q[i], A[i], l[i], u[i], verbose=verbose, eps_abs=eps_abs, eps_rel=eps_rel)
                 result = solver.solve()
                 solvers.append(solver)
                 status = result.info.status
                 if status != 'solved':
                     # TODO: We can replace this with something calmer and
                     # add some more options around potentially ignoring this.
-                    raise RuntimeError(f"Unable to solve QP, status: {status}")
+                    raise RuntimeError(f'Unable to solve QP, status: {status}')
                 x.append(result.x)
 
                 # This is silently converting result.x to the same

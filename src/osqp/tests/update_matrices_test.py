@@ -2,9 +2,7 @@ from types import SimpleNamespace
 import osqp
 from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, SOLVER_TYPES
 import numpy as np
-import scipy as sp
 from scipy import sparse
-
 import pytest
 import numpy.testing as nptest
 
@@ -33,12 +31,9 @@ def self(request):
     self.A_new.data += np.random.randn(self.A_new.nnz)
     self.l = np.zeros(self.m)
     self.u = 30 + np.random.randn(self.m)
-    self.opts = {'eps_abs': 1e-08,
-                 'eps_rel': 1e-08,
-                 'verbose': False}
+    self.opts = {'eps_abs': 1e-08, 'eps_rel': 1e-08, 'verbose': False}
     self.model = osqp.OSQP()
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u,
-                     **self.opts)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     return self
 
@@ -52,8 +47,7 @@ def test_solve(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P(self):
@@ -67,8 +61,7 @@ def test_update_P(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P_allind(self):
@@ -81,8 +74,7 @@ def test_update_P_allind(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_A(self):
@@ -96,8 +88,7 @@ def test_update_A(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_A_allind(self):
@@ -110,8 +101,7 @@ def test_update_A_allind(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P_A_indP_indA(self):
@@ -127,8 +117,7 @@ def test_update_P_A_indP_indA(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P_A_indP(self):
@@ -143,8 +132,7 @@ def test_update_P_A_indP(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P_A_indA(self):
@@ -159,8 +147,7 @@ def test_update_P_A_indA(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
 
 
 def test_update_P_A_allind(self):
@@ -174,5 +161,4 @@ def test_update_P_A_allind(self):
     # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
     nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(
-        res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)

@@ -2,7 +2,7 @@
 OSQP solver pure python implementation
 """
 from builtins import object
-import osqppurepy._osqp as _osqp # Internal low level module
+import osqppurepy._osqp as _osqp   # Internal low level module
 from warnings import warn
 import numpy as np
 from scipy import sparse
@@ -35,7 +35,7 @@ class OSQP(object):
             elif A is not None:
                 n = A.shape[1]
             else:
-                raise ValueError("The problem does not have any variables")
+                raise ValueError('The problem does not have any variables')
         else:
             n = P.shape[0]
         if A is None:
@@ -47,10 +47,8 @@ class OSQP(object):
         # Create parameters if they are None
         #
 
-        if (A is None and (l is not None or u is not None)) or \
-                (A is not None and (l is None and u is None)):
-            raise ValueError("A must be supplied together " +
-                             "with at least one bound l or u")
+        if (A is None and (l is not None or u is not None)) or (A is not None and (l is None and u is None)):
+            raise ValueError('A must be supplied together ' + 'with at least one bound l or u')
 
         # Add infinity bounds in case they are not specified
         if A is not None and l is None:
@@ -60,18 +58,18 @@ class OSQP(object):
 
         # Create elements if they are not specified
         if P is None:
-            P = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
-                                  shape=(n, n))
+            P = sparse.csc_matrix(
+                (np.zeros((0,), dtype=np.double), np.zeros((0,), dtype=np.int), np.zeros((n + 1,), dtype=np.int)),
+                shape=(n, n),
+            )
         if q is None:
             q = np.zeros(n)
 
         if A is None:
-            A = sparse.csc_matrix((np.zeros((0,), dtype=np.double),
-                                  np.zeros((0,), dtype=np.int),
-                                  np.zeros((n+1,), dtype=np.int)),
-                                  shape=(m, n))
+            A = sparse.csc_matrix(
+                (np.zeros((0,), dtype=np.double), np.zeros((0,), dtype=np.int), np.zeros((n + 1,), dtype=np.int)),
+                shape=(m, n),
+            )
             l = np.zeros(A.shape[0])
             u = np.zeros(A.shape[0])
 
@@ -83,30 +81,26 @@ class OSQP(object):
         # if A.shape[1] != n:
         #     raise ValueError("Dimension n in A and P does not match")
         if len(q) != n:
-            raise ValueError("Incorrect dimension of q")
+            raise ValueError('Incorrect dimension of q')
         if len(l) != m:
-            raise ValueError("Incorrect dimension of l")
+            raise ValueError('Incorrect dimension of l')
         if len(u) != m:
-            raise ValueError("Incorrect dimension of u")
+            raise ValueError('Incorrect dimension of u')
 
         #
         # Check or Sparsify Matrices
         #
-        if not sparse.issparse(P) and isinstance(P, np.ndarray) and \
-                len(P.shape) == 2:
-            raise TypeError("P is required to be a sparse matrix")
-        if not sparse.issparse(A) and isinstance(A, np.ndarray) and \
-                len(A.shape) == 2:
-            raise TypeError("A is required to be a sparse matrix")
+        if not sparse.issparse(P) and isinstance(P, np.ndarray) and len(P.shape) == 2:
+            raise TypeError('P is required to be a sparse matrix')
+        if not sparse.issparse(A) and isinstance(A, np.ndarray) and len(A.shape) == 2:
+            raise TypeError('A is required to be a sparse matrix')
 
         # Convert matrices in CSC form and to individual pointers
         if not sparse.isspmatrix_csc(P):
-            warn("Converting sparse P to a CSC " +
-                 "(compressed sparse column) matrix. (It may take a while...)")
+            warn('Converting sparse P to a CSC ' + '(compressed sparse column) matrix. (It may take a while...)')
             P = P.tocsc()
         if not sparse.isspmatrix_csc(A):
-            warn("Converting sparse A to a CSC " +
-                 "(compressed sparse column) matrix. (It may take a while...)")
+            warn('Converting sparse A to a CSC ' + '(compressed sparse column) matrix. (It may take a while...)')
             A = A.tocsc()
 
         # Check if P an A have sorted indices
@@ -119,9 +113,7 @@ class OSQP(object):
         u = np.minimum(u, self._model.constant('OSQP_INFTY'))
         l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
 
-        self._model.setup((n, m), P.data, P.indices, P.indptr, q,
-                          A.data, A.indices, A.indptr,
-                          l, u, **settings)
+        self._model.setup((n, m), P.data, P.indices, P.indptr, q, A.data, A.indices, A.indptr, l, u, **settings)
 
     def update(self, q=None, l=None, u=None, P=None, A=None):
         """
@@ -133,13 +125,13 @@ class OSQP(object):
 
         if P is not None:
             if P.shape != (n, n):
-                raise ValueError("P must have shape (n x n)")
+                raise ValueError('P must have shape (n x n)')
             if A is None:
                 self._model.update_P(P)
 
         if A is not None:
             if A.shape != (m, n):
-                raise ValueError("A must have shape (m x n)")
+                raise ValueError('A must have shape (m x n)')
             if P is None:
                 self._model.update_A(A)
 
@@ -148,12 +140,12 @@ class OSQP(object):
 
         if q is not None:
             if q.shape != (n,):
-                raise ValueError("q must have shape (n,)")
+                raise ValueError('q must have shape (n,)')
             self._model.update_lin_cost(q)
 
         if l is not None:
             if l.shape != (m,):
-                raise ValueError("l must have shape (m,)")
+                raise ValueError('l must have shape (m,)')
 
             # Convert values to OSQP_INFTY
             l = np.maximum(l, -self._model.constant('OSQP_INFTY'))
@@ -163,7 +155,7 @@ class OSQP(object):
 
         if u is not None:
             if u.shape != (m,):
-                raise ValueError("u must have shape (m,)")
+                raise ValueError('u must have shape (m,)')
 
             # Convert values to OSQP_INFTY
             u = np.minimum(u, self._model.constant('OSQP_INFTY'))
@@ -175,7 +167,7 @@ class OSQP(object):
             self._model.update_bounds(l, u)
 
         if q is None and l is None and u is None and P is None and A is None:
-            raise ValueError("No updatable data has been specified!")
+            raise ValueError('No updatable data has been specified!')
 
     def update_settings(self, **kwargs):
         """
@@ -238,19 +230,21 @@ class OSQP(object):
         if warm_start is not None:
             self._model.update_warm_start(warm_start)
 
-        if max_iter is None and \
-           eps_abs is None and \
-           eps_rel is None and \
-           rho is None and \
-           alpha is None and \
-           delta is None and \
-           polish is None and \
-           polish_refine_iter is None and \
-           verbose is None and \
-           scaled_termination is None and \
-           check_termination is None and \
-           warm_start is None:
-            raise ValueError("No updatable settings has been specified!")
+        if (
+            max_iter is None
+            and eps_abs is None
+            and eps_rel is None
+            and rho is None
+            and alpha is None
+            and delta is None
+            and polish is None
+            and polish_refine_iter is None
+            and verbose is None
+            and scaled_termination is None
+            and check_termination is None
+            and warm_start is None
+        ):
+            raise ValueError('No updatable settings has been specified!')
 
     def solve(self):
         """
@@ -273,15 +267,15 @@ class OSQP(object):
         (n, m) = (self._model.work.data.n, self._model.work.data.m)
 
         if x is not None:
-            if len(x)!=n:
-                raise ValueError("Wrong dimension for variable x")
+            if len(x) != n:
+                raise ValueError('Wrong dimension for variable x')
 
             if y is None:
                 self._model.warm_start_x(x)
 
         if y is not None:
-            if len(y)!=m:
-                raise ValueError("Wrong dimension for variable y")
+            if len(y) != m:
+                raise ValueError('Wrong dimension for variable y')
 
             if x is None:
                 self._model.warm_start_y(y)
