@@ -327,7 +327,7 @@ class OSQP:
         printing_enable=False,
         profiling_enable=False,
         interrupt_enable=False,
-        include_codegen_src=False,
+        include_codegen_src=True,
         prefix='',
         compile=False,
     ):
@@ -361,6 +361,7 @@ class OSQP:
         assert status == 0, f'Codegen failed with error code {status}'
 
         if extension_name is not None:
+            assert include_codegen_src, 'If generating python wrappers, include_codegen_src must be True'
             template_vars = dict(prefix=prefix, extension_name=extension_name, embedded_mode=defines.embedded_mode)
             self._render_pywrapper_files(folder, **template_vars)
             if compile:
