@@ -270,6 +270,7 @@ OSQPInt MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object
 }
 
 OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_l, const py::object dy_u, CSC& dP, py::object dq, CSC& dA, py::object dl, py::object du) {
+#ifdef OSQP_ENABLE_DERIVATIVES
     OSQPFloat* _dx;
     OSQPFloat* _dy_l;
     OSQPFloat* _dy_u;
@@ -302,6 +303,9 @@ OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object d
     OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
     OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
     return osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u, &_dP, _dq, &_dA, _dl, _du);
+#else
+    return 1;
+#endif
 }
 
 OSQPInt MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
