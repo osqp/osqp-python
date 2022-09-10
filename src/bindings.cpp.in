@@ -362,7 +362,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
     py::class_<OSQPSettings>(m, "OSQPSettings", py::module_local())
     .def(py::init([]() {
-        return new OSQPSettings;
+        return new OSQPSettings();
     }))
     .def_readwrite("device", &OSQPSettings::device)
     .def_readwrite("linsys_solver", &OSQPSettings::linsys_solver)
@@ -404,13 +404,14 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
     py::class_<OSQPCodegenDefines>(m, "OSQPCodegenDefines", py::module_local())
     .def(py::init([]() {
-        return new OSQPCodegenDefines;
+        return new OSQPCodegenDefines();
     }))
     .def_readwrite("embedded_mode", &OSQPCodegenDefines::embedded_mode)
     .def_readwrite("float_type", &OSQPCodegenDefines::float_type)
     .def_readwrite("printing_enable", &OSQPCodegenDefines::printing_enable)
     .def_readwrite("profiling_enable", &OSQPCodegenDefines::profiling_enable)
-    .def_readwrite("interrupt_enable", &OSQPCodegenDefines::interrupt_enable);
+    .def_readwrite("interrupt_enable", &OSQPCodegenDefines::interrupt_enable)
+    .def_readwrite("derivatives_enable", &OSQPCodegenDefines::derivatives_enable);
 
     m.def("osqp_set_default_settings", &osqp_set_default_settings);
 

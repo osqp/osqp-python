@@ -340,6 +340,7 @@ class OSQP:
         defines.printing_enable = 1 if printing_enable else 0
         defines.profiling_enable = 1 if profiling_enable else 0
         defines.interrupt_enable = 1 if interrupt_enable else 0
+        defines.derivatives_enable = 0
 
         folder = os.path.abspath(folder)
         if include_codegen_src:
