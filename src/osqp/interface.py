@@ -172,7 +172,12 @@ class OSQP:
         return int(self.ext.osqp_capabilities())
 
     def has_capability(self, capability: str):
-        return (self.capabilities & self.constant(capability)) != 0
+        try:
+            cap = int(self.ext.osqp_capabilities_type.__members__[capability])
+        except KeyError:
+            raise RuntimeError(f'Unrecognized capability {capability}')
+
+        return (self.capabilities & cap) != 0
 
     @property
     def solver_type(self):
@@ -382,6 +387,8 @@ class OSQP:
         """
         Compute adjoint derivative after solve.
         """
+
+        assert self.has_capability('OSQP_CAPABILITY_DERIVATIVES'), 'This OSQP object does not support derivatives'
 
         try:
             results = self._derivative_cache['results']
