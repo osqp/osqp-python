@@ -58,7 +58,8 @@ class CmdCMakeBuild(build_ext):
         # from the temporary build folder to the source folder
         if self.editable_mode:
             codegen_target_folder = os.path.join('src', 'osqp', 'codegen', 'codegen_src')
-            shutil.rmtree(codegen_target_folder, ignore_errors=True)
+            if os.path.exists(codegen_target_folder):
+                shutil.rmtree(codegen_target_folder)
             shutil.copytree(os.path.join(self.build_temp, 'codegen_src'), codegen_target_folder)
 
     def build_extension(self, ext):
