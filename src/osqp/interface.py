@@ -168,6 +168,18 @@ class OSQP:
         return f'OSQP with algebra={self.algebra}'
 
     @property
+    def capabilities(self):
+        return int(self.ext.osqp_capabilities())
+
+    def has_capability(self, capability: str):
+        try:
+            cap = int(self.ext.osqp_capabilities_type.__members__[capability])
+        except KeyError:
+            raise RuntimeError(f'Unrecognized capability {capability}')
+
+        return (self.capabilities & cap) != 0
+
+    @property
     def solver_type(self):
         return (
             'direct'
@@ -230,9 +242,9 @@ class OSQP:
 
         q, l, u = kwargs.get('q'), kwargs.get('l'), kwargs.get('u')
         if l is not None:
-            l = np.maximum(l, -constant('OSQP_INFTY'))
+            l = np.maximum(l, -self.constant('OSQP_INFTY'))
         if u is not None:
-            u = np.minimum(u, constant('OSQP_INFTY'))
+            u = np.minimum(u, self.constant('OSQP_INFTY'))
 
         if q is not None or l is not None or u is not None:
             self._solver.update_data_vec(q=q, l=l, u=u)
@@ -288,11 +300,11 @@ class OSQP:
         self._solver.solve()
 
         info = self._solver.info
-        if info.status_val == constant('OSQP_NON_CVX', algebra=self.algebra):
+        if info.status_val == self.constant('OSQP_NON_CVX'):
             info.obj_val = np.nan
         # TODO: Handle primal/dual infeasibility
 
-        if info.status_val != constant('OSQP_SOLVED') and raise_error:
+        if info.status_val != self.constant('OSQP_SOLVED') and raise_error:
             raise ValueError('Problem not solved!')
 
         # Create a Namespace of OSQPInfo keys and associated values
@@ -332,6 +344,7 @@ class OSQP:
         compile=False,
     ):
 
+        assert self.has_capability('OSQP_CAPABILITY_CODEGEN'), 'This OSQP object does not support codegen'
         assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
 
         defines = self.ext.OSQPCodegenDefines()
@@ -374,6 +387,8 @@ class OSQP:
         """
         Compute adjoint derivative after solve.
         """
+
+        assert self.has_capability('OSQP_CAPABILITY_DERIVATIVES'), 'This OSQP object does not support derivatives'
 
         try:
             results = self._derivative_cache['results']

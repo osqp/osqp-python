@@ -354,6 +354,15 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
 
+    py::enum_<osqp_capabilities_type>(m, "osqp_capabilities_type", py::module_local())
+    .value("OSQP_CAPABILITY_DIRECT_SOLVER", OSQP_CAPABILITY_DIRECT_SOLVER)
+    .value("OSQP_CAPABILITY_INDIRECT_SOLVER", OSQP_CAPABILITY_INDIRECT_SOLVER)
+    .value("OSQP_CAPABILITY_CODEGEN", OSQP_CAPABILITY_CODEGEN)
+    .value("OSQP_CAPABILITY_UPDATE_MATRICES", OSQP_CAPABILITY_UPDATE_MATRICES)
+    .value("OSQP_CAPABILITY_DERIVATIVES", OSQP_CAPABILITY_DERIVATIVES);
+
+    m.def("osqp_capabilities", &osqp_capabilities);
+
     py::class_<CSC>(m, "CSC", py::module_local())
     .def(py::init<py::object>())
     .def_readonly("m", &CSC::m)
