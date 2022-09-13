@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=45", "wheel", "oldest-supported-numpy", "scipy>=0.13.2", "setuptools_scm>=6.2", "cmake>=3.18"]
+requires = ["setuptools>=64", "wheel", "oldest-supported-numpy", "scipy>=0.13.2", "setuptools_scm>=6.2", "cmake>=3.18"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
