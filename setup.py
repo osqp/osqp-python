@@ -52,6 +52,15 @@ class CustomBuildPy(build_py):
 
 
 class CmdCMakeBuild(build_ext):
+    def run(self):
+        super().run()
+        # For editable installs, after the extension(s) have been built, copy the 'codegen_src' folder
+        # from the temporary build folder to the source folder
+        if self.editable_mode:
+            codegen_target_folder = os.path.join('src', 'osqp', 'codegen', 'codegen_src')
+            shutil.rmtree(codegen_target_folder, ignore_errors=True)
+            shutil.copytree(os.path.join(self.build_temp, 'codegen_src'), codegen_target_folder)
+
     def build_extension(self, ext):
         extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
         thisdir = os.path.dirname(os.path.abspath(__file__))
