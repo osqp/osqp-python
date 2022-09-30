@@ -348,6 +348,8 @@ class OSQP:
         assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
 
         defines = self.ext.OSQPCodegenDefines()
+        self.ext.osqp_set_default_codegen_defines(defines)
+
         defines.embedded_mode = 1 if parameters == 'vectors' else 2
         defines.float_type = 1 if use_float else 0
         defines.printing_enable = 1 if printing_enable else 0

@@ -354,15 +354,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
 
-    py::enum_<osqp_capabilities_type>(m, "osqp_capabilities_type", py::module_local())
-    .value("OSQP_CAPABILITY_DIRECT_SOLVER", OSQP_CAPABILITY_DIRECT_SOLVER)
-    .value("OSQP_CAPABILITY_INDIRECT_SOLVER", OSQP_CAPABILITY_INDIRECT_SOLVER)
-    .value("OSQP_CAPABILITY_CODEGEN", OSQP_CAPABILITY_CODEGEN)
-    .value("OSQP_CAPABILITY_UPDATE_MATRICES", OSQP_CAPABILITY_UPDATE_MATRICES)
-    .value("OSQP_CAPABILITY_DERIVATIVES", OSQP_CAPABILITY_DERIVATIVES);
-
-    m.def("osqp_capabilities", &osqp_capabilities);
-
+    // CSC
     py::class_<CSC>(m, "CSC", py::module_local())
     .def(py::init<py::object>())
     .def_readonly("m", &CSC::m)
@@ -373,6 +365,17 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("nzmax", &CSC::nzmax)
     .def_readonly("nz", &CSC::nz);
 
+    // Capabilities
+    py::enum_<osqp_capabilities_type>(m, "osqp_capabilities_type", py::module_local())
+    .value("OSQP_CAPABILITY_DIRECT_SOLVER", OSQP_CAPABILITY_DIRECT_SOLVER)
+    .value("OSQP_CAPABILITY_INDIRECT_SOLVER", OSQP_CAPABILITY_INDIRECT_SOLVER)
+    .value("OSQP_CAPABILITY_CODEGEN", OSQP_CAPABILITY_CODEGEN)
+    .value("OSQP_CAPABILITY_UPDATE_MATRICES", OSQP_CAPABILITY_UPDATE_MATRICES)
+    .value("OSQP_CAPABILITY_DERIVATIVES", OSQP_CAPABILITY_DERIVATIVES);
+
+    m.def("osqp_capabilities", &osqp_capabilities);
+
+    // Settings
     py::class_<OSQPSettings>(m, "OSQPSettings", py::module_local())
     .def(py::init([]() {
         return new OSQPSettings();
@@ -384,24 +387,24 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("scaling", &OSQPSettings::scaling)
     .def_readwrite("polishing", &OSQPSettings::polishing)
 
-    // ADMM
+    // Settings - ADMM
     .def_readwrite("rho", &OSQPSettings::rho)
     .def_readwrite("rho_is_vec", &OSQPSettings::rho_is_vec)
     .def_readwrite("sigma", &OSQPSettings::sigma)
     .def_readwrite("alpha", &OSQPSettings::alpha)
 
-    // CG
+    // Settings - CG
     .def_readwrite("cg_max_iter", &OSQPSettings::cg_max_iter)
     .def_readwrite("cg_tol_reduction", &OSQPSettings::cg_tol_reduction)
     .def_readwrite("cg_tol_fraction", &OSQPSettings::cg_tol_fraction)
 
-    // Adaptive rho
+    // Settings - Adaptive rho
     .def_readwrite("adaptive_rho", &OSQPSettings::adaptive_rho)
     .def_readwrite("adaptive_rho_interval", &OSQPSettings::adaptive_rho_interval)
     .def_readwrite("adaptive_rho_fraction", &OSQPSettings::adaptive_rho_fraction)
     .def_readwrite("adaptive_rho_tolerance", &OSQPSettings::adaptive_rho_tolerance)
 
-    // Termination parameters
+    // Settings - Termination parameters
     .def_readwrite("max_iter", &OSQPSettings::max_iter)
     .def_readwrite("eps_abs", &OSQPSettings::eps_abs)
     .def_readwrite("eps_rel", &OSQPSettings::eps_rel)
@@ -411,10 +414,13 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("check_termination", &OSQPSettings::check_termination)
     .def_readwrite("time_limit", &OSQPSettings::time_limit)
 
-    // Polishing
+    // Settings - Polishing
     .def_readwrite("delta", &OSQPSettings::delta)
     .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter);
 
+    m.def("osqp_set_default_settings", &osqp_set_default_settings);
+
+    // Codegen Defines
     py::class_<OSQPCodegenDefines>(m, "OSQPCodegenDefines", py::module_local())
     .def(py::init([]() {
         return new OSQPCodegenDefines();
@@ -426,14 +432,16 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("interrupt_enable", &OSQPCodegenDefines::interrupt_enable)
     .def_readwrite("derivatives_enable", &OSQPCodegenDefines::derivatives_enable);
 
-    m.def("osqp_set_default_settings", &osqp_set_default_settings);
+    m.def("osqp_set_default_codegen_defines", &osqp_set_default_codegen_defines);
 
+    // Solution
     py::class_<MyOSQPSolution>(m, "OSQPSolution", py::module_local())
     .def_property_readonly("x", &MyOSQPSolution::get_x)
     .def_property_readonly("y", &MyOSQPSolution::get_y)
     .def_property_readonly("prim_inf_cert", &MyOSQPSolution::get_prim_inf_cert)
     .def_property_readonly("dual_inf_cert", &MyOSQPSolution::get_dual_inf_cert);
 
+    // Info
     py::class_<OSQPInfo>(m, "OSQPInfo", py::module_local())
     .def_readonly("status", &OSQPInfo::status)
     .def_readonly("status_val", &OSQPInfo::status_val)
@@ -451,6 +459,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("polish_time", &OSQPInfo::polish_time)
     .def_readonly("run_time", &OSQPInfo::run_time);
 
+    // Solver
     py::class_<MyOSQPSolver>(m, "OSQPSolver", py::module_local())
     .def(py::init<const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
