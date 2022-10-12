@@ -302,7 +302,11 @@ OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object d
     OSQPCscMatrix& _dA = dA.getcsc();
     OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
     OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
-    return osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u, &_dP, _dq, &_dA, _dl, _du);
+
+    // TODO: Break these up into corresponding wrapper functions
+    osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u);
+    osqp_adjoint_derivative_get_mat(this->_solver, &_dP, &_dA);
+    osqp_adjoint_derivative_get_vec(this->_solver, _dq, _dl, _du);
 #else
     return 1;
 #endif
@@ -354,6 +358,12 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
 
+    // Preconditioner Type
+    py::enum_<osqp_precond_type>(m, "osqp_precond_type", py::module_local())
+    .value("OSQP_NO_PRECONDITIONER", OSQP_NO_PRECONDITIONER)
+    .value("OSQP_DIAGONAL_PRECONDITIONER", OSQP_DIAGONAL_PRECONDITIONER)
+    .export_values();
+
     // CSC
     py::class_<CSC>(m, "CSC", py::module_local())
     .def(py::init<py::object>())
@@ -397,6 +407,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("cg_max_iter", &OSQPSettings::cg_max_iter)
     .def_readwrite("cg_tol_reduction", &OSQPSettings::cg_tol_reduction)
     .def_readwrite("cg_tol_fraction", &OSQPSettings::cg_tol_fraction)
+    .def_readwrite("cg_precond", &OSQPSettings::cg_precond)
 
     // Settings - Adaptive rho
     .def_readwrite("adaptive_rho", &OSQPSettings::adaptive_rho)

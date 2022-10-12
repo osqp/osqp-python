@@ -14,9 +14,12 @@ if __name__ == '__main__':
 
     # Create an OSQP object
     prob = osqp.OSQP()
+    print(prob)
+    prob.cg_preconditioner = 'diagonal'
+    print(prob.cg_preconditioner)
 
     # Setup workspace and change alpha parameter
-    prob.setup(P, q, A, l, u, alpha=1.0)
-
-    # Solve problem
-    res = prob.solve()
+    prob.setup(P, q, A, l, u, alpha=1.0, cg_preconditioner=42)
+    #
+    # # Solve problem
+    # res = prob.solve()

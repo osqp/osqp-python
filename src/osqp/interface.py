@@ -196,6 +196,21 @@ class OSQP:
             else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
         )
 
+    @property
+    def cg_preconditioner(self):
+        return (
+            'diagonal' if self.settings.cg_precond == self.ext.osqp_precond_type.OSQP_DIAGONAL_PRECONDITIONER else None
+        )
+
+    @cg_preconditioner.setter
+    def cg_preconditioner(self, value):
+        assert value in (None, 'diagonal')
+        self.settings.cg_precond = (
+            self.ext.osqp_precond_type.OSQP_DIAGONAL_PRECONDITIONER
+            if value == 'diagonal'
+            else self.ext.osqp_precond_type.OSQP_NO_PRECONDITIONER
+        )
+
     def _as_dense(self, m):
         assert isinstance(m, self.ext.CSC)
         _m_csc = spa.csc_matrix((m.x, m.i, m.p))
