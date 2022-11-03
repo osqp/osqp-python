@@ -80,7 +80,6 @@ class CmdCMakeBuild(build_ext):
         ]
 
         cfg = 'Debug' if self.debug else 'Release'
-        cfg = 'Debug'
         build_args = ['--config', cfg]
 
         if system() == 'Windows':
