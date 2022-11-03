@@ -304,7 +304,7 @@ OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object d
     OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
 
     // TODO: Break these up into corresponding wrapper functions
-    osqp_adjoint_derivative(this->_solver, _dx, _dy_l, _dy_u);
+    osqp_adjoint_derivative_compute(this->_solver, _dx, _dy_l, _dy_u);
     osqp_adjoint_derivative_get_mat(this->_solver, &_dP, &_dA);
     osqp_adjoint_derivative_get_vec(this->_solver, _dq, _dl, _du);
 #else

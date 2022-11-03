@@ -198,17 +198,13 @@ class OSQP:
 
     @property
     def cg_preconditioner(self):
-        return (
-            'diagonal' if self.settings.cg_precond == self.ext.osqp_precond_type.OSQP_DIAGONAL_PRECONDITIONER else None
-        )
+        return 'diagonal' if self.settings.cg_precond == self.ext.OSQP_DIAGONAL_PRECONDITIONER else None
 
     @cg_preconditioner.setter
     def cg_preconditioner(self, value):
         assert value in (None, 'diagonal')
         self.settings.cg_precond = (
-            self.ext.osqp_precond_type.OSQP_DIAGONAL_PRECONDITIONER
-            if value == 'diagonal'
-            else self.ext.osqp_precond_type.OSQP_NO_PRECONDITIONER
+            self.ext.OSQP_DIAGONAL_PRECONDITIONER if value == 'diagonal' else self.ext.OSQP_NO_PRECONDITIONER
         )
 
     def _as_dense(self, m):
