@@ -35,7 +35,7 @@ jobs:
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_ARCHS_LINUX: aarch64
         CIBW_BEFORE_ALL: "yum -y update && yum install -y blas-devel lapack-devel suitesparse-devel"
-        CIBW_TEST_REQUIRES: "pytest cvxopt"
+        CIBW_TEST_REQUIRES: "pytest"
         CIBW_TEST_COMMAND: "pytest -s {project}/src/osqp/tests -k \"not codegen and not mkl\""
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
 
