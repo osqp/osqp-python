@@ -4,7 +4,6 @@ from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-import scipy as sp
 
 # Unit Test
 import unittest
@@ -55,7 +54,7 @@ class polish_tests(unittest.TestCase):
     def test_polish_unconstrained(self):
 
         # Unconstrained QP problem
-        sp.random.seed(4)
+        np.random.seed(4)
 
         self.n = 30
         self.m = 0
@@ -81,7 +80,7 @@ class polish_tests(unittest.TestCase):
     def test_polish_random(self):
 
         # Random QP problem
-        sp.random.seed(6)
+        np.random.seed(6)
 
         self.n = 30
         self.m = 50

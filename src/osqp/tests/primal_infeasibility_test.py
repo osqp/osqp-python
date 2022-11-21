@@ -3,7 +3,6 @@ import osqp
 from osqp._osqp import constant
 # import osqppurepy as osqp
 from scipy import sparse
-import scipy as sp
 import numpy as np
 
 # Unit Test
@@ -13,7 +12,7 @@ import unittest
 class primal_infeasibility_tests(unittest.TestCase):
 
     def setUp(self):
-        sp.random.seed(6)
+        np.random.seed(6)
         """
         Setup primal infeasible problem
         """
@@ -28,7 +27,7 @@ class primal_infeasibility_tests(unittest.TestCase):
     def test_primal_infeasible_problem(self):
 
         # Simple QP problem
-        sp.random.seed(4)
+        np.random.seed(4)
 
         self.n = 50
         self.m = 500

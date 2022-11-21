@@ -3,7 +3,6 @@ import osqp
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-import scipy as sp
 
 # Unit Test
 import unittest
@@ -22,7 +21,7 @@ class feasibility_tests(unittest.TestCase):
             st      A x = l = u
         """
         # Simple QP problem
-        sp.random.seed(4)
+        np.random.seed(4)
 
         self.n = 30
         self.m = 30

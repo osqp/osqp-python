@@ -3,7 +3,6 @@ import osqp
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-import scipy as sp
 
 # Unit Test
 import unittest
@@ -25,7 +24,7 @@ class warm_start_tests(unittest.TestCase):
     def test_warm_start(self):
 
         # Big problem
-        sp.random.seed(2)
+        np.random.seed(2)
         self.n = 100
         self.m = 200
         self.A = sparse.random(self.m, self.n, density=0.9, format='csc')
