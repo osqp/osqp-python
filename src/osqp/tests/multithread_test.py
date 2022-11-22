@@ -15,7 +15,7 @@ class multithread_tests(unittest.TestCase):
     def test_multithread(self):
         data = []
 
-        n_rep = 50
+        n_rep = 500
 
         for i in range(n_rep):
             m = 1000
