@@ -23,6 +23,13 @@ is defined by a positive semidefinite matrix ``P in S^n_+`` and vector
 ``A in R^{m x n}`` and vectors ``l in R^m U {-inf}^m``,
 ``u in R^m U {+inf}^m``.
 
+Installation
+------------
+
+To install `osqp` for python, make sure that you're using a recent version of `pip` (`pip install --upgrade pip`)
+and then use `pip install osqp`. To install `osqp` from source, clone the repository (`git clone --recurse-submodules https://github.com/osqp/osqp-python`)
+and run `pip install .` from inside the cloned folder.
+
 Documentation
 -------------
 
