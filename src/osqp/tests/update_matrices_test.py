@@ -2,7 +2,6 @@
 import osqp
 from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 import numpy as np
-import scipy as sp
 from scipy import sparse
 
 # Unit Test
@@ -14,7 +13,7 @@ class update_matrices_tests(unittest.TestCase):
 
     def setUp(self):
         # Simple QP problem
-        sp.random.seed(1)
+        np.random.seed(1)
 
         self.n = 5
         self.m = 8

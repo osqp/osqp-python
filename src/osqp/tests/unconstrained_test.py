@@ -4,7 +4,6 @@ from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol
 # import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-import scipy as sp
 
 # Unit Test
 import unittest
@@ -18,7 +17,7 @@ class unconstrained_tests(unittest.TestCase):
         Setup unconstrained quadratic problem
         """
         # Unconstrained QP problem
-        sp.random.seed(4)
+        np.random.seed(4)
 
         self.n = 30
         self.m = 0
