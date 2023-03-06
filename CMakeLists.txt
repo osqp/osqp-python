@@ -2,16 +2,15 @@ cmake_minimum_required(VERSION 3.13)
 project(ext)
 
 include(FetchContent)
-#message(STATUS "Fetching/configuring OSQP")
-#list(APPEND CMAKE_MESSAGE_INDENT "  ")
-#FetchContent_Declare(
-#  osqp
-#  GIT_REPOSITORY https://github.com/osqp/osqp.git
-#  GIT_TAG im/precond)
-#
-#list(POP_BACK CMAKE_MESSAGE_INDENT)
-#FetchContent_MakeAvailable(osqp)
-add_subdirectory(/home/vineetb/osqp /home/vineetb/osqp/build)
+message(STATUS "Fetching/configuring OSQP")
+list(APPEND CMAKE_MESSAGE_INDENT "  ")
+FetchContent_Declare(
+  osqp
+  GIT_REPOSITORY https://github.com/osqp/osqp.git
+  GIT_TAG develop-1.0)
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+FetchContent_MakeAvailable(osqp)
 
 FetchContent_Declare(
   pybind11
