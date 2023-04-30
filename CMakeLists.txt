@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 project(ext)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 include(FetchContent)
 message(STATUS "Fetching/configuring OSQP")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")

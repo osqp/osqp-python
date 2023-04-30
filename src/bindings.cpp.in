@@ -148,7 +148,8 @@ MyOSQPSolver::MyOSQPSolver(
 
     OSQPInt status = osqp_setup(&this->_solver, &this->_P.getcsc(), (OSQPFloat *)this->_q.data(), &this->_A.getcsc(), (OSQPFloat *)this->_l.data(), (OSQPFloat *)this->_u.data(), m, n, settings);
     if (status) {
-        throw pybind11::value_error("Setup error");
+        std::string message = "Setup Error (Error Code " + std::to_string(status) + ")";
+        throw py::value_error(message);
     }
 }
 

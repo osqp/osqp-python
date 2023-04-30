@@ -42,8 +42,7 @@ def default_algebra():
     raise RuntimeError('No algebra backend available!')
 
 
-def constant(which, algebra=None):
-    algebra = algebra or default_algebra()
+def constant(which, algebra):
     m = importlib.import_module(_ALGEBRA_MODULES[algebra])
     _constant = getattr(m, which, None)
 
@@ -62,8 +61,34 @@ def constant(which, algebra=None):
 
 
 class OSQP:
-    @staticmethod
-    def _infer_mnpqalu(P=None, q=None, A=None, l=None, u=None):
+    def __init__(self, *args, **kwargs):
+        self.m = None
+        self.n = None
+        self.P = None
+        self.q = None
+        self.A = None
+        self.l = None
+        self.u = None
+
+        self.algebra = kwargs.pop('algebra') if 'algebra' in kwargs else default_algebra()
+        if not algebra_available(self.algebra):
+            raise RuntimeError(f'Algebra {self.algebra} not available')
+        self.ext = importlib.import_module(_ALGEBRA_MODULES[self.algebra])
+
+        self._dtype = np.float32 if self.ext.OSQP_USE_FLOAT == 1 else np.float64
+        self._itype = np.int64 if self.ext.OSQP_USE_LONG == 1 else np.int32
+
+        # The following attributes are populated on setup()
+        self._solver = None
+        self._derivative_cache = {}
+
+    def __str__(self):
+        if self._solver is None:
+            return f'Uninitialized OSQP with algebra={self.algebra}'
+        else:
+            return f'OSQP with algebra={self.algebra} ({self.solver_type})'
+
+    def _infer_mnpqalu(self, P=None, q=None, A=None, l=None, u=None):
         # infer as many parameters of the problems as we can, and return them as a tuple
         if P is None:
             if q is not None:
@@ -135,37 +160,10 @@ class OSQP:
         if not A.has_sorted_indices:
             A.sort_indices()
 
-        u = np.minimum(u, constant('OSQP_INFTY'))
-        l = np.maximum(l, -constant('OSQP_INFTY'))
+        u = np.minimum(u, self.constant('OSQP_INFTY'))
+        l = np.maximum(l, -self.constant('OSQP_INFTY'))
 
         return m, n, P, q, A, l, u
-
-    def __init__(self, *args, **kwargs):
-        self.m = None
-        self.n = None
-        self.P = None
-        self.q = None
-        self.A = None
-        self.l = None
-        self.u = None
-
-        self.algebra = kwargs.pop('algebra', default_algebra())
-        if not algebra_available(self.algebra):
-            raise RuntimeError(f'Algebra {self.algebra} not available')
-        self.ext = importlib.import_module(_ALGEBRA_MODULES[self.algebra])
-
-        self.settings = self.ext.OSQPSettings()
-        self.ext.osqp_set_default_settings(self.settings)
-
-        self._dtype = np.float32 if self.ext.OSQP_USE_FLOAT == 1 else np.float64
-        self._itype = np.int64 if self.ext.OSQP_USE_LONG == 1 else np.int32
-
-        # The following attributes are populated on setup()
-        self._solver = None
-        self._derivative_cache = {}
-
-    def __str__(self):
-        return f'OSQP with algebra={self.algebra}'
 
     @property
     def capabilities(self):
@@ -187,25 +185,9 @@ class OSQP:
             else 'indirect'
         )
 
-    @solver_type.setter
-    def solver_type(self, value):
-        assert value in ('direct', 'indirect')
-        self.settings.linsys_solver = (
-            self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER
-            if value == 'direct'
-            else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
-        )
-
     @property
     def cg_preconditioner(self):
         return 'diagonal' if self.settings.cg_precond == self.ext.OSQP_DIAGONAL_PRECONDITIONER else None
-
-    @cg_preconditioner.setter
-    def cg_preconditioner(self, value):
-        assert value in (None, 'diagonal')
-        self.settings.cg_precond = (
-            self.ext.OSQP_DIAGONAL_PRECONDITIONER if value == 'diagonal' else self.ext.OSQP_NO_PRECONDITIONER
-        )
 
     def _as_dense(self, m):
         assert isinstance(m, self.ext.CSC)
@@ -222,6 +204,7 @@ class OSQP:
         return constant(which, algebra=self.algebra)
 
     def update_settings(self, **kwargs):
+        assert self.settings is not None
 
         # Some setting names have changed. Support the old names for now, but warn the caller.
         renamed_settings = {'polish': 'polishing', 'warm_start': 'warm_starting'}
@@ -231,22 +214,35 @@ class OSQP:
                 kwargs[v] = kwargs[k]
                 del kwargs[k]
 
-        new_settings = self.ext.OSQPSettings()
+        settings_changed = False
+
+        if 'rho' in kwargs and self._solver is not None:
+            self._solver.update_rho(kwargs.pop('rho'))
+        if 'solver_type' in kwargs:
+            value = kwargs.pop('solver_type')
+            assert value in ('direct', 'indirect')
+            self.settings.linsys_solver = (
+                self.ext.osqp_linsys_solver_type.OSQP_DIRECT_SOLVER
+                if value == 'direct'
+                else self.ext.osqp_linsys_solver_type.OSQP_INDIRECT_SOLVER
+            )
+            settings_changed = True
+        if 'cg_preconditioner' in kwargs:
+            value = kwargs.pop('cg_preconditioner')
+            assert value in (None, 'diagonal')
+            self.settings.cg_precond = (
+                self.ext.OSQP_DIAGONAL_PRECONDITIONER if value == 'diagonal' else self.ext.OSQP_NO_PRECONDITIONER
+            )
+            settings_changed = True
+
         for k in self.ext.OSQPSettings.__dict__:
             if not k.startswith('__'):
                 if k in kwargs:
-                    setattr(new_settings, k, kwargs[k])
-                else:
-                    setattr(new_settings, k, getattr(self.settings, k))
+                    setattr(self.settings, k, kwargs[k])
+                    settings_changed = True
 
-        if self._solver is not None:
-            if 'rho' in kwargs:
-                self._solver.update_rho(kwargs.pop('rho'))
-            if kwargs:
-                self._solver.update_settings(new_settings)
-            self.settings = self._solver.get_settings()  # TODO: Why isn't this just an attribute?
-        else:
-            self.settings = new_settings
+        if settings_changed and self._solver is not None:
+            self._solver.update_settings(self.settings)
 
     def update(self, **kwargs):
         # TODO: sanity-check on types/dimensions
@@ -298,9 +294,13 @@ class OSQP:
         self.l = l.astype(self._dtype)
         self.u = u.astype(self._dtype)
 
+        self.settings = self.ext.OSQPSettings()
+        self.ext.osqp_set_default_settings(self.settings)
         self.update_settings(**settings)
 
         self._solver = self.ext.OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
+        if 'rho' in settings:
+            self._solver.update_rho(settings['rho'])
         self._derivative_cache.update({'P': P, 'q': q, 'A': A, 'l': l, 'u': u})
 
     def warm_start(self, x=None, y=None):
