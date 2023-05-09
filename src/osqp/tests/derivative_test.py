@@ -127,7 +127,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         l[:5] = u[:5]
-        l[5:] = -osqp.constant('OSQP_INFTY')
+        l[5:] = -osqp.constant('OSQP_INFTY', algebra='builtin')
 
         def grad(dq, mode):
             [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
@@ -385,7 +385,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[10:20] = -osqp.constant('OSQP_INFTY')
+        # l[10:20] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:10] = l[:10]
 
         A_idx = A.nonzero()
@@ -422,7 +422,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[20:40] = -osqp.constant('OSQP_INFTY')
+        # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
         def grad(q, mode):
@@ -454,7 +454,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
-        l[20:40] = -osqp.constant('OSQP_INFTY')
+        l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
         def grad(q, mode):
@@ -486,7 +486,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[20:40] = -osqp.constant('OSQP_INFTY')
+        # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         num_eq = 2
         u[:num_eq] = l[:num_eq]
 
