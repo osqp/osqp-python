@@ -12,6 +12,6 @@ sudo /Volumes/$(basename $ONEAPI_INSTALLER_URL .dmg)/bootstrapper.app/Contents/M
 
 # Install LLVM's libomp because Intel's OpenMP runtime included in MKL does
 # not ship with the header file.
-brew install libomp
+# brew install libomp
 
 pip install "cmake==3.18.4"
