@@ -22,9 +22,25 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 def test_non_convex_small_sigma(self, solver_type):
     if solver_type == 'direct':
         with pytest.raises(ValueError):
-            self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, solver_type=solver_type, sigma=1e-6)
+            self.model.setup(
+                P=self.P,
+                q=self.q,
+                A=self.A,
+                l=self.l,
+                u=self.u,
+                solver_type=solver_type,
+                sigma=1e-6,
+            )
     else:
-        self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, solver_type=solver_type, sigma=1e-6)
+        self.model.setup(
+            P=self.P,
+            q=self.q,
+            A=self.A,
+            l=self.l,
+            u=self.u,
+            solver_type=solver_type,
+            sigma=1e-6,
+        )
         res = self.model.solve()
 
         if self.model.algebra == 'mkl':  # pytest-todo

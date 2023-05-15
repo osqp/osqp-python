@@ -16,7 +16,17 @@ cuda = False
 verbose = True
 
 
-def get_grads(n_batch=1, n=10, m=3, P_scale=1.0, A_scale=1.0, u_scale=1.0, l_scale=1.0, algebra=None, solver_type=None):
+def get_grads(
+    n_batch=1,
+    n=10,
+    m=3,
+    P_scale=1.0,
+    A_scale=1.0,
+    u_scale=1.0,
+    l_scale=1.0,
+    algebra=None,
+    solver_type=None,
+):
     assert n_batch == 1
     npr.seed(1)
     L = np.random.randn(n, n)
@@ -53,9 +63,14 @@ def get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type):
     for x in [P_torch, q_torch, A_torch, l_torch, u_torch]:
         x.requires_grad = True
 
-    x_hats = OSQP(P_idx, P_shape, A_idx, A_shape, algebra=algebra, solver_type=solver_type)(
-        P_torch, q_torch, A_torch, l_torch, u_torch
-    )
+    x_hats = OSQP(
+        P_idx,
+        P_shape,
+        A_idx,
+        A_shape,
+        algebra=algebra,
+        solver_type=solver_type,
+    )(P_torch, q_torch, A_torch, l_torch, u_torch)
 
     dl_dxhat = x_hats.data - true_x_torch
     x_hats.backward(dl_dxhat)
@@ -72,7 +87,12 @@ def test_dl_dp(algebra, solver_type, atol, rtol, decimal_tol):
         pytest.skip('No derivatives capability')
 
     [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
-        n=n, m=m, P_scale=100.0, A_scale=100.0, algebra=algebra, solver_type=solver_type
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
     )
 
     def f(q):

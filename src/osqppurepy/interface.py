@@ -59,7 +59,11 @@ class OSQP(object):
         # Create elements if they are not specified
         if P is None:
             P = sparse.csc_matrix(
-                (np.zeros((0,), dtype=np.double), np.zeros((0,), dtype=np.int), np.zeros((n + 1,), dtype=np.int)),
+                (
+                    np.zeros((0,), dtype=np.double),
+                    np.zeros((0,), dtype=np.int),
+                    np.zeros((n + 1,), dtype=np.int),
+                ),
                 shape=(n, n),
             )
         if q is None:
@@ -67,7 +71,11 @@ class OSQP(object):
 
         if A is None:
             A = sparse.csc_matrix(
-                (np.zeros((0,), dtype=np.double), np.zeros((0,), dtype=np.int), np.zeros((n + 1,), dtype=np.int)),
+                (
+                    np.zeros((0,), dtype=np.double),
+                    np.zeros((0,), dtype=np.int),
+                    np.zeros((n + 1,), dtype=np.int),
+                ),
                 shape=(m, n),
             )
             l = np.zeros(A.shape[0])

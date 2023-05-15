@@ -291,7 +291,12 @@ class linsys_solver(object):
         # Construct reduced KKT matrix
         KKT = spspa.vstack(
             [
-                spspa.hstack([work.data.P + work.settings.sigma * spspa.eye(work.data.n), work.data.A.T]),
+                spspa.hstack(
+                    [
+                        work.data.P + work.settings.sigma * spspa.eye(work.data.n),
+                        work.data.A.T,
+                    ]
+                ),
                 spspa.hstack([work.data.A, -spspa.diags(work.rho_inv_vec)]),
             ]
         )
@@ -469,7 +474,18 @@ class OSQP(object):
             print('Final cost scaling = %.10f' % c)
 
         # Assign scaled problem
-        self.work.data = problem((n, m), P.data, P.indices, P.indptr, q, A.data, A.indices, A.indptr, l, u)
+        self.work.data = problem(
+            (n, m),
+            P.data,
+            P.indices,
+            P.indptr,
+            q,
+            A.data,
+            A.indices,
+            A.indptr,
+            l,
+            u,
+        )
 
         # Assign scaling matrices
         self.work.scaling = scaling()
@@ -491,7 +507,10 @@ class OSQP(object):
 
         # Find indices of loose bounds, equality constr and one-sided constr
         loose_ind = np.where(
-            np.logical_and(self.work.data.l < -OSQP_INFTY * MIN_SCALING, self.work.data.u > OSQP_INFTY * MIN_SCALING)
+            np.logical_and(
+                self.work.data.l < -OSQP_INFTY * MIN_SCALING,
+                self.work.data.u > OSQP_INFTY * MIN_SCALING,
+            )
         )[0]
         eq_ind = np.where(self.work.data.u - self.work.data.l < RHO_TOL)[0]
         ineq_ind = np.setdiff1d(np.setdiff1d(np.arange(self.work.data.m), loose_ind), eq_ind)
@@ -513,7 +532,10 @@ class OSQP(object):
         """
         # Find indices of loose bounds, equality constr and one-sided constr
         loose_ind = np.where(
-            np.logical_and(self.work.data.l < -OSQP_INFTY * MIN_SCALING, self.work.data.u > OSQP_INFTY * MIN_SCALING)
+            np.logical_and(
+                self.work.data.l < -OSQP_INFTY * MIN_SCALING,
+                self.work.data.u > OSQP_INFTY * MIN_SCALING,
+            )
         )[0]
         eq_ind = np.where(self.work.data.u - self.work.data.l < RHO_TOL)[0]
         ineq_ind = np.setdiff1d(np.setdiff1d(np.arange(self.work.data.m), loose_ind), eq_ind)
@@ -564,7 +586,10 @@ class OSQP(object):
             print('(adaptive)')
         else:
             print('')
-        print('          sigma = %.2e, alpha = %.2f, ' % (settings.sigma, settings.alpha), end='')
+        print(
+            '          sigma = %.2e, alpha = %.2f, ' % (settings.sigma, settings.alpha),
+            end='',
+        )
         print('max_iter = %d' % settings.max_iter)
         if settings.scaling:
             print('          scaling: on, ', end='')
@@ -711,10 +736,18 @@ class OSQP(object):
         if self.work.settings.scaling and not self.work.settings.scaled_termination:
             Einv = self.work.scaling.Einv
             max_rel_eps = np.max(
-                [la.norm(Einv.dot(A.dot(self.work.x)), np.inf), la.norm(Einv.dot(self.work.z), np.inf)]
+                [
+                    la.norm(Einv.dot(A.dot(self.work.x)), np.inf),
+                    la.norm(Einv.dot(self.work.z), np.inf),
+                ]
             )
         else:
-            max_rel_eps = np.max([la.norm(A.dot(self.work.x), np.inf), la.norm(self.work.z, np.inf)])
+            max_rel_eps = np.max(
+                [
+                    la.norm(A.dot(self.work.x), np.inf),
+                    la.norm(self.work.z, np.inf),
+                ]
+            )
 
         eps_pri = eps_abs + eps_rel * max_rel_eps
 
@@ -752,7 +785,11 @@ class OSQP(object):
             )
         else:
             max_rel_eps = np.max(
-                [la.norm(A.T.dot(self.work.y), np.inf), la.norm(P.dot(self.work.x), np.inf), la.norm(q, np.inf)]
+                [
+                    la.norm(A.T.dot(self.work.y), np.inf),
+                    la.norm(P.dot(self.work.x), np.inf),
+                    la.norm(q, np.inf),
+                ]
             )
 
         eps_dua = eps_abs + eps_rel * max_rel_eps
@@ -861,7 +898,16 @@ class OSQP(object):
         pri_res = la.norm(A.dot(x) - z, np.inf)
         pri_res /= np.max([la.norm(A.dot(x), np.inf), la.norm(z, np.inf)]) + 1e-10
         dua_res = la.norm(P.dot(x) + q + A.T.dot(y), np.inf)
-        dua_res /= np.max([la.norm(A.T.dot(y), np.inf), la.norm(P.dot(x), np.inf), la.norm(q, np.inf)]) + 1e-10
+        dua_res /= (
+            np.max(
+                [
+                    la.norm(A.T.dot(y), np.inf),
+                    la.norm(P.dot(x), np.inf),
+                    la.norm(q, np.inf),
+                ]
+            )
+            + 1e-10
+        )
 
         # Compute new rho
         new_rho = self.work.settings.rho * np.sqrt(pri_res / (dua_res + 1e-10))
@@ -947,7 +993,12 @@ class OSQP(object):
             runtime = self.work.info.update_time + self.work.info.solve_time + self.work.info.polish_time
         print(
             'plsh  %11.4e   %8.2e   %8.2e   --------  %8.2es'
-            % (self.work.info.obj_val, self.work.info.pri_res, self.work.info.dua_res, runtime)
+            % (
+                self.work.info.obj_val,
+                self.work.info.pri_res,
+                self.work.info.dua_res,
+                runtime,
+            )
         )
 
     def check_termination(self, approximate=False):
@@ -1678,7 +1729,10 @@ class OSQP(object):
 
         # Form Ared from the assumed active constraints
         self.work.pol.Ared = spspa.vstack(
-            [self.work.data.A[self.work.pol.ind_low], self.work.data.A[self.work.pol.ind_upp]]
+            [
+                self.work.data.A[self.work.pol.ind_low],
+                self.work.data.A[self.work.pol.ind_upp],
+            ]
         )
 
         # # Terminate if there are no active constraints
@@ -1689,16 +1743,28 @@ class OSQP(object):
         KKTred = spspa.vstack(
             [
                 spspa.hstack(
-                    [self.work.data.P + self.work.settings.delta * spspa.eye(self.work.data.n), self.work.pol.Ared.T]
+                    [
+                        self.work.data.P + self.work.settings.delta * spspa.eye(self.work.data.n),
+                        self.work.pol.Ared.T,
+                    ]
                 ),
-                spspa.hstack([self.work.pol.Ared, -self.work.settings.delta * spspa.eye(self.work.pol.Ared.shape[0])]),
+                spspa.hstack(
+                    [
+                        self.work.pol.Ared,
+                        -self.work.settings.delta * spspa.eye(self.work.pol.Ared.shape[0]),
+                    ]
+                ),
             ]
         )
         KKTred_factor = spla.splu(KKTred.tocsc())
 
         # Form reduced RHS
         rhs_red = np.hstack(
-            [-self.work.data.q, self.work.data.l[self.work.pol.ind_low], self.work.data.u[self.work.pol.ind_upp]]
+            [
+                -self.work.data.q,
+                self.work.data.l[self.work.pol.ind_low],
+                self.work.data.u[self.work.pol.ind_upp],
+            ]
         )
 
         # Solve reduced KKT system
@@ -1756,7 +1822,13 @@ class OSQP(object):
             # Line search on the line connecting the ADMM and the polished sol.
             ls.t = np.linspace(0.0, 0.002, 1000)
             ls.X, ls.Z, ls.Y = self.line_search(
-                self.work.x, self.work.z, self.work.y, self.work.pol.x, self.work.pol.z, self.work.pol.y, ls.t
+                self.work.x,
+                self.work.z,
+                self.work.y,
+                self.work.pol.x,
+                self.work.pol.z,
+                self.work.pol.y,
+                ls.t,
             )
 
         return ls

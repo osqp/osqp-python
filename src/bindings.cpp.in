@@ -118,7 +118,10 @@ class MyOSQPSolver {
         OSQPInt update_data_mat(py::object, py::object, py::object, py::object);
         OSQPInt warm_start(py::object, py::object);
         OSQPInt solve();
-        OSQPInt adjoint_derivative(py::object, py::object, py::object, CSC&, py::object, CSC&, py::object, py::object);
+        OSQPInt adjoint_derivative_compute(py::object, py::object, py::object);
+        OSQPInt adjoint_derivative_get_mat(CSC&, CSC&);
+        OSQPInt adjoint_derivative_get_vec(py::object, py::object, py::object);
+
         OSQPInt codegen(const char*, const char*, OSQPCodegenDefines&);
     private:
         OSQPInt m;
@@ -270,12 +273,11 @@ OSQPInt MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
-OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object dy_l, const py::object dy_u, CSC& dP, py::object dq, CSC& dA, py::object dl, py::object du) {
+OSQPInt MyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy_l, const py::object dy_u) {
 #ifdef OSQP_ENABLE_DERIVATIVES
     OSQPFloat* _dx;
     OSQPFloat* _dy_l;
     OSQPFloat* _dy_u;
-    OSQPFloat* _check2;
 
     if (dx.is_none()) {
         _dx = NULL;
@@ -298,14 +300,33 @@ OSQPInt MyOSQPSolver::adjoint_derivative(const py::object dx, const py::object d
         _dy_u = (OSQPFloat *)_dy_u_array.data();
     }
 
+    osqp_adjoint_derivative_compute(this->_solver, _dx, _dy_l, _dy_u);
+
+    return 0;
+#else
+    return 1;
+#endif
+}
+
+OSQPInt MyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
+#ifdef OSQP_ENABLE_DERIVATIVES
     OSQPCscMatrix& _dP = dP.getcsc();
-    OSQPFloat* _dq = (OSQPFloat *)py::array_t<OSQPFloat>(dq).data();
     OSQPCscMatrix& _dA = dA.getcsc();
+
+    osqp_adjoint_derivative_get_mat(this->_solver, &_dP, &_dA);
+
+    return 0;
+#else
+    return 1;
+#endif
+}
+
+OSQPInt MyOSQPSolver::adjoint_derivative_get_vec(py::object dq, py::object dl, py::object du) {
+#ifdef OSQP_ENABLE_DERIVATIVES
+    OSQPFloat* _dq = (OSQPFloat *)py::array_t<OSQPFloat>(dq).data();
     OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
     OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
 
-    osqp_adjoint_derivative_compute(this->_solver, _dx, _dy_l, _dy_u);
-    osqp_adjoint_derivative_get_mat(this->_solver, &_dP, &_dA);
     osqp_adjoint_derivative_get_vec(this->_solver, _dq, _dl, _du);
 
     return 0;
@@ -486,7 +507,9 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def("update_rho", &MyOSQPSolver::update_rho)
     .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference)
 
-    .def("adjoint_derivative", &MyOSQPSolver::adjoint_derivative, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true), "dP"_a, "dq"_a, "dA"_a, "dl"_a, "du"_a)
+    .def("adjoint_derivative_compute", &MyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true))
+    .def("adjoint_derivative_get_mat", &MyOSQPSolver::adjoint_derivative_get_mat, "dP"_a, "dA"_a)
+    .def("adjoint_derivative_get_vec", &MyOSQPSolver::adjoint_derivative_get_vec, "dq"_a, "dl"_a, "du"_a)
 
     .def("codegen", &MyOSQPSolver::codegen, "output_dir"_a, "file_prefix"_a, "defines"_a);
 

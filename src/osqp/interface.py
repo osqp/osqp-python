@@ -10,11 +10,18 @@ import numpy as np
 import scipy.sparse as spa
 from jinja2 import Environment, PackageLoader, select_autoescape
 
-
-_ALGEBRAS = ('cuda', 'mkl', 'builtin')   # Highest->Lowest priority of algebras that are tried in turn
+_ALGEBRAS = (
+    'cuda',
+    'mkl',
+    'builtin',
+)  # Highest->Lowest priority of algebras that are tried in turn
 # Mapping from algebra to loadable module
-_ALGEBRA_MODULES = {'cuda': 'osqp_cuda', 'mkl': 'osqp_mkl', 'builtin': 'osqp.ext_builtin'}
-OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')      # If envvar is set, that algebra is used by default
+_ALGEBRA_MODULES = {
+    'cuda': 'osqp_cuda',
+    'mkl': 'osqp_mkl',
+    'builtin': 'osqp.ext_builtin',
+}
+OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')  # If envvar is set, that algebra is used by default
 
 
 def algebra_available(algebra):
@@ -207,10 +214,16 @@ class OSQP:
         assert self.settings is not None
 
         # Some setting names have changed. Support the old names for now, but warn the caller.
-        renamed_settings = {'polish': 'polishing', 'warm_start': 'warm_starting'}
+        renamed_settings = {
+            'polish': 'polishing',
+            'warm_start': 'warm_starting',
+        }
         for k, v in renamed_settings.items():
             if k in kwargs:
-                warnings.warn(f'"{k}" is deprecated. Please use "{v}" instead.', DeprecationWarning)
+                warnings.warn(
+                    f'"{k}" is deprecated. Please use "{v}" instead.',
+                    DeprecationWarning,
+                )
                 kwargs[v] = kwargs[k]
                 del kwargs[k]
 
@@ -298,7 +311,16 @@ class OSQP:
         self.ext.osqp_set_default_settings(self.settings)
         self.update_settings(**settings)
 
-        self._solver = self.ext.OSQPSolver(self.P, self.q, self.A, self.l, self.u, self.m, self.n, self.settings)
+        self._solver = self.ext.OSQPSolver(
+            self.P,
+            self.q,
+            self.A,
+            self.l,
+            self.u,
+            self.m,
+            self.n,
+            self.settings,
+        )
         if 'rho' in settings:
             self._solver.update_rho(settings['rho'])
         self._derivative_cache.update({'P': P, 'q': q, 'A': A, 'l': l, 'u': u})
@@ -330,7 +352,8 @@ class OSQP:
 
     def _render_pywrapper_files(self, output_folder, **kwargs):
         env = Environment(
-            loader=PackageLoader('osqp.codegen.pywrapper', package_path=''), autoescape=select_autoescape()
+            loader=PackageLoader('osqp.codegen.pywrapper', package_path=''),
+            autoescape=select_autoescape(),
         )
 
         for template_name in env.list_templates(extensions='.jinja'):
@@ -356,7 +379,10 @@ class OSQP:
     ):
 
         assert self.has_capability('OSQP_CAPABILITY_CODEGEN'), 'This OSQP object does not support codegen'
-        assert parameters in ('vectors', 'matrices'), 'Unknown parameters specification'
+        assert parameters in (
+            'vectors',
+            'matrices',
+        ), 'Unknown parameters specification'
 
         defines = self.ext.OSQPCodegenDefines()
         self.ext.osqp_set_default_codegen_defines(defines)
@@ -389,14 +415,27 @@ class OSQP:
 
         if extension_name is not None:
             assert include_codegen_src, 'If generating python wrappers, include_codegen_src must be True'
-            template_vars = dict(prefix=prefix, extension_name=extension_name, embedded_mode=defines.embedded_mode)
+            template_vars = dict(
+                prefix=prefix,
+                extension_name=extension_name,
+                embedded_mode=defines.embedded_mode,
+            )
             self._render_pywrapper_files(folder, **template_vars)
             if compile:
-                subprocess.check_call([sys.executable, 'setup.py', '--quiet', 'build_ext', '--inplace'], cwd=folder)
+                subprocess.check_call(
+                    [
+                        sys.executable,
+                        'setup.py',
+                        '--quiet',
+                        'build_ext',
+                        '--inplace',
+                    ],
+                    cwd=folder,
+                )
 
         return folder
 
-    def adjoint_derivative(self, dx=None, dy_u=None, dy_l=None, as_dense=True, dP_as_triu=True):
+    def adjoint_derivative_compute(self, dx=None, dy_l=None, dy_u=None):
         """
         Compute adjoint derivative after solve.
         """
@@ -413,23 +452,37 @@ class OSQP:
         if results.info.status != 'solved':
             raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
+        if dy_u is None:
+            dy_u = np.zeros(self.m)
+        if dy_l is None:
+            dy_l = np.zeros(self.m)
+
+        self._solver.adjoint_derivative_compute(dx, dy_l, dy_u)
+
+    def adjoint_derivative_get_mat(self, as_dense=True, dP_as_triu=True):
+        """
+        Get dP/dA matrices after an invocation of adjoint_derivative_compute
+        """
+
+        assert self.has_capability('OSQP_CAPABILITY_DERIVATIVES'), 'This OSQP object does not support derivatives'
+
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError(
+                'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
+            )
+
+        if results.info.status != 'solved':
+            raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
+
         P, _ = self._derivative_cache['P'], self._derivative_cache['q']
         A = self._derivative_cache['A']
-        m, n = A.shape
-
-        if dy_u is None:
-            dy_u = np.zeros(m)
-        if dy_l is None:
-            dy_l = np.zeros(m)
 
         dP = self.ext.CSC(P.copy())
-        dq = np.empty(n).astype(self._dtype)
         dA = self.ext.CSC(A.copy())
-        dl = np.zeros(m).astype(self._dtype)
-        du = np.zeros(m).astype(self._dtype)
 
-        # In the following call to the C extension, the first 3 are inputs, the remaining are outputs
-        self._solver.adjoint_derivative(dx, dy_l, dy_u, dP, dq, dA, dl, du)
+        self._solver.adjoint_derivative_get_mat(dP, dA)
 
         if not dP_as_triu:
             dP = self._csc_triu_as_csc_full(dP)
@@ -438,4 +491,29 @@ class OSQP:
             dP = self._as_dense(dP)
             dA = self._as_dense(dA)
 
-        return dP, dq, dA, dl, du
+        return dP, dA
+
+    def adjoint_derivative_get_vec(self):
+        """
+        Get dq/dl/du vectors after an invocation of adjoint_derivative_compute
+        """
+
+        assert self.has_capability('OSQP_CAPABILITY_DERIVATIVES'), 'This OSQP object does not support derivatives'
+
+        try:
+            results = self._derivative_cache['results']
+        except KeyError:
+            raise ValueError(
+                'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
+            )
+
+        if results.info.status != 'solved':
+            raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
+
+        dq = np.empty(self.n).astype(self._dtype)
+        dl = np.zeros(self.m).astype(self._dtype)
+        du = np.zeros(self.m).astype(self._dtype)
+
+        self._solver.adjoint_derivative_get_vec(dq, dl, du)
+
+        return dq, dl, du

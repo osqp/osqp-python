@@ -141,4 +141,8 @@ def test_upper_triangular_P(self):
 
     nptest.assert_allclose(res_default.x, res_triu.x, rtol=self.rtol, atol=self.atol)
     nptest.assert_allclose(res_default.y, res_triu.y, rtol=self.rtol, atol=self.atol)
-    nptest.assert_almost_equal(res_default.info.obj_val, res_triu.info.obj_val, decimal=self.decimal_tol)
+    nptest.assert_almost_equal(
+        res_default.info.obj_val,
+        res_triu.info.obj_val,
+        decimal=self.decimal_tol,
+    )
