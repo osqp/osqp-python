@@ -7,7 +7,4 @@ pip install "cmake==3.22.*"
 
 yum-config-manager --add-repo https://yum.repos.intel.com/oneapi
 rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-yum groupinstall -y "Development Tools"
-yum install -y intel-basekit
-echo "/opt/intel/oneapi/compiler/latest/linux/compiler/lib/intel64_lin" > /etc/ld.so.conf.d/libiomp5.conf
-ldconfig
+yum install -y intel-oneapi-mkl-devel-2023.0.0
