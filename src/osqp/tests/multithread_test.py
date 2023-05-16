@@ -1,18 +1,11 @@
 import osqp
-from osqp import default_algebra
 from multiprocessing.pool import ThreadPool
 import time
 import numpy as np
 from scipy import sparse
-
 import unittest
-import pytest
 
 
-@pytest.mark.skipif(
-    default_algebra() != 'builtin',
-    reason='threading improvements expected for builtin algebra',
-)
 class multithread_tests(unittest.TestCase):
     def test_multithread(self):
         data = []
@@ -42,7 +35,7 @@ class multithread_tests(unittest.TestCase):
 
         def f(i):
             P, q, A, l, u = data[i]
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(P, q, A, l, u, verbose=False)
             m.solve()
 

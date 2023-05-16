@@ -23,10 +23,6 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
-@pytest.mark.skipif(
-    osqp.default_algebra() != 'builtin',
-    reason='Derivatives only supported for builtin algebra.',
-)
 class derivative_tests(unittest.TestCase):
     def setUp(self):
         npr.seed(1)
@@ -52,7 +48,7 @@ class derivative_tests(unittest.TestCase):
 
     def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
         # Get gradients by solving with osqp
-        m = osqp.OSQP()
+        m = osqp.OSQP(algebra='builtin')
         m.setup(
             P,
             q,
@@ -84,7 +80,7 @@ class derivative_tests(unittest.TestCase):
 
     def get_forward_grads(self, P, q, A, l, u, dP, dq, dA, dl, du, mode='qdldl'):
         # Get gradients by solving with osqp
-        m = osqp.OSQP(eps_rel=eps_rel, eps_abs=eps_abs)
+        m = osqp.OSQP(algebra='builtin', eps_rel=eps_rel, eps_abs=eps_abs)
         m.setup(
             P,
             q,
@@ -116,7 +112,7 @@ class derivative_tests(unittest.TestCase):
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
 
-        osqp_solver = osqp.OSQP()
+        osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
             P,
             q,
@@ -182,7 +178,7 @@ class derivative_tests(unittest.TestCase):
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
-        osqp_solver = osqp.OSQP()
+        osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
             P,
             q,
@@ -251,7 +247,7 @@ class derivative_tests(unittest.TestCase):
         dL = np.random.normal(size=(n, n))
         dP = dL + dL.T
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dP, dq, dA, dl, du, 'qdldl')
-        osqp_solver = osqp.OSQP()
+        osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
             P,
             q,
@@ -313,7 +309,7 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -355,7 +351,7 @@ class derivative_tests(unittest.TestCase):
 
         def f(P_val):
             P_qp = sparse.csc_matrix((P_val, P_idx), shape=P.shape)
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P_qp,
                 q,
@@ -399,7 +395,7 @@ class derivative_tests(unittest.TestCase):
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -439,7 +435,7 @@ class derivative_tests(unittest.TestCase):
             return dl
 
         def f(l):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -478,7 +474,7 @@ class derivative_tests(unittest.TestCase):
             return du
 
         def f(u):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -524,7 +520,7 @@ class derivative_tests(unittest.TestCase):
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -567,7 +563,7 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -609,7 +605,7 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
@@ -652,7 +648,7 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(
                 P,
                 q,
