@@ -43,12 +43,9 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_solve(self):
-    # Solve problem
     res = self.model.solve()
 
-    # Assert close
     x_sol, y_sol, obj_sol = load_high_accuracy('test_solve')
-    # Assert close
     nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
     nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
     nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)

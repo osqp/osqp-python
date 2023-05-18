@@ -43,10 +43,10 @@ def test_non_convex_small_sigma(self, solver_type):
         )
         res = self.model.solve()
 
-        if self.model.algebra == 'mkl':  # pytest-todo
-            assert res.info.status_val == self.model.constant('OSQP_NON_CVX')
-        elif self.model.algebra == 'cuda':  # pytest-todo
-            assert res.info.status_val == self.model.constant('OSQP_MAX_ITER_REACHED')
+        assert res.info.status_val in (
+            self.model.constant('OSQP_MAX_ITER_REACHED'),
+            self.model.constant('OSQP_NON_CVX'),
+        )
 
 
 def test_non_convex_big_sigma(self):

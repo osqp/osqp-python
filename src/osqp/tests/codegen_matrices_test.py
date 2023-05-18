@@ -146,7 +146,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax_idx = np.arange(self.A.nnz)
         mat_emosqp.update_data_mat(A_x=Ax, A_i=Ax_idx)
 
-    def _test_update_P_A_indP_indA(self):
+    def test_update_P_A_indP_indA(self):
         import mat_emosqp
 
         # Update matrices P and A
