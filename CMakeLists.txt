@@ -7,7 +7,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG fc41306124dc7345439f0ac596ec42bb03401b84)
+  GIT_TAG vineetbansal-patch-2)
 
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
