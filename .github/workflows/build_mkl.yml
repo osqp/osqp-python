@@ -54,9 +54,11 @@ jobs:
         CIBW_ENVIRONMENT: OSQP_ALGEBRA_BACKEND=mkl
 
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh
+        CIBW_ENVIRONMENT_LINUX: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
 
         CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
-        _CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
+        CIBW_ENVIRONMENT_MACOS: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
+        CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
 
         CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_mkl.sh
         _CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
