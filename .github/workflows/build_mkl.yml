@@ -44,7 +44,7 @@ jobs:
         CIBW_BUILD: cp38-*
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_TEST_REQUIRES: pytest torch numdifftools mkl mkl-devel
-        CIBW_TEST_COMMAND: "python -m pytest {project}/src/osqp/tests"
+        CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests"
         CIBW_ENVIRONMENT: OSQP_ALGEBRA_BACKEND=mkl
 
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh

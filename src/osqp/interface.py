@@ -426,7 +426,6 @@ class OSQP:
                     [
                         sys.executable,
                         'setup.py',
-                        '--quiet',
                         'build_ext',
                         '--inplace',
                     ],
