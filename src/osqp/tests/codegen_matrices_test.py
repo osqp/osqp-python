@@ -1,20 +1,13 @@
-# Test osqp python module
 import osqp
-from osqp import default_algebra
-
-# import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
 
-# Unit Test
 import unittest
-import pytest
 import numpy.testing as nptest
 import shutil as sh
 import sys
 
 
-@pytest.mark.skipif(default_algebra() != 'builtin', reason='Codegen only implemented for builtin algebra.')
 class codegen_matrices_tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -36,7 +29,7 @@ class codegen_matrices_tests(unittest.TestCase):
             'warm_start': True,
         }
 
-        model = osqp.OSQP()
+        model = osqp.OSQP(algebra='builtin')
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model_dir = model.codegen(
@@ -66,7 +59,6 @@ class codegen_matrices_tests(unittest.TestCase):
         sh.rmtree('codegen_mat_out', ignore_errors=True)
 
     def setUp(self):
-
         self.model = osqp.OSQP()
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
@@ -153,7 +145,7 @@ class codegen_matrices_tests(unittest.TestCase):
         Ax_idx = np.arange(self.A.nnz)
         mat_emosqp.update_data_mat(A_x=Ax, A_i=Ax_idx)
 
-    def _test_update_P_A_indP_indA(self):
+    def test_update_P_A_indP_indA(self):
         import mat_emosqp
 
         # Update matrices P and A

@@ -17,13 +17,27 @@ def to_numpy(t):
 
 
 class OSQP(Module):
-    def __init__(self, P_idx, P_shape, A_idx, A_shape, eps_rel=1e-5, eps_abs=1e-5, verbose=False, max_iter=10000):
+    def __init__(
+        self,
+        P_idx,
+        P_shape,
+        A_idx,
+        A_shape,
+        eps_rel=1e-5,
+        eps_abs=1e-5,
+        verbose=False,
+        max_iter=10000,
+        algebra='builtin',
+        solver_type='direct',
+    ):
         super().__init__()
         self.P_idx, self.P_shape = P_idx, P_shape
         self.A_idx, self.A_shape = A_idx, A_shape
         self.eps_rel, self.eps_abs = eps_rel, eps_abs
         self.verbose = verbose
         self.max_iter = max_iter
+        self.algebra = algebra
+        self.solver_type = solver_type
 
     def forward(self, P_val, q_val, A_val, l_val, u_val):
         return _OSQP_Fn(
@@ -35,13 +49,26 @@ class OSQP(Module):
             eps_abs=self.eps_abs,
             verbose=self.verbose,
             max_iter=self.max_iter,
+            algebra=self.algebra,
+            solver_type=self.solver_type,
         )(P_val, q_val, A_val, l_val, u_val)
 
 
-def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs, verbose, max_iter):
+def _OSQP_Fn(
+    P_idx,
+    P_shape,
+    A_idx,
+    A_shape,
+    eps_rel,
+    eps_abs,
+    verbose,
+    max_iter,
+    algebra,
+    solver_type,
+):
     solvers = []
 
-    m, n = A_shape   # Problem size
+    m, n = A_shape  # Problem size
 
     class _OSQP_FnFn(Function):
         @staticmethod
@@ -124,8 +151,18 @@ def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs, verbose, max_iter
             for i in range(n_batch):
                 # Solve QP
                 # TODO: Cache solver object in between
-                solver = osqp.OSQP()
-                solver.setup(P[i], q[i], A[i], l[i], u[i], verbose=verbose, eps_abs=eps_abs, eps_rel=eps_rel)
+                solver = osqp.OSQP(algebra=algebra)
+                solver.setup(
+                    P[i],
+                    q[i],
+                    A[i],
+                    l[i],
+                    u[i],
+                    solver_type=solver_type,
+                    verbose=verbose,
+                    eps_abs=eps_abs,
+                    eps_rel=eps_rel,
+                )
                 result = solver.solve()
                 solvers.append(solver)
                 status = result.info.status
@@ -172,8 +209,9 @@ def _OSQP_Fn(P_idx, P_shape, A_idx, A_shape, eps_rel, eps_abs, verbose, max_iter
             du = torch.zeros((n_batch, m), dtype=dtype, device=device)
 
             for i in range(n_batch):
-                derivatives_np = solvers[i].adjoint_derivative(dx=dl_dx[i], as_dense=False, dP_as_triu=False)
-                dPi_np, dqi_np, dAi_np, dli_np, dui_np = derivatives_np
+                solvers[i].adjoint_derivative_compute(dx=dl_dx[i])
+                dPi_np, dAi_np = solvers[i].adjoint_derivative_get_mat(as_dense=False, dP_as_triu=False)
+                dqi_np, dli_np, dui_np = solvers[i].adjoint_derivative_get_vec()
                 dq[i], dl[i], du[i] = [torch.from_numpy(d) for d in [dqi_np, dli_np, dui_np]]
                 dP[i], dA[i] = [torch.from_numpy(d.x) for d in [dPi_np, dAi_np]]
 

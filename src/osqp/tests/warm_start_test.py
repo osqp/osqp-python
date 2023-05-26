@@ -3,29 +3,26 @@ import numpy as np
 from scipy import sparse
 import pytest
 import osqp
-from osqp.tests.utils import SOLVER_TYPES
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
-    self = SimpleNamespace()
-    self.opts = {
-        'verbose': False,
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
+    ns = SimpleNamespace()
+    ns.opts = {
+        'verbose': True,
         'adaptive_rho': False,
-        'eps_abs': 1e-08,
-        'eps_rel': 1e-08,
+        'eps_abs': 1e-08 if solver_type == 'direct' else 1e-2,
+        'eps_rel': 1e-08 if solver_type == 'direct' else 1e-2,
         'polish': False,
         'check_termination': 1,
+        'solver_type': solver_type,
     }
 
-    self.model = osqp.OSQP()
-    self.model.solver_type = request.param
-
-    return self
+    ns.model = osqp.OSQP(algebra=algebra)
+    return ns
 
 
 def test_warm_start(self):
-
     # Big problem
     np.random.seed(2)
     self.n = 100

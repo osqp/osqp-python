@@ -1,20 +1,12 @@
-# Test osqp python module
 import osqp
-from osqp import default_algebra
-
-# import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
-
-# Unit Test
 import unittest
-import pytest
 import numpy.testing as nptest
 import shutil as sh
 import sys
 
 
-@pytest.mark.skipif(default_algebra() != 'builtin', reason='Codegen only implemented for builtin algebra.')
 class codegen_vectors_tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -35,7 +27,7 @@ class codegen_vectors_tests(unittest.TestCase):
             'warm_start': True,
         }
 
-        model = osqp.OSQP()
+        model = osqp.OSQP(algebra='builtin')
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model_dir = model.codegen(

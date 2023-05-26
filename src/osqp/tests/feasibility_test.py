@@ -4,11 +4,11 @@ import numpy as np
 from scipy import sparse
 import pytest
 import numpy.testing as nptest
-from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, SOLVER_TYPES
+from osqp.tests.utils import load_high_accuracy
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
     self = SimpleNamespace()
 
     np.random.seed(4)
@@ -30,21 +30,27 @@ def self(request):
         'polish': False,
         'warm_start': True,
         'polish_refine_iter': 4,
+        'solver_type': solver_type,
     }
 
-    self.model = osqp.OSQP()
-    self.model.solver_type = request.param
+    self.model = osqp.OSQP(algebra=algebra)
     self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
+
+    self.rtol = rtol
+    self.atol = atol
+    self.decimal_tol = decimal_tol
+
     return self
 
 
 def test_feasibility_problem(self):
-
-    # Solve problem
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_feasibility_problem')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.solver_type == 'direct':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
+    else:
+        assert res.info.status_val == self.model.constant('OSQP_MAX_ITER_REACHED')

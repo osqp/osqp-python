@@ -23,7 +23,6 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
-@pytest.mark.skipif(osqp.default_algebra() != 'builtin', reason='Derivatives only supported for builtin algebra.')
 class derivative_tests(unittest.TestCase):
     def setUp(self):
         npr.seed(1)
@@ -49,8 +48,18 @@ class derivative_tests(unittest.TestCase):
 
     def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
         # Get gradients by solving with osqp
-        m = osqp.OSQP()
-        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=True)
+        m = osqp.OSQP(algebra='builtin')
+        m.setup(
+            P,
+            q,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=True,
+        )
         results = m.solve()
         if results.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -59,16 +68,30 @@ class derivative_tests(unittest.TestCase):
         yl = -np.minimum(y, 0)
         yu = np.maximum(y, 0)
         if true_yl is None and true_yu is None:
-            grads = m.adjoint_derivative(dx=x - true_x)
+            m.adjoint_derivative_compute(dx=x - true_x)
         else:
-            grads = m.adjoint_derivative(dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
+            m.adjoint_derivative_compute(dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
+
+        dP, dA = m.adjoint_derivative_get_mat()
+        dq, dl, du = m.adjoint_derivative_get_vec()
+        grads = dP, dq, dA, dl, du
 
         return grads
 
     def get_forward_grads(self, P, q, A, l, u, dP, dq, dA, dl, du, mode='qdldl'):
         # Get gradients by solving with osqp
-        m = osqp.OSQP(eps_rel=eps_rel, eps_abs=eps_abs)
-        m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        m = osqp.OSQP(algebra='builtin', eps_rel=eps_rel, eps_abs=eps_abs)
+        m.setup(
+            P,
+            q,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         results = m.solve()
         if results.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -89,8 +112,18 @@ class derivative_tests(unittest.TestCase):
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
 
-        osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        osqp_solver = osqp.OSQP(algebra='builtin')
+        osqp_solver.setup(
+            P,
+            q,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
         if res.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -98,7 +131,17 @@ class derivative_tests(unittest.TestCase):
         y1 = res.y
 
         eps = grad_precision
-        osqp_solver.setup(P, q + eps * dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        osqp_solver.setup(
+            P,
+            q + eps * dq,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
         if res.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -127,7 +170,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         l[:5] = u[:5]
-        l[5:] = -osqp.constant('OSQP_INFTY')
+        l[5:] = -osqp.constant('OSQP_INFTY', algebra='builtin')
 
         def grad(dq, mode):
             [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
@@ -135,8 +178,18 @@ class derivative_tests(unittest.TestCase):
 
         dq = np.random.normal(size=(n))
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
-        osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        osqp_solver = osqp.OSQP(algebra='builtin')
+        osqp_solver.setup(
+            P,
+            q,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
         if res.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -144,7 +197,17 @@ class derivative_tests(unittest.TestCase):
         y1 = res.y
 
         eps = grad_precision
-        osqp_solver.setup(P, q + eps * dq, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        osqp_solver.setup(
+            P,
+            q + eps * dq,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
         if res.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -184,8 +247,18 @@ class derivative_tests(unittest.TestCase):
         dL = np.random.normal(size=(n, n))
         dP = dL + dL.T
         dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dP, dq, dA, dl, du, 'qdldl')
-        osqp_solver = osqp.OSQP()
-        osqp_solver.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+        osqp_solver = osqp.OSQP(algebra='builtin')
+        osqp_solver.setup(
+            P,
+            q,
+            A,
+            l,
+            u,
+            eps_abs=eps_abs,
+            eps_rel=eps_rel,
+            max_iter=max_iter,
+            verbose=False,
+        )
         res = osqp_solver.solve()
         if res.info.status != 'solved':
             raise ValueError('Problem not solved!')
@@ -236,8 +309,18 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -268,8 +351,18 @@ class derivative_tests(unittest.TestCase):
 
         def f(P_val):
             P_qp = sparse.csc_matrix((P_val, P_idx), shape=P.shape)
-            m = osqp.OSQP()
-            m.setup(P_qp, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P_qp,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -302,8 +395,18 @@ class derivative_tests(unittest.TestCase):
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            m = osqp.OSQP()
-            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A_qp,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -332,8 +435,18 @@ class derivative_tests(unittest.TestCase):
             return dl
 
         def f(l):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -361,8 +474,18 @@ class derivative_tests(unittest.TestCase):
             return du
 
         def f(u):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -385,7 +508,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[10:20] = -osqp.constant('OSQP_INFTY')
+        # l[10:20] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:10] = l[:10]
 
         A_idx = A.nonzero()
@@ -397,8 +520,18 @@ class derivative_tests(unittest.TestCase):
 
         def f(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            m = osqp.OSQP()
-            m.setup(P, q, A_qp, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A_qp,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -422,7 +555,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[20:40] = -osqp.constant('OSQP_INFTY')
+        # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
         def grad(q, mode):
@@ -430,8 +563,18 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -454,7 +597,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
 
-        l[20:40] = -osqp.constant('OSQP_INFTY')
+        l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
         def grad(q, mode):
@@ -462,8 +605,18 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')
@@ -486,7 +639,7 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
         P, q, A, l, u, true_x, true_yl, true_yu = prob
         # u = l
-        # l[20:40] = -osqp.constant('OSQP_INFTY')
+        # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         num_eq = 2
         u[:num_eq] = l[:num_eq]
 
@@ -495,8 +648,18 @@ class derivative_tests(unittest.TestCase):
             return dq
 
         def f(q):
-            m = osqp.OSQP()
-            m.setup(P, q, A, l, u, eps_abs=eps_abs, eps_rel=eps_rel, max_iter=max_iter, verbose=False)
+            m = osqp.OSQP(algebra='builtin')
+            m.setup(
+                P,
+                q,
+                A,
+                l,
+                u,
+                eps_abs=eps_abs,
+                eps_rel=eps_rel,
+                max_iter=max_iter,
+                verbose=False,
+            )
             res = m.solve()
             if res.info.status != 'solved':
                 raise ValueError('Problem not solved!')

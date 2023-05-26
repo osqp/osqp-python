@@ -1,19 +1,15 @@
 from types import SimpleNamespace
 import osqp
-from osqp import constant
-from osqp.tests.utils import SOLVER_TYPES
-
-# import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
 
 import pytest
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
-    self = SimpleNamespace()
-    self.opts = {
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
+    ns = SimpleNamespace()
+    ns.opts = {
         'verbose': False,
         'eps_abs': 1e-05,
         'eps_rel': 1e-05,
@@ -24,15 +20,14 @@ def self(request):
         'polish': False,
         'check_termination': 1,
         'polish_refine_iter': 4,
+        'solver_type': solver_type,
     }
 
-    self.model = osqp.OSQP()
-    self.model.solver_type = request.param
-    return self
+    ns.model = osqp.OSQP(algebra=algebra)
+    return ns
 
 
 def test_dual_infeasible_lp(self):
-
     # Dual infeasible example
     self.P = sparse.csc_matrix((2, 2))
     self.q = np.array([2, -1])
@@ -45,11 +40,10 @@ def test_dual_infeasible_lp(self):
     # Solve problem with OSQP
     res = self.model.solve()
 
-    assert res.info.status_val == constant('OSQP_DUAL_INFEASIBLE')
+    assert res.info.status_val == self.model.constant('OSQP_DUAL_INFEASIBLE')
 
 
 def test_dual_infeasible_qp(self):
-
     # Dual infeasible example
     self.P = sparse.diags([4.0, 0.0], format='csc')
     self.q = np.array([0, 2])
@@ -62,11 +56,10 @@ def test_dual_infeasible_qp(self):
     # Solve problem with OSQP
     res = self.model.solve()
 
-    assert res.info.status_val == constant('OSQP_DUAL_INFEASIBLE')
+    assert res.info.status_val == self.model.constant('OSQP_DUAL_INFEASIBLE')
 
 
 def test_primal_and_dual_infeasible_problem(self):
-
     self.n = 2
     self.m = 4
     self.P = sparse.csc_matrix((2, 2))
@@ -85,4 +78,7 @@ def test_primal_and_dual_infeasible_problem(self):
     # Solve
     res = self.model.solve()
 
-    assert res.info.status_val in (constant('OSQP_PRIMAL_INFEASIBLE'), constant('OSQP_DUAL_INFEASIBLE'))
+    assert res.info.status_val in (
+        self.model.constant('OSQP_PRIMAL_INFEASIBLE'),
+        self.model.constant('OSQP_DUAL_INFEASIBLE'),
+    )

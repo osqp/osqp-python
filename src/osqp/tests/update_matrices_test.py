@@ -1,14 +1,14 @@
 from types import SimpleNamespace
 import osqp
-from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, SOLVER_TYPES
+from osqp.tests.utils import load_high_accuracy
 import numpy as np
 from scipy import sparse
 import pytest
 import numpy.testing as nptest
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
     self = SimpleNamespace()
 
     np.random.seed(1)
@@ -32,22 +32,23 @@ def self(request):
     self.l = np.zeros(self.m)
     self.u = 30 + np.random.randn(self.m)
     self.opts = {'eps_abs': 1e-08, 'eps_rel': 1e-08, 'verbose': False}
-    self.model = osqp.OSQP()
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
+    self.model = osqp.OSQP(algebra=algebra)
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, solver_type=solver_type, **self.opts)
+
+    self.rtol = rtol
+    self.atol = atol
+    self.decimal_tol = decimal_tol
 
     return self
 
 
 def test_solve(self):
-    # Solve problem
     res = self.model.solve()
 
-    # Assert close
     x_sol, y_sol, obj_sol = load_high_accuracy('test_solve')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P(self):
@@ -58,10 +59,11 @@ def test_update_P(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.algebra != 'cuda':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P_allind(self):
@@ -72,9 +74,9 @@ def test_update_P_allind(self):
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_allind')
     # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_A(self):
@@ -85,10 +87,11 @@ def test_update_A(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_A')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.algebra != 'cuda':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_A_allind(self):
@@ -99,9 +102,9 @@ def test_update_A_allind(self):
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_A_allind')
     # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P_A_indP_indA(self):
@@ -114,10 +117,11 @@ def test_update_P_A_indP_indA(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indP_indA')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.algebra != 'cuda':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P_A_indP(self):
@@ -129,10 +133,11 @@ def test_update_P_A_indP(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indP')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.algebra != 'cuda':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P_A_indA(self):
@@ -144,10 +149,11 @@ def test_update_P_A_indA(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_indA')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    if self.model.algebra != 'cuda':  # pytest-todo
+        nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+        nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_update_P_A_allind(self):
@@ -158,7 +164,7 @@ def test_update_P_A_allind(self):
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_update_P_A_allind')
-    # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)

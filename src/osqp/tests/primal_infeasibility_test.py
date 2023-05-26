@@ -1,14 +1,12 @@
 from types import SimpleNamespace
 import osqp
-from osqp import constant
-from osqp.tests.utils import SOLVER_TYPES
 from scipy import sparse
 import numpy as np
 import pytest
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
     self = SimpleNamespace()
     self.opts = {
         'verbose': False,
@@ -17,14 +15,13 @@ def self(request):
         'eps_dual_inf': 1e-20,
         'max_iter': 2500,
         'polish': False,
+        'solver_type': solver_type,
     }
-    self.model = osqp.OSQP()
-    self.model.solver_type = request.param
+    self.model = osqp.OSQP(algebra=algebra)
     return self
 
 
 def test_primal_infeasible_problem(self):
-
     # Simple QP problem
     np.random.seed(4)
 
@@ -51,11 +48,10 @@ def test_primal_infeasible_problem(self):
     # Solve problem with OSQP
     res = self.model.solve()
 
-    assert res.info.status_val == constant('OSQP_PRIMAL_INFEASIBLE')
+    assert res.info.status_val == self.model.constant('OSQP_PRIMAL_INFEASIBLE')
 
 
 def test_primal_and_dual_infeasible_problem(self):
-
     self.n = 2
     self.m = 4
     self.P = sparse.csc_matrix((2, 2))
@@ -68,4 +64,7 @@ def test_primal_and_dual_infeasible_problem(self):
 
     res = self.model.solve()
 
-    assert res.info.status_val in (constant('OSQP_PRIMAL_INFEASIBLE'), constant('OSQP_DUAL_INFEASIBLE'))
+    assert res.info.status_val in (
+        self.model.constant('OSQP_PRIMAL_INFEASIBLE'),
+        self.model.constant('OSQP_DUAL_INFEASIBLE'),
+    )

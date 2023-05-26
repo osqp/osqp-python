@@ -23,10 +23,11 @@ class CmdCMakeBuild(build_ext):
             f'-DPYTHON_EXECUTABLE={sys.executable}',
         ]
 
+        build_args = []
         cfg = 'Debug' if self.debug else 'Release'
-        build_args = [
-            f'--config={cfg}'
-        ]
+
+        if system() != "Darwin":
+            build_args += [f'--config={cfg}']
 
         if system() == "Windows":
             cmake_args += ['-G', 'Visual Studio 17 2022']

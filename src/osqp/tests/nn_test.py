@@ -16,7 +16,17 @@ cuda = False
 verbose = True
 
 
-def get_grads(n_batch=1, n=10, m=3, P_scale=1.0, A_scale=1.0, u_scale=1.0, l_scale=1.0):
+def get_grads(
+    n_batch=1,
+    n=10,
+    m=3,
+    P_scale=1.0,
+    A_scale=1.0,
+    u_scale=1.0,
+    l_scale=1.0,
+    algebra=None,
+    solver_type=None,
+):
     assert n_batch == 1
     npr.seed(1)
     L = np.random.randn(n, n)
@@ -31,12 +41,11 @@ def get_grads(n_batch=1, n=10, m=3, P_scale=1.0, A_scale=1.0, u_scale=1.0, l_sca
 
     P, q, A, l, u, true_x = [x.astype(np.float64) for x in [P, q, A, l, u, true_x]]
 
-    grads = get_grads_torch(P, q, A, l, u, true_x)
+    grads = get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type)
     return [P, q, A, l, u, true_x], grads
 
 
-def get_grads_torch(P, q, A, l, u, true_x):
-
+def get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type):
     P_idx = P.nonzero()
     P_shape = P.shape
     A_idx = A.nonzero()
@@ -53,7 +62,14 @@ def get_grads_torch(P, q, A, l, u, true_x):
     for x in [P_torch, q_torch, A_torch, l_torch, u_torch]:
         x.requires_grad = True
 
-    x_hats = OSQP(P_idx, P_shape, A_idx, A_shape)(P_torch, q_torch, A_torch, l_torch, u_torch)
+    x_hats = OSQP(
+        P_idx,
+        P_shape,
+        A_idx,
+        A_shape,
+        algebra=algebra,
+        solver_type=solver_type,
+    )(P_torch, q_torch, A_torch, l_torch, u_torch)
 
     dl_dxhat = x_hats.data - true_x_torch
     x_hats.backward(dl_dxhat)
@@ -62,16 +78,25 @@ def get_grads_torch(P, q, A, l, u, true_x):
     return grads
 
 
-@pytest.mark.skipif(osqp.default_algebra() != 'builtin', reason='Derivatives only supported for builtin algebra.')
-def test_dl_dp():
+def test_dl_dp(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
-    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(n=n, m=m, P_scale=100.0, A_scale=100.0)
+    model = osqp.OSQP(algebra=algebra)
+    if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+        pytest.skip('No derivatives capability')
+
+    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
+    )
 
     def f(q):
-        m = osqp.OSQP()
-        m.setup(P, q, A, l, u, verbose=False)
-        res = m.solve()
+        model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
+        res = model.solve()
         x_hat = res.x
 
         return 0.5 * np.sum(np.square(x_hat - true_x))

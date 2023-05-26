@@ -4,13 +4,13 @@ from scipy import sparse
 import pytest
 import numpy.testing as nptest
 import osqp
-from osqp.tests.utils import load_high_accuracy, rel_tol, abs_tol, decimal_tol, SOLVER_TYPES
+from osqp.tests.utils import load_high_accuracy
 
 
-@pytest.fixture(params=SOLVER_TYPES)
-def self(request):
-    self = SimpleNamespace()
-    self.opts = {
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
+    ns = SimpleNamespace()
+    ns.opts = {
         'verbose': False,
         'eps_abs': 1e-03,
         'eps_rel': 1e-03,
@@ -20,14 +20,16 @@ def self(request):
         'max_iter': 2500,
         'polish': True,
         'polish_refine_iter': 4,
+        'solver_type': solver_type,
     }
-    self.model = osqp.OSQP()
-    self.model.solver_type = request.param
-    return self
+    ns.model = osqp.OSQP(algebra=algebra)
+    ns.atol = atol
+    ns.rtol = rtol
+    ns.decimal_tol = decimal_tol
+    return ns
 
 
 def test_polish_simple(self):
-
     # Simple QP problem
     self.P = sparse.diags([11.0, 0.0], format='csc')
     self.q = np.array([3, 4])
@@ -43,13 +45,12 @@ def test_polish_simple(self):
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_polish_simple')
     # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_polish_unconstrained(self):
-
     # Unconstrained QP problem
     np.random.seed(4)
 
@@ -68,12 +69,11 @@ def test_polish_unconstrained(self):
 
     x_sol, _, obj_sol = load_high_accuracy('test_polish_unconstrained')
     # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
 
 
 def test_polish_random(self):
-
     # Random QP problem
     np.random.seed(6)
 
@@ -85,14 +85,15 @@ def test_polish_random(self):
     self.A = sparse.csc_matrix(np.random.randn(self.m, self.n))
     self.l = -3 + np.random.randn(self.m)
     self.u = 3 + np.random.randn(self.m)
-    self.model = osqp.OSQP()
-    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
+    model = osqp.OSQP(algebra=self.model.algebra)
+    model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
+    assert model.solver_type == self.opts['solver_type']
 
     # Solve problem
-    res = self.model.solve()
+    res = model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_polish_random')
     # Assert close
-    nptest.assert_allclose(res.x, x_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_allclose(res.y, y_sol, rtol=rel_tol, atol=abs_tol)
-    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=decimal_tol)
+    nptest.assert_allclose(res.x, x_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_allclose(res.y, y_sol, rtol=self.rtol, atol=self.atol)
+    nptest.assert_almost_equal(res.info.obj_val, obj_sol, decimal=self.decimal_tol)
