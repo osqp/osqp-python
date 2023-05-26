@@ -377,7 +377,6 @@ class OSQP:
         prefix='',
         compile=False,
     ):
-
         assert self.has_capability('OSQP_CAPABILITY_CODEGEN'), 'This OSQP object does not support codegen'
         assert parameters in (
             'vectors',

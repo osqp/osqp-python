@@ -35,7 +35,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_unconstrained_problem(self):
-
     # Solve problem
     res = self.model.solve()
 

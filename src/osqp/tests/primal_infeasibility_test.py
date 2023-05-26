@@ -22,7 +22,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_primal_infeasible_problem(self):
-
     # Simple QP problem
     np.random.seed(4)
 
@@ -53,7 +52,6 @@ def test_primal_infeasible_problem(self):
 
 
 def test_primal_and_dual_infeasible_problem(self):
-
     self.n = 2
     self.m = 4
     self.P = sparse.csc_matrix((2, 2))

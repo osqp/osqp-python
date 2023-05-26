@@ -23,7 +23,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_warm_start(self):
-
     # Big problem
     np.random.seed(2)
     self.n = 100

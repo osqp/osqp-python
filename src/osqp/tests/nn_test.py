@@ -46,7 +46,6 @@ def get_grads(
 
 
 def get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type):
-
     P_idx = P.nonzero()
     P_shape = P.shape
     A_idx = A.nonzero()

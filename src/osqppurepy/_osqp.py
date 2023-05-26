@@ -143,7 +143,6 @@ class settings(object):
     """
 
     def __init__(self, **kwargs):
-
         self.rho = kwargs.pop('rho', 0.1)
         self.sigma = kwargs.pop('sigma', 1e-06)
         self.scaling = kwargs.pop('scaling', 10)
@@ -366,8 +365,7 @@ class OSQP(object):
         Norm vector for scaling
         """
 
-        if isinstance(norm_vec, (list, tuple, np.ndarray)):   # Array
-
+        if isinstance(norm_vec, (list, tuple, np.ndarray)):  # Array
             n = len(norm_vec)
             new_norm_vec = np.zeros(n)
 
@@ -378,7 +376,7 @@ class OSQP(object):
                     new_norm_vec[i] = MAX_SCALING
                 else:
                     new_norm_vec[i] = norm_vec[i]
-        else:   # Scalar
+        else:  # Scalar
             if norm_vec < MIN_SCALING:
                 new_norm_vec = 1.0
             elif norm_vec > MAX_SCALING:
@@ -416,12 +414,11 @@ class OSQP(object):
 
         # Iterate Scaling
         for i in range(self.work.settings.scaling):
-
             # First Step Ruiz
             norm_cols = self._norm_KKT_cols(P, A)
             norm_cols = self._limit_scaling(norm_cols)  # Limit scaling
-            sqrt_norm_cols = np.sqrt(norm_cols)         # Compute sqrt
-            s_temp = np.reciprocal(sqrt_norm_cols)      # Elementwise recipr
+            sqrt_norm_cols = np.sqrt(norm_cols)  # Compute sqrt
+            s_temp = np.reciprocal(sqrt_norm_cols)  # Elementwise recipr
 
             # Obtain Scaler Matrices
             D_temp = spspa.diags(s_temp[: self.work.data.n])
@@ -843,7 +840,6 @@ class OSQP(object):
 
         # Prevent 0 division
         if norm_delta_x > eps_dual_inf:
-
             # First check q'* delta_x < 0
             if self.work.data.q.dot(self.work.delta_x) < -scale_cost * eps_dual_inf * norm_delta_x:
                 # Compute P * delta_x
@@ -855,7 +851,6 @@ class OSQP(object):
 
                 # Check if ||P * delta_x|| = 0
                 if la.norm(self.work.Pdelta_x, np.inf) < scale_cost * eps_dual_inf * norm_delta_x:
-
                     # Compute A * delta_x
                     self.work.Adelta_x = self.work.data.A.dot(self.work.delta_x)
 
@@ -873,7 +868,6 @@ class OSQP(object):
                             (self.work.data.l[i] > -OSQP_INFTY * MIN_SCALING)
                             and (self.work.Adelta_x[i] < -eps_dual_inf * norm_delta_x)
                         ):
-
                             # At least one condition not satisfied
                             return False
 
@@ -1154,7 +1148,7 @@ class OSQP(object):
         self.work.x_prev = np.zeros(n)
         self.work.z_prev = np.zeros(m)
         self.work.y = np.zeros(m)
-        self.work.delta_y = np.zeros(m)    # Delta_y for primal infeasibility
+        self.work.delta_y = np.zeros(m)  # Delta_y for primal infeasibility
 
         # Flag indicating first run
         self.work.first_run = 1

@@ -2,7 +2,6 @@ from osqp import algebra_available
 
 
 def pytest_generate_tests(metafunc):
-
     parameters = ('algebra', 'solver_type', 'atol', 'rtol', 'decimal_tol')
     values = []
     if algebra_available('builtin'):

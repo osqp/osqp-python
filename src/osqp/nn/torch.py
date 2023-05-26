@@ -68,7 +68,7 @@ def _OSQP_Fn(
 ):
     solvers = []
 
-    m, n = A_shape   # Problem size
+    m, n = A_shape  # Problem size
 
     class _OSQP_FnFn(Function):
         @staticmethod

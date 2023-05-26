@@ -28,7 +28,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_dual_infeasible_lp(self):
-
     # Dual infeasible example
     self.P = sparse.csc_matrix((2, 2))
     self.q = np.array([2, -1])
@@ -45,7 +44,6 @@ def test_dual_infeasible_lp(self):
 
 
 def test_dual_infeasible_qp(self):
-
     # Dual infeasible example
     self.P = sparse.diags([4.0, 0.0], format='csc')
     self.q = np.array([0, 2])
@@ -62,7 +60,6 @@ def test_dual_infeasible_qp(self):
 
 
 def test_primal_and_dual_infeasible_problem(self):
-
     self.n = 2
     self.m = 4
     self.P = sparse.csc_matrix((2, 2))

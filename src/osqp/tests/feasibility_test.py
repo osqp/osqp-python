@@ -44,7 +44,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_feasibility_problem(self):
-
     res = self.model.solve()
 
     x_sol, y_sol, obj_sol = load_high_accuracy('test_feasibility_problem')

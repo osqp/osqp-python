@@ -30,7 +30,6 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 
 def test_polish_simple(self):
-
     # Simple QP problem
     self.P = sparse.diags([11.0, 0.0], format='csc')
     self.q = np.array([3, 4])
@@ -52,7 +51,6 @@ def test_polish_simple(self):
 
 
 def test_polish_unconstrained(self):
-
     # Unconstrained QP problem
     np.random.seed(4)
 
@@ -76,7 +74,6 @@ def test_polish_unconstrained(self):
 
 
 def test_polish_random(self):
-
     # Random QP problem
     np.random.seed(6)
 

@@ -59,7 +59,6 @@ class codegen_matrices_tests(unittest.TestCase):
         sh.rmtree('codegen_mat_out', ignore_errors=True)
 
     def setUp(self):
-
         self.model = osqp.OSQP()
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 

@@ -4,7 +4,6 @@ from scipy import sparse
 
 
 if __name__ == '__main__':
-
     # Define problem data
     P = sparse.csc_matrix([[4, 1], [1, 2]])
     q = np.array([1, 1])
