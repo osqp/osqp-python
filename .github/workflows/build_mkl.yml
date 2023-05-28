@@ -60,7 +60,8 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
 
     - name: Release to pypi
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: ${{ false }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

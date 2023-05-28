@@ -56,7 +56,8 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
 
     - name: Release to pypi
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: ${{ false }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
