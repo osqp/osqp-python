@@ -50,7 +50,8 @@ jobs:
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')
       run: |
-        python setup.py sdist --dist-dir=wheelhouse
+        python -m pip install --upgrade build
+        python -m build --sdist --outdir wheelhouse
 
     - name: Release to pypi
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
