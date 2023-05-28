@@ -60,9 +60,9 @@ CSC::~CSC() {
     delete this->_csc;
 }
 
-class MyOSQPSolution {
+class PyOSQPSolution {
     public:
-        MyOSQPSolution(OSQPSolution&, OSQPInt, OSQPInt);
+        PyOSQPSolution(OSQPSolution&, OSQPInt, OSQPInt);
         py::array_t<OSQPFloat> get_x();
         py::array_t<OSQPFloat> get_y();
         py::array_t<OSQPFloat> get_prim_inf_cert();
@@ -73,43 +73,43 @@ class MyOSQPSolution {
         OSQPSolution& _solution;
 };
 
-MyOSQPSolution::MyOSQPSolution(OSQPSolution& solution, OSQPInt m, OSQPInt n): _m(m), _n(n), _solution(solution) {}
+PyOSQPSolution::PyOSQPSolution(OSQPSolution& solution, OSQPInt m, OSQPInt n): _m(m), _n(n), _solution(solution) {}
 
-py::array_t<OSQPFloat> MyOSQPSolution::get_x() {
+py::array_t<OSQPFloat> PyOSQPSolution::get_x() {
     return py::array_t<OSQPFloat>(
             { this->_n },
             { sizeof(OSQPFloat) },
             this->_solution.x);
 }
 
-py::array_t<OSQPFloat> MyOSQPSolution::get_y() {
+py::array_t<OSQPFloat> PyOSQPSolution::get_y() {
     return py::array_t<OSQPFloat>(
             { this->_m },
             { sizeof(OSQPFloat) },
             this->_solution.y);
 }
 
-py::array_t<OSQPFloat> MyOSQPSolution::get_prim_inf_cert() {
+py::array_t<OSQPFloat> PyOSQPSolution::get_prim_inf_cert() {
     return py::array_t<OSQPFloat>(
             { this->_m },
             { sizeof(OSQPFloat) },
             this->_solution.prim_inf_cert);
 }
 
-py::array_t<OSQPFloat> MyOSQPSolution::get_dual_inf_cert() {
+py::array_t<OSQPFloat> PyOSQPSolution::get_dual_inf_cert() {
     return py::array_t<OSQPFloat>(
             { this->_n },
             { sizeof(OSQPFloat) },
             this->_solution.dual_inf_cert);
 }
 
-class MyOSQPSolver {
+class PyOSQPSolver {
     public:
-        MyOSQPSolver(const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*);
-        ~MyOSQPSolver();
+        PyOSQPSolver(const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*);
+        ~PyOSQPSolver();
 
         OSQPSettings* get_settings();
-        MyOSQPSolution& get_solution();
+        PyOSQPSolution& get_solution();
         OSQPInfo* get_info();
 
         OSQPInt update_settings(const OSQPSettings&);
@@ -134,7 +134,7 @@ class MyOSQPSolver {
         OSQPSolver *_solver;
 };
 
-MyOSQPSolver::MyOSQPSolver(
+PyOSQPSolver::PyOSQPSolver(
         const CSC& P,
         const py::array_t<OSQPFloat> q,
         const CSC& A,
@@ -156,24 +156,24 @@ MyOSQPSolver::MyOSQPSolver(
     }
 }
 
-MyOSQPSolver::~MyOSQPSolver() {
+PyOSQPSolver::~PyOSQPSolver() {
     osqp_cleanup(this->_solver);
 }
 
-OSQPSettings* MyOSQPSolver::get_settings() {
+OSQPSettings* PyOSQPSolver::get_settings() {
     return this->_solver->settings;
 }
 
-MyOSQPSolution& MyOSQPSolver::get_solution() {
-    MyOSQPSolution* solution = new MyOSQPSolution(*this->_solver->solution, this->m, this->n);
+PyOSQPSolution& PyOSQPSolver::get_solution() {
+    PyOSQPSolution* solution = new PyOSQPSolution(*this->_solver->solution, this->m, this->n);
     return *solution;
 }
 
-OSQPInfo* MyOSQPSolver::get_info() {
+OSQPInfo* PyOSQPSolver::get_info() {
     return this->_solver->info;
 }
 
-OSQPInt MyOSQPSolver::warm_start(py::object x, py::object y) {
+OSQPInt PyOSQPSolver::warm_start(py::object x, py::object y) {
     OSQPFloat* _x;
     OSQPFloat* _y;
 
@@ -191,22 +191,22 @@ OSQPInt MyOSQPSolver::warm_start(py::object x, py::object y) {
     return osqp_warm_start(this->_solver, _x, _y);
 }
 
-OSQPInt MyOSQPSolver::solve() {
+OSQPInt PyOSQPSolver::solve() {
     py::gil_scoped_release release;
     OSQPInt results = osqp_solve(this->_solver);
     py::gil_scoped_acquire acquire;
     return results;
 }
 
-OSQPInt MyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
+OSQPInt PyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
     return osqp_update_settings(this->_solver, &new_settings);
 }
 
-OSQPInt MyOSQPSolver::update_rho(OSQPFloat rho_new) {
+OSQPInt PyOSQPSolver::update_rho(OSQPFloat rho_new) {
     return osqp_update_rho(this->_solver, rho_new);
 }
 
-OSQPInt MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
+OSQPInt PyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
     OSQPFloat* _q;
     OSQPFloat* _l;
     OSQPFloat* _u;
@@ -230,7 +230,7 @@ OSQPInt MyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) 
     return osqp_update_data_vec(this->_solver, _q, _l, _u);
 }
 
-OSQPInt MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
+OSQPInt PyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
     OSQPFloat* _P_x;
     OSQPInt* _P_i;
     OSQPInt _P_n = 0;
@@ -273,7 +273,7 @@ OSQPInt MyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
-OSQPInt MyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy_l, const py::object dy_u) {
+OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy_l, const py::object dy_u) {
     OSQPFloat* _dx;
     OSQPFloat* _dy_l;
     OSQPFloat* _dy_u;
@@ -303,14 +303,14 @@ OSQPInt MyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::
 
 }
 
-OSQPInt MyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
+OSQPInt PyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
     OSQPCscMatrix& _dP = dP.getcsc();
     OSQPCscMatrix& _dA = dA.getcsc();
 
     return osqp_adjoint_derivative_get_mat(this->_solver, &_dP, &_dA);
 }
 
-OSQPInt MyOSQPSolver::adjoint_derivative_get_vec(py::object dq, py::object dl, py::object du) {
+OSQPInt PyOSQPSolver::adjoint_derivative_get_vec(py::object dq, py::object dl, py::object du) {
     OSQPFloat* _dq = (OSQPFloat *)py::array_t<OSQPFloat>(dq).data();
     OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
     OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
@@ -318,7 +318,7 @@ OSQPInt MyOSQPSolver::adjoint_derivative_get_vec(py::object dq, py::object dl, p
     return osqp_adjoint_derivative_get_vec(this->_solver, _dq, _dl, _du);
 }
 
-OSQPInt MyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
+OSQPInt PyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, OSQPCodegenDefines& defines) {
     return osqp_codegen(this->_solver, output_dir, file_prefix, &defines);
 }
 
@@ -448,11 +448,11 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     m.def("osqp_set_default_codegen_defines", &osqp_set_default_codegen_defines);
 
     // Solution
-    py::class_<MyOSQPSolution>(m, "OSQPSolution", py::module_local())
-    .def_property_readonly("x", &MyOSQPSolution::get_x)
-    .def_property_readonly("y", &MyOSQPSolution::get_y)
-    .def_property_readonly("prim_inf_cert", &MyOSQPSolution::get_prim_inf_cert)
-    .def_property_readonly("dual_inf_cert", &MyOSQPSolution::get_dual_inf_cert);
+    py::class_<PyOSQPSolution>(m, "OSQPSolution", py::module_local())
+    .def_property_readonly("x", &PyOSQPSolution::get_x)
+    .def_property_readonly("y", &PyOSQPSolution::get_y)
+    .def_property_readonly("prim_inf_cert", &PyOSQPSolution::get_prim_inf_cert)
+    .def_property_readonly("dual_inf_cert", &PyOSQPSolution::get_dual_inf_cert);
 
     // Info
     py::class_<OSQPInfo>(m, "OSQPInfo", py::module_local())
@@ -473,23 +473,23 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("run_time", &OSQPInfo::run_time);
 
     // Solver
-    py::class_<MyOSQPSolver>(m, "OSQPSolver", py::module_local())
+    py::class_<PyOSQPSolver>(m, "OSQPSolver", py::module_local())
     .def(py::init<const CSC&, const py::array_t<OSQPFloat>, const CSC&, const py::array_t<OSQPFloat>, const py::array_t<OSQPFloat>, OSQPInt, OSQPInt, const OSQPSettings*>(),
             "P"_a, "q"_a.noconvert(), "A"_a, "l"_a.noconvert(), "u"_a.noconvert(), "m"_a, "n"_a, "settings"_a)
-    .def_property_readonly("solution", &MyOSQPSolver::get_solution, py::return_value_policy::reference)
-    .def_property_readonly("info", &MyOSQPSolver::get_info)
-    .def("warm_start", &MyOSQPSolver::warm_start, "x"_a.none(true), "y"_a.none(true))
-    .def("solve", &MyOSQPSolver::solve)
-    .def("update_data_vec", &MyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
-    .def("update_data_mat", &MyOSQPSolver::update_data_mat, "P_x"_a.none(true), "P_i"_a.none(true), "A_x"_a.none(true), "A_i"_a.none(true))
-    .def("update_settings", &MyOSQPSolver::update_settings)
-    .def("update_rho", &MyOSQPSolver::update_rho)
-    .def("get_settings", &MyOSQPSolver::get_settings, py::return_value_policy::reference)
+    .def_property_readonly("solution", &PyOSQPSolver::get_solution, py::return_value_policy::reference)
+    .def_property_readonly("info", &PyOSQPSolver::get_info)
+    .def("warm_start", &PyOSQPSolver::warm_start, "x"_a.none(true), "y"_a.none(true))
+    .def("solve", &PyOSQPSolver::solve)
+    .def("update_data_vec", &PyOSQPSolver::update_data_vec, "q"_a.none(true), "l"_a.none(true), "u"_a.none(true))
+    .def("update_data_mat", &PyOSQPSolver::update_data_mat, "P_x"_a.none(true), "P_i"_a.none(true), "A_x"_a.none(true), "A_i"_a.none(true))
+    .def("update_settings", &PyOSQPSolver::update_settings)
+    .def("update_rho", &PyOSQPSolver::update_rho)
+    .def("get_settings", &PyOSQPSolver::get_settings, py::return_value_policy::reference)
 
-    .def("adjoint_derivative_compute", &MyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true))
-    .def("adjoint_derivative_get_mat", &MyOSQPSolver::adjoint_derivative_get_mat, "dP"_a, "dA"_a)
-    .def("adjoint_derivative_get_vec", &MyOSQPSolver::adjoint_derivative_get_vec, "dq"_a, "dl"_a, "du"_a)
+    .def("adjoint_derivative_compute", &PyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true))
+    .def("adjoint_derivative_get_mat", &PyOSQPSolver::adjoint_derivative_get_mat, "dP"_a, "dA"_a)
+    .def("adjoint_derivative_get_vec", &PyOSQPSolver::adjoint_derivative_get_vec, "dq"_a, "dl"_a, "du"_a)
 
-    .def("codegen", &MyOSQPSolver::codegen, "output_dir"_a, "file_prefix"_a, "defines"_a);
+    .def("codegen", &PyOSQPSolver::codegen, "output_dir"_a, "file_prefix"_a, "defines"_a);
 
 }
