@@ -1,13 +1,14 @@
 import osqp
 import numpy as np
 from scipy import sparse
-
 import unittest
+import pytest
 import numpy.testing as nptest
 import shutil as sh
 import sys
 
 
+@pytest.mark.skipif(not osqp.algebra_available('builtin'), reason='Builtin Algebra not available')
 class codegen_matrices_tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):

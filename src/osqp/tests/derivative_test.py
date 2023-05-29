@@ -23,6 +23,7 @@ eps_rel = 1e-9
 max_iter = 500000
 
 
+@pytest.mark.skipif(not osqp.algebra_available('builtin'), reason='Builtin Algebra not available')
 class derivative_tests(unittest.TestCase):
     def setUp(self):
         npr.seed(1)

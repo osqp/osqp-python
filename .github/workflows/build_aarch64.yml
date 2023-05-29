@@ -46,7 +46,8 @@ jobs:
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
 
     - name: Release to pypi
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: ${{ false }}
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.pypi_password }}

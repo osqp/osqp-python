@@ -4,8 +4,10 @@ import time
 import numpy as np
 from scipy import sparse
 import unittest
+import pytest
 
 
+@pytest.mark.skipif(not osqp.algebra_available('builtin'), reason='Builtin Algebra not available')
 class multithread_tests(unittest.TestCase):
     def test_multithread(self):
         data = []
