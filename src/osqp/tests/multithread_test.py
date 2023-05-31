@@ -1,21 +1,14 @@
-# Test osqp python module
 import osqp
-# import osqppurepy as osqp
 from multiprocessing.pool import ThreadPool
 import time
 import numpy as np
 from scipy import sparse
-import pytest
 import unittest
+import pytest
 
 
+@pytest.mark.skipif(not osqp.algebra_available('builtin'), reason='Builtin Algebra not available')
 class multithread_tests(unittest.TestCase):
-
-    # TODO: The multi-threading case runs slower on macOS + Python 3.11, so this may fail.
-    # This is likely because of performance improvements in Python 3.11
-    # We should write a more robust test to determine if the GIL is released,
-    # Or abandon this test altogether.
-    @pytest.mark.xfail(strict=False)
     def test_multithread(self):
         data = []
 
@@ -28,12 +21,15 @@ class multithread_tests(unittest.TestCase):
             b = np.random.randn(m)
 
             # OSQP data
-            P = sparse.block_diag(
-                [sparse.csc_matrix((n, n)), sparse.eye(m)], format='csc')
-            q = np.zeros(n+m)
-            A = sparse.vstack([
-                sparse.hstack([Ad, -sparse.eye(m)]),
-                sparse.hstack([sparse.eye(n), sparse.csc_matrix((n, m))])], format='csc')
+            P = sparse.block_diag([sparse.csc_matrix((n, n)), sparse.eye(m)], format='csc')
+            q = np.zeros(n + m)
+            A = sparse.vstack(
+                [
+                    sparse.hstack([Ad, -sparse.eye(m)]),
+                    sparse.hstack([sparse.eye(n), sparse.csc_matrix((n, m))]),
+                ],
+                format='csc',
+            )
             l = np.hstack([b, np.zeros(n)])
             u = np.hstack([b, np.ones(n)])
 
@@ -41,7 +37,7 @@ class multithread_tests(unittest.TestCase):
 
         def f(i):
             P, q, A, l, u = data[i]
-            m = osqp.OSQP()
+            m = osqp.OSQP(algebra='builtin')
             m.setup(P, q, A, l, u, verbose=False)
             m.solve()
 

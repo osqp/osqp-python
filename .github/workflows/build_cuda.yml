@@ -1,0 +1,74 @@
+name: Build CUDA
+
+on:
+  push:
+    branches: [ master, develop* ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master, develop* ]
+
+jobs:
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-2022]
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        submodules: 'recursive'
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      if: startsWith(matrix.os, 'windows')
+
+    - name: Add Windows SDK
+      shell: cmd
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        choco install windows-sdk-8.1
+
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.9'
+
+    - name: Build CUDA wheels
+      uses: pypa/cibuildwheel@v2.3.1
+      with:
+        output-dir: wheelhouse
+      env:
+        CIBW_BUILD: cp38-* cp39-* cp310-*
+        CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_* *-macosx_*"
+        CIBW_TEST_REQUIRES: pytest torch numdifftools
+
+        CIBW_ENVIRONMENT_LINUX: OSQP_ALGEBRA_BACKEND=cuda CMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc
+        CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
+        CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
+        CIBW_TEST_COMMAND_LINUX: "python -c \"from osqp import algebra_available; assert(algebra_available('cuda'))\""
+
+        CIBW_ENVIRONMENT_WINDOWS: OSQP_ALGEBRA_BACKEND=cuda CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/nvcc.exe" CUDA_TOOLKIT_ROOT_DIR="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6"
+        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_cuda.sh
+        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+        CIBW_TEST_COMMAND_WINDOWS_TODO: "python -c \"from osqp import algebra_available; assert(algebra_available('cuda'))\""
+
+    - name: Release to pypi
+      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: ${{ false }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        TWINE_REPOSITORY: testpypi
+      run: |
+        python -m pip install --upgrade twine
+        twine upload wheelhouse/*
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: ./wheelhouse

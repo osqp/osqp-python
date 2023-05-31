@@ -1,272 +1,177 @@
 import os
-import shutil as sh
+import shutil
 import sys
 from glob import glob
 from platform import system
-from shutil import copyfile, copy
-from subprocess import call, check_output
+from subprocess import check_call
 
+from distutils.sysconfig import get_python_inc
 from setuptools import setup, find_namespace_packages, Extension
 from setuptools.command.build_ext import build_ext
-import distutils.sysconfig as sysconfig
-
-import argparse
-
-OSQP_ARG_MARK = '--osqp'
-
-parser = argparse.ArgumentParser(description='OSQP Setup script arguments.')
-parser.add_argument(
-    OSQP_ARG_MARK,
-    dest='osqp',
-    action='store_true',
-    default=False,
-    help='Put this first to ensure following arguments are parsed correctly')
-parser.add_argument(
-    '--long',
-    dest='long',
-    action='store_true',
-    default=False,
-    help='Use long integers')
-parser.add_argument(
-    '--debug',
-    dest='debug',
-    action='store_true',
-    default=False,
-    help='Compile extension in debug mode')
-args, unknown = parser.parse_known_args()
-
-# necessary to remove OSQP args before passing to setup:
-if OSQP_ARG_MARK in sys.argv:
-    sys.argv = sys.argv[0:sys.argv.index(OSQP_ARG_MARK)]
-
-cmake_args = []
-# What variables from the environment do we wish to pass on to cmake as variables?
-cmake_env_vars = ('CMAKE_GENERATOR', 'CMAKE_GENERATOR_PLATFORM')
-for cmake_env_var in cmake_env_vars:
-    cmake_var = os.environ.get(cmake_env_var)
-    if cmake_var:
-        cmake_args.extend([f'-D{cmake_env_var}={cmake_var}'])
-
-# Add parameters to cmake_args and define_macros
-cmake_args += ["-DUNITTESTS=OFF"]
-cmake_build_flags = []
-define_macros = []
-lib_subdir = []
-
-# Check if windows linux or mac to pass flag
-if system() == 'Windows':
-    cmake_build_flags += ['--config', 'Release']
-    lib_name = 'osqp.lib'
-    lib_subdir = ['Release']
-
-else:  # Linux or Mac
-    cmake_args += ['-G', 'Unix Makefiles']
-    lib_name = 'libosqp.a'
-
-# Pass Python option to CMake and Python interface compilation
-cmake_args += ['-DPYTHON=ON']
-
-# Remove long integers for numpy compatibility (default args.long == False)
-# https://github.com/numpy/numpy/issues/5906
-# https://github.com/ContinuumIO/anaconda-issues/issues/3823
-if not args.long:
-    print("Disabling LONG\n" +
-          "Remove long integers for numpy compatibility. See:\n" +
-          " - https://github.com/numpy/numpy/issues/5906\n" +
-          " - https://github.com/ContinuumIO/anaconda-issues/issues/3823\n" +
-          "You can reenable long integers by passing: "
-          "--osqp --long argument.\n")
-    cmake_args += ['-DDLONG=OFF']
-
-# Pass python to compiler launched from setup.py
-define_macros += [('PYTHON', None)]
-
-# Pass python include dirs to cmake
-cmake_args += ['-DPYTHON_INCLUDE_DIRS=%s' % sysconfig.get_python_inc()]
+from setuptools.command.build_py import build_py
 
 
-# Define osqp and qdldl directories
-current_dir = os.getcwd()
-osqp_dir = os.path.join('osqp_sources')
-osqp_build_dir = os.path.join(osqp_dir, 'build')
-qdldl_dir = os.path.join(osqp_dir, 'lin_sys', 'direct', 'qdldl')
+class CMakeExtension(Extension):
+    def __init__(self, name, sourcedir='', cmake_args=None):
+        Extension.__init__(self, name, sources=[])
+        self.sourcedir = os.path.abspath(sourcedir)
+        self.cmake_args = cmake_args
 
 
-# Interface files
-class get_numpy_include(object):
-    """Returns Numpy's include path with lazy import.
-    """
-    def __str__(self):
-        import numpy
-        return numpy.get_include()
+class CustomBuildPy(build_py):
+    def run(self):
+        # Build all extensions first so that we generate codegen files in the build folder
+        # Note that each command like 'build_ext', is run once by setuptools, even if invoked multiple times.
+        self.run_command('build_ext')
+
+        codegen_build_dir = None
+        for data_file in self.data_files:
+            package, src_dir, build_dir, filename = data_file
+            if package == 'osqp.codegen':
+                codegen_build_dir = build_dir
+
+        if codegen_build_dir is not None:
+            for ext in self.distribution.ext_modules:
+                if hasattr(ext, 'codegen_dir'):
+                    src_dirs = []
+                    build_dirs = []
+                    filenames = []
+                    for filepath in glob(
+                        os.path.join(ext.codegen_dir, 'codegen_src/**'),
+                        recursive=True,
+                    ):
+                        if os.path.isfile(filepath):
+                            dirname = os.path.dirname(filepath)
+                            dirpath = os.path.relpath(dirname, ext.codegen_dir)
+                            src_dirs.append(os.path.join(ext.codegen_dir, dirpath))
+                            build_dirs.append(os.path.join(codegen_build_dir, dirpath))
+                            filenames.append(os.path.basename(filepath))
+
+                    if filenames:
+                        for src_dir, build_dir, filename in zip(src_dirs, build_dirs, filenames):
+                            self.data_files.append(
+                                (
+                                    'osqp.codegen',
+                                    src_dir,
+                                    build_dir,
+                                    [filename],
+                                )
+                            )
+
+        super().run()
 
 
-include_dirs = [
-    os.path.join(osqp_dir, 'include'),      # osqp.h
-    os.path.join(qdldl_dir),                # qdldl_interface header to
-                                            # extract workspace for codegen
-    os.path.join(qdldl_dir, "qdldl_sources",
-                            "include"),     # qdldl includes for file types
-    os.path.join('src', 'extension', 'include'),   # auxiliary .h files
-    get_numpy_include()]                    # numpy header files
+class CmdCMakeBuild(build_ext):
+    def run(self):
+        super().run()
+        # For editable installs, after the extension(s) have been built, copy the 'codegen_src' folder
+        # from the temporary build folder to the source folder
+        if self.editable_mode:
+            codegen_src_folder = os.path.join(self.build_temp, 'codegen_src')
+            codegen_target_folder = os.path.join('src', 'osqp', 'codegen', 'codegen_src')
+            if os.path.exists(codegen_src_folder):
+                if os.path.exists(codegen_target_folder):
+                    shutil.rmtree(codegen_target_folder)
+                shutil.copytree(codegen_src_folder, codegen_target_folder)
 
-sources_files = glob(os.path.join('src', 'extension', 'src', '*.c'))
+    def build_extension(self, ext):
+        extdir = os.path.abspath(os.path.dirname(self.get_ext_fullpath(ext.name)))
+        thisdir = os.path.dirname(os.path.abspath(__file__))
+        cmake_args = [
+            '-DCMAKE_LIBRARY_OUTPUT_DIRECTORY=' + extdir,
+            '-DPYTHON=ON',
+            '-DPYTHON_EXECUTABLE=' + sys.executable,
+            f'-DPYTHON_INCLUDE_DIRS={get_python_inc()}',
+            '-DOSQP_BUILD_UNITTESTS=OFF',
+            '-DOSQP_USE_LONG=OFF',  # https://github.com/numpy/numpy/issues/5906
+            # https://github.com/ContinuumIO/anaconda-issues/issues/3823
+            f'-DOSQP_CUSTOM_PRINTING={thisdir}/cmake/printing.h',
+            f'-DOSQP_CUSTOM_MEMORY={thisdir}/cmake/memory.h',
+        ]
+
+        cfg = 'Debug' if self.debug else 'Release'
+        build_args = ['--config', cfg]
+
+        if system() == 'Windows':
+            cmake_args += ['-G', 'Visual Studio 17 2022']
+            # Finding the CUDA Toolkit on Windows seems to work reliably only if BOTH
+            # CMAKE_GENERATOR_TOOLSET (-T) and CUDA_TOOLKIT_ROOT_DIR are supplied to cmake
+            if 'CUDA_TOOLKIT_ROOT_DIR' in os.environ:
+                cuda_root = os.environ['CUDA_TOOLKIT_ROOT_DIR']
+                cmake_args += ['-T', f'cuda={cuda_root}']
+            cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
+            if sys.maxsize > 2**32:
+                cmake_args += ['-A', 'x64']
+            build_args += ['--', '/m']
+        else:
+            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
+            build_args += ['--', '-j2']
+
+        if os.path.exists(self.build_temp):
+            shutil.rmtree(self.build_temp)
+        os.makedirs(self.build_temp)
+
+        # Save the build folder as a custom attribute in the extension object,
+        #   as we'll need it to package the codegen files as package_data later.
+        ext.codegen_dir = self.build_temp
+
+        _ext_name = ext.name.split('.')[-1]
+        cmake_args.extend([f'-DOSQP_EXT_MODULE_NAME={_ext_name}'])
+
+        # What variables from the environment do we wish to pass on to cmake as variables?
+        cmake_env_vars = (
+            'CMAKE_CUDA_COMPILER',
+            'CUDA_TOOLKIT_ROOT_DIR',
+            'MKL_DIR',
+            'MKL_ROOT',
+        )
+        for cmake_env_var in cmake_env_vars:
+            cmake_var = os.environ.get(cmake_env_var)
+            if cmake_var:
+                cmake_args.extend([f'-D{cmake_env_var}={cmake_var}'])
+
+        if ext.cmake_args is not None:
+            cmake_args.extend(ext.cmake_args)
+
+        check_call(['cmake', ext.sourcedir] + cmake_args, cwd=self.build_temp)
+        check_call(['cmake', '--build', '.'] + build_args, cwd=self.build_temp)
+
+        super().build_extension(ext)
 
 
-# Set optimizer flag
-if system() != 'Windows':
-    compile_args = ["-O3"]
+extras_require = {'dev': ['pytest>=6', 'torch', 'numdifftools', 'pre-commit']}
+
+algebra = os.environ.get('OSQP_ALGEBRA_BACKEND', 'builtin')
+assert algebra in ('builtin', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
+if algebra == 'builtin':
+    package_name = 'osqp'
+    ext_modules = [CMakeExtension('osqp.ext_builtin', cmake_args=['-DOSQP_ALGEBRA_BACKEND=builtin'])]
+    extras_require['mkl'] = ['osqp-mkl']
+    extras_require['cuda'] = ['osqp-cuda']
 else:
-    compile_args = []
-
-# If in debug mode
-if args.debug:
-    print("Debug mode")
-    compile_args += ["-g"]
-    cmake_args += ["-DCMAKE_BUILD_TYPE=Debug"]
-
-# External libraries
-library_dirs = []
-libraries = []
-if system() == 'Linux':
-    libraries += ['rt']
-if system() == 'Windows':
-    # They moved the stdio library to another place.
-    # We need to include this to fix the dependency
-    libraries += ['legacy_stdio_definitions']
-
-# Add OSQP compiled library
-extra_objects = [os.path.join('src', 'extension', 'src', lib_name)]
-
-'''
-Copy C sources for code generation
-'''
-
-# Create codegen directory
-osqp_codegen_sources_dir = os.path.join('src', 'osqp', 'codegen', 'sources')
-if os.path.exists(osqp_codegen_sources_dir):
-    sh.rmtree(osqp_codegen_sources_dir)
-os.makedirs(osqp_codegen_sources_dir)
-
-# OSQP C files
-cfiles = [os.path.join(osqp_dir, 'src', f)
-          for f in os.listdir(os.path.join(osqp_dir, 'src'))
-          if f.endswith('.c') and f not in ('cs.c', 'ctrlc.c', 'polish.c',
-                                            'lin_sys.c')]
-cfiles += [os.path.join(qdldl_dir, f)
-           for f in os.listdir(qdldl_dir)
-           if f.endswith('.c')]
-cfiles += [os.path.join(qdldl_dir, 'qdldl_sources', 'src', f)
-           for f in os.listdir(os.path.join(qdldl_dir, 'qdldl_sources',
-                                            'src'))]
-osqp_codegen_sources_c_dir = os.path.join(osqp_codegen_sources_dir, 'src')
-if os.path.exists(osqp_codegen_sources_c_dir):  # Create destination directory
-    sh.rmtree(osqp_codegen_sources_c_dir)
-os.makedirs(osqp_codegen_sources_c_dir)
-for f in cfiles:  # Copy C files
-    copy(f, osqp_codegen_sources_c_dir)
-
-# List with OSQP H files
-hfiles = [os.path.join(osqp_dir, 'include', f)
-          for f in os.listdir(os.path.join(osqp_dir, 'include'))
-          if f.endswith('.h') and f not in ('qdldl_types.h',
-                                            'osqp_configure.h',
-                                            'cs.h', 'ctrlc.h', 'polish.h',
-                                            'lin_sys.h')]
-hfiles += [os.path.join(qdldl_dir, f)
-           for f in os.listdir(qdldl_dir)
-           if f.endswith('.h')]
-hfiles += [os.path.join(qdldl_dir, 'qdldl_sources', 'include', f)
-           for f in os.listdir(os.path.join(qdldl_dir, 'qdldl_sources',
-                                            'include'))
-           if f.endswith('.h')]
-osqp_codegen_sources_h_dir = os.path.join(osqp_codegen_sources_dir, 'include')
-if os.path.exists(osqp_codegen_sources_h_dir):  # Create destination directory
-    sh.rmtree(osqp_codegen_sources_h_dir)
-os.makedirs(osqp_codegen_sources_h_dir)
-for f in hfiles:  # Copy header files
-    copy(f, osqp_codegen_sources_h_dir)
-
-# List with OSQP configure files
-configure_files = [os.path.join(osqp_dir, 'configure', 'osqp_configure.h.in'),
-                   os.path.join(qdldl_dir, 'qdldl_sources', 'configure',
-                                'qdldl_types.h.in')]
-osqp_codegen_sources_configure_dir = os.path.join(osqp_codegen_sources_dir,
-                                                  'configure')
-if os.path.exists(osqp_codegen_sources_configure_dir):
-    sh.rmtree(osqp_codegen_sources_configure_dir)
-os.makedirs(osqp_codegen_sources_configure_dir)
-for f in configure_files:  # Copy configure files
-    copy(f, osqp_codegen_sources_configure_dir)
-
-# Copy cmake files
-copy(os.path.join(osqp_dir, 'src',     'CMakeLists.txt'),
-     osqp_codegen_sources_c_dir)
-copy(os.path.join(osqp_dir, 'include', 'CMakeLists.txt'),
-     osqp_codegen_sources_h_dir)
+    package_name = f'osqp_{algebra}'
+    ext_modules = [CMakeExtension(f'osqp_{algebra}', cmake_args=[f'-DOSQP_ALGEBRA_BACKEND={algebra}'])]
 
 
-class build_ext_osqp(build_ext):
-    def build_extensions(self):
-        # Compile OSQP using CMake
-
-        # Create build directory
-        if os.path.exists(osqp_build_dir):
-            sh.rmtree(osqp_build_dir)
-        os.makedirs(osqp_build_dir)
-        os.chdir(osqp_build_dir)
-
-        try:
-            check_output(['cmake', '--version'])
-        except OSError:
-            raise RuntimeError("CMake must be installed to build OSQP")
-
-        # Compile static library with CMake
-        call(['cmake'] + cmake_args + ['..'])
-        call(['cmake', '--build', '.', '--target', 'osqpstatic'] +
-             cmake_build_flags)
-
-        # Change directory back to the python interface
-        os.chdir(current_dir)
-
-        # Copy static library to src folder
-        lib_origin = [osqp_build_dir, 'out'] + lib_subdir + [lib_name]
-        lib_origin = os.path.join(*lib_origin)
-        copyfile(lib_origin, os.path.join('src', 'extension', 'src', lib_name))
-
-        # Run extension
-        build_ext.build_extensions(self)
-
-
-_osqp = Extension('osqp._osqp',
-                  define_macros=define_macros,
-                  libraries=libraries,
-                  library_dirs=library_dirs,
-                  include_dirs=include_dirs,
-                  extra_objects=extra_objects,
-                  sources=sources_files,
-                  extra_compile_args=compile_args)
-
-
-# Read README.rst file
-def readme():
-    with open('README.rst') as f:
-        return f.read()
-
-
-with open('requirements.txt') as f:
-    requirements = f.read().splitlines()
-
-setup(name='osqp',
-      author='Bartolomeo Stellato, Goran Banjac',
-      author_email='bartolomeo.stellato@gmail.com',
-      description='OSQP: The Operator Splitting QP Solver',
-      long_description=readme(),
-      package_dir={'': 'src'},
-      include_package_data=True,  # Include package data from MANIFEST.in
-      install_requires=requirements,
-      license='Apache 2.0',
-      url="https://osqp.org/",
-      cmdclass={'build_ext': build_ext_osqp},
-      packages=find_namespace_packages(where='src'),
-      ext_modules=[_osqp])
+setup(
+    name=package_name,
+    author='Bartolomeo Stellato, Goran Banjac',
+    author_email='bartolomeo.stellato@gmail.com',
+    description='OSQP: The Operator Splitting QP Solver',
+    long_description=open('README.rst').read(),
+    package_dir={'': 'src'},
+    # package_data for 'osqp.codegen' is populated by CustomBuildPy to include codegen_src files
+    #   after building extensions, so it should not be included here.
+    # It is however ok to specify package_data for submodules of 'osqp.codegen'.
+    package_data={'osqp.codegen.pywrapper': ['*.jinja']},
+    include_package_data=True,
+    zip_safe=False,
+    install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl', 'jinja2'],
+    python_requires='>=3.7',
+    extras_require=extras_require,
+    license='Apache 2.0',
+    url='https://osqp.org/',
+    cmdclass={'build_ext': CmdCMakeBuild, 'build_py': CustomBuildPy},
+    packages=find_namespace_packages(where='src'),
+    ext_modules=ext_modules,
+)
