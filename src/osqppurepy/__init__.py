@@ -1,1 +1,1 @@
-from osqppurepy.interface import OSQP
+from osqppurepy.interface import OSQP  # noqa: F401

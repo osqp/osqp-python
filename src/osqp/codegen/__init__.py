@@ -1,1 +1,1 @@
-from osqp.codegen.code_generator import codegen
+# This module is populated with codegen src/header files at build time.

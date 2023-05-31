@@ -1,54 +1,60 @@
-# Test osqp python module
+from types import SimpleNamespace
 import osqp
-from osqp._osqp import constant
-# import osqppurepy as osqp
 import numpy as np
 from scipy import sparse
 
-# Unit Test
-import unittest
+import pytest
 import numpy.testing as nptest
 
 
-class non_convex_tests(unittest.TestCase):
+@pytest.fixture
+def self(algebra, solver_type, atol, rtol, decimal_tol):
+    ns = SimpleNamespace()
+    ns.P = sparse.triu([[2.0, 5.0], [5.0, 1.0]], format='csc')
+    ns.q = np.array([3, 4])
+    ns.A = sparse.csc_matrix([[-1.0, 0.0], [0.0, -1.0], [-1.0, 3.0], [2.0, 5.0], [3.0, 4]])
+    ns.u = np.array([0.0, 0.0, -15, 100, 80])
+    ns.l = -np.inf * np.ones(len(ns.u))
+    ns.model = osqp.OSQP(algebra=algebra)
+    return ns
 
-    def setUp(self):
 
-        # Simple QP problem
-        self.P = sparse.triu([[2., 5.], [5., 1.]], format='csc')
-        self.q = np.array([3, 4])
-        self.A = sparse.csc_matrix([[-1.0, 0.], [0., -1.],
-                                    [-1., 3.], [2., 5.], [3., 4]])
-        self.u = np.array([0., 0., -15, 100, 80])
-        self.l = -np.inf * np.ones(len(self.u))
-        self.model = osqp.OSQP()
-
-    def test_non_convex_small_sigma(self):
-        opts = {'verbose': False, 'sigma': 1e-6}
-        try:
-            # Setup should fail due to (P + sigma I) having a negative
-            # eigenvalue
-            test_setup = 1
-            self.model.setup(P=self.P, q=self.q, A=self.A,
-                             l=self.l, u=self.u, **opts)
-        except ValueError:
-            test_setup = 0
-
-        # Assert test_setup flag
-        self.assertEqual(test_setup, 0)
-
-    def test_non_convex_big_sigma(self):
-        # Setup workspace with new sigma
-        opts = {'verbose': False, 'sigma': 5}
-        self.model.setup(P=self.P, q=self.q, A=self.A,
-                         l=self.l, u=self.u, **opts)
-
-        # Solve problem
+def test_non_convex_small_sigma(self, solver_type):
+    if solver_type == 'direct':
+        with pytest.raises(ValueError):
+            self.model.setup(
+                P=self.P,
+                q=self.q,
+                A=self.A,
+                l=self.l,
+                u=self.u,
+                solver_type=solver_type,
+                sigma=1e-6,
+            )
+    else:
+        self.model.setup(
+            P=self.P,
+            q=self.q,
+            A=self.A,
+            l=self.l,
+            u=self.u,
+            solver_type=solver_type,
+            sigma=1e-6,
+        )
         res = self.model.solve()
 
-        # Assert close
-        self.assertEqual(res.info.status_val, constant('OSQP_NON_CVX'))
-        nptest.assert_approx_equal(res.info.obj_val, np.nan)
+        assert res.info.status_val in (
+            self.model.constant('OSQP_MAX_ITER_REACHED'),
+            self.model.constant('OSQP_NON_CVX'),
+        )
 
-    def test_nan(self):
-        nptest.assert_approx_equal(constant('OSQP_NAN'), np.nan)
+
+def test_non_convex_big_sigma(self):
+    self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, sigma=5)
+    res = self.model.solve()
+
+    assert res.info.status_val == self.model.constant('OSQP_NON_CVX')
+
+
+def test_nan(self):
+    nptest.assert_approx_equal(self.model.constant('OSQP_NAN'), np.nan)

@@ -1,0 +1,80 @@
+name: Build MKL
+
+on:
+  push:
+    branches: [ master, develop* ]
+    tags:
+      - '*'
+  pull_request:
+    branches: [ master, develop* ]
+
+jobs:
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-2022]
+
+    steps:
+    - uses: actions/checkout@master
+      with:
+        submodules: 'recursive'
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+      if: startsWith(matrix.os, 'windows')
+
+    - name: Add Windows SDK
+      shell: cmd
+      if: startsWith(matrix.os, 'windows')
+      run: |
+        choco install windows-sdk-8.1
+
+    - uses: actions/setup-python@v2
+      name: Install Python
+      with:
+        python-version: '3.9'
+
+    - name: Install cibuildwheel
+      run: python -m pip install cibuildwheel==2.12.3
+
+    - name: Build wheels
+      run: python -m cibuildwheel --output-dir wheelhouse
+      env:
+        CIBW_BUILD: cp38-* cp39-* cp310-*
+        CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
+        CIBW_TEST_REQUIRES: pytest torch numdifftools mkl mkl-devel
+
+        CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh
+        CIBW_ENVIRONMENT_LINUX: "OSQP_ALGEBRA_BACKEND=mkl MKL_ROOT=/opt/intel/oneapi/mkl/latest"
+        CIBW_TEST_COMMAND_LINUX: "LD_PRELOAD=$(dirname `which python`)/../lib/libmkl_core.so.2:$(dirname `which python`)/../lib/libmkl_sequential.so.2:$(dirname `which python`)/../lib/libmkl_intel_thread.so.2:$(dirname `which python`)/../lib/libmkl_intel_lp64.so.2 pytest -s {project}/src/osqp/tests"
+
+        CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
+        CIBW_ENVIRONMENT_MACOS: "OSQP_ALGEBRA_BACKEND=mkl MKL_ROOT=/opt/intel/oneapi/mkl/latest"
+        CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
+        CIBW_TEST_COMMAND_MACOS: "pytest -s {project}/src/osqp/tests"
+
+        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_mkl.sh
+        CIBW_ENVIRONMENT_WINDOWS: OSQP_ALGEBRA_BACKEND=mkl MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
+        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
+        CIBW_TEST_COMMAND_WINDOWS: "python -c \"from osqp import algebra_available; assert(algebra_available('mkl'))\""
+        CIBW_TEST_COMMAND_WINDOWS_TODO: "pytest -s {project}/src/osqp/tests"
+
+    - name: Release to pypi
+      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      if: ${{ false }}
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        TWINE_REPOSITORY: testpypi
+      run: |
+        python -m pip install --upgrade twine
+        twine upload wheelhouse/*
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v1
+      with:
+        name: wheels
+        path: ./wheelhouse
