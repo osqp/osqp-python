@@ -138,9 +138,7 @@ def _OSQP_Fn(
             assert A_val.size(1) == len(A_idx[0]), 'Unexpected size of A'
             assert P_val.size(1) == len(P_idx[0]), 'Unexpected size of P'
 
-            P = [spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape) for i in range(n_batch)]
             q = [to_numpy(q_val[i]) for i in range(n_batch)]
-            A = [spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape) for i in range(n_batch)]
             l = [to_numpy(l_val[i]) for i in range(n_batch)]
             u = [to_numpy(u_val[i]) for i in range(n_batch)]
 
@@ -148,14 +146,16 @@ def _OSQP_Fn(
             x_torch = torch.zeros((n_batch, n), dtype=dtype, device=device)
 
             x = []
+            solver = osqp.OSQP(algebra=algebra)
             for i in range(n_batch):
                 # Solve QP
                 # TODO: Cache solver object in between
-                solver = osqp.OSQP(algebra=algebra)
+                P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
+                A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
                 solver.setup(
-                    P[i],
+                    P,
                     q[i],
-                    A[i],
+                    A,
                     l[i],
                     u[i],
                     solver_type=solver_type,
