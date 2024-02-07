@@ -122,44 +122,7 @@ def _OSQP_Fn(
                         raise RuntimeError(f"Invalid number of solvers: expected 0 or {n_batch},"
                                        f" but got {num_solvers}.")
                     return num_solvers==n_batch
-
-            def _setup_update_solvers(n_batch: int, **kwargs) -> None:
-                """
-                This is a helper function that setups new solvers if solvers is empty or updates
-                the list if it exists. Raises an RuntimeError if the number of solvers is invalid.
-                """
-
-                
-
-                update_flag = _get_update_flag(solvers, n_batch)
-                P_val, P_idx = kwargs.get("P_val"), kwargs.get("P_idx")
-                A_val, A_idx = kwargs.get("A_val"), kwargs.get("A_idx")
-                P_shape, A_shape = kwargs.get("P_shape"), kwargs.get("A_shape")
-                q, l, u = kwargs.get("q"), kwargs.get("l"), kwargs.get("u")
-
-                for i in range(n_batch):
-                    # Solve QP
-                    # TODO: Cache solver object in between
-                    P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
-                    A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
-                    if update_flag:
-                        solvers[i].update(q=q[i], l=l[i], u=u[i], Px=P, Px_idx=P_idx,
-                                          Ax=A, Ax_idx=A_idx)
-                    else: #setup
-                        solver = osqp.OSQP(algebra=algebra) #TODO: When Ian introduces hard copy, generate only once
-                        solver.setup(
-                            P,
-                            q[i],
-                            A,
-                            l[i],
-                            u[i],
-                            solver_type=solver_type,
-                            verbose=verbose,
-                            eps_abs=eps_abs,
-                            eps_rel=eps_rel,
-                        )
-                        solvers.append(solver)
-               
+        
 
             params = [P_val, q_val, A_val, l_val, u_val]
 
@@ -199,13 +162,14 @@ def _OSQP_Fn(
                 # Solve QP
                 # TODO: Cache solver object in between
                 update_flag = _get_update_flag(solvers, n_batch)
-                P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
-                A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
+                # P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
                 if update_flag:
                         solver = solvers[i]
-                        solver.update(q=q[i], l=l[i], u=u[i], Px=P, Px_idx=P_idx,
-                                          Ax=A, Ax_idx=A_idx)
+                        solver.update(q=q[i], l=l[i], u=u[i], Px=to_numpy(P_val[i]), Px_idx=P_idx,
+                                          Ax=to_numpy(A_val[i]), Ax_idx=A_idx)
                 else:
+                    P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
+                    A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
                     solver = osqp.OSQP(algebra=algebra) #TODO: Deep copy when available
                     solver.setup(
                         P,
