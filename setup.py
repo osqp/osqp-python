@@ -139,7 +139,7 @@ class CmdCMakeBuild(build_ext):
         super().build_extension(ext)
 
 
-extras_require = {'dev': ['pytest>=6', 'torch', 'numdifftools', 'pre-commit']}
+extras_require = {'dev': ['pytest>=6', 'torch', 'numdifftools', 'pre-commit', 'joblib']}
 
 algebra = os.environ.get('OSQP_ALGEBRA_BACKEND', 'builtin')
 assert algebra in ('builtin', 'mkl', 'cuda'), f'Unknown algebra {algebra}'
@@ -166,7 +166,7 @@ setup(
     package_data={'osqp.codegen.pywrapper': ['*.jinja']},
     include_package_data=True,
     zip_safe=False,
-    install_requires=['numpy>=1.7', 'scipy==1.10.1', 'qdldl', 'jinja2', 'joblib'],
+    install_requires=['numpy>=1.7', 'scipy==1.10.1', 'qdldl', 'jinja2'],
     python_requires='>=3.7',
     extras_require=extras_require,
     license='Apache 2.0',
