@@ -3,6 +3,8 @@ import scipy.sparse as spa
 import torch
 from torch.nn import Module
 from torch.autograd import Function
+from joblib import Parallel, delayed
+import multiprocessing
 
 import osqp
 
@@ -122,6 +124,43 @@ def _OSQP_Fn(
                         raise RuntimeError(f"Invalid number of solvers: expected 0 or {n_batch},"
                                        f" but got {num_solvers}.")
                     return num_solvers==n_batch
+            
+            def _inner_solve(i, update_flag, q, l, u, P_val, P_idx, A_val, A_idx, solver_type,
+                             eps_abs, eps_rel):
+                """
+                This inner function solves for each solver. update_flag has to be passed from
+                outside to make sure it doesn't change during a parallel run.
+                """
+                # Solve QP
+                # TODO: Cache solver object in between
+                # P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
+                if update_flag:
+                        solver = solvers[i]
+                        solver.update(q=q[i], l=l[i], u=u[i], Px=to_numpy(P_val[i]), Px_idx=P_idx,
+                                        Ax=to_numpy(A_val[i]), Ax_idx=A_idx)
+                else:
+                    P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
+                    A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
+                    solver = osqp.OSQP(algebra=algebra) #TODO: Deep copy when available
+                    solver.setup(
+                        P,
+                        q[i],
+                        A,
+                        l[i],
+                        u[i],
+                        solver_type=solver_type,
+                        verbose=verbose,
+                        eps_abs=eps_abs,
+                        eps_rel=eps_rel,
+                    )
+                result = solver.solve()
+                status = result.info.status
+                if status != 'solved':
+                    # TODO: We can replace this with something calmer and
+                    # add some more options around potentially ignoring this.
+                    raise RuntimeError(f'Unable to solve QP, status: {status}')
+
+                return solver, result.x              
         
 
             params = [P_val, q_val, A_val, l_val, u_val]
@@ -157,46 +196,19 @@ def _OSQP_Fn(
             # Perform forward step solving the QPs
             x_torch = torch.zeros((n_batch, n), dtype=dtype, device=device)
 
-            x = []
+            update_flag = _get_update_flag(n_batch)
+            n_jobs = multiprocessing.cpu_count()
+            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_inner_solve)(i=i,
+                update_flag=update_flag, q=q, l=l, u=u, P_val=P_val, P_idx=P_idx,
+                A_val=A_val, A_idx=A_idx, solver_type=solver_type, eps_abs=eps_abs,
+                eps_rel=eps_rel) for i in range(n_batch))
+            solvers_loop, x = zip(*res)
             for i in range(n_batch):
-                # Solve QP
-                # TODO: Cache solver object in between
-                update_flag = _get_update_flag(solvers, n_batch)
-                # P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
                 if update_flag:
-                        solver = solvers[i]
-                        solver.update(q=q[i], l=l[i], u=u[i], Px=to_numpy(P_val[i]), Px_idx=P_idx,
-                                          Ax=to_numpy(A_val[i]), Ax_idx=A_idx)
+                    solvers[i] = solvers_loop[i]
                 else:
-                    P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
-                    A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
-                    solver = osqp.OSQP(algebra=algebra) #TODO: Deep copy when available
-                    solver.setup(
-                        P,
-                        q[i],
-                        A,
-                        l[i],
-                        u[i],
-                        solver_type=solver_type,
-                        verbose=verbose,
-                        eps_abs=eps_abs,
-                        eps_rel=eps_rel,
-                    )
-                result = solver.solve()
-                if update_flag:
-                    solvers[i] = solver
-                else:
-                    solvers.append(solver)
-                status = result.info.status
-                if status != 'solved':
-                    # TODO: We can replace this with something calmer and
-                    # add some more options around potentially ignoring this.
-                    raise RuntimeError(f'Unable to solve QP, status: {status}')
-                x.append(result.x)
-
-                # This is silently converting result.x to the same
-                # dtype and device as x_torch.
-                x_torch[i] = torch.from_numpy(result.x)
+                    solvers.append(solvers_loop[i])
+                x_torch[i] = torch.from_numpy(x[i])
 
             # Return solutions
             if not batch_mode:
@@ -206,6 +218,18 @@ def _OSQP_Fn(
 
         @staticmethod
         def backward(ctx, dl_dx_val):
+            def _loop_adjoint_derivative(solver, dl_dx):
+                """
+                This inner function calculates dp[i] dl[i], du[i], dP[i], dA[i]
+                using solvers[i], dl_dx[i].
+                """
+                solver.adjoint_derivative_compute(dx=dl_dx)
+                dPi_np, dAi_np = solver.adjoint_derivative_get_mat(as_dense=False, dP_as_triu=False)
+                dqi_np, dli_np, dui_np = solver.adjoint_derivative_get_vec()
+                dq, dl, du = [torch.from_numpy(d) for d in [dqi_np, dli_np, dui_np]]
+                dP, dA = [torch.from_numpy(d.x) for d in [dPi_np, dAi_np]]
+                return dq, dl, du, dP, dA
+            
             dtype = dl_dx_val.dtype
             device = dl_dx_val.device
 
@@ -230,12 +254,15 @@ def _OSQP_Fn(
             dl = torch.zeros((n_batch, m), dtype=dtype, device=device)
             du = torch.zeros((n_batch, m), dtype=dtype, device=device)
 
+            n_jobs = multiprocessing.cpu_count()
+            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_loop_adjoint_derivative)(solvers[i], dl_dx[i]) for i in range(n_batch))
+            dq_vec, dl_vec, du_vec, dP_vec, dA_vec = zip(*res)
             for i in range(n_batch):
-                solvers[i].adjoint_derivative_compute(dx=dl_dx[i])
-                dPi_np, dAi_np = solvers[i].adjoint_derivative_get_mat(as_dense=False, dP_as_triu=False)
-                dqi_np, dli_np, dui_np = solvers[i].adjoint_derivative_get_vec()
-                dq[i], dl[i], du[i] = [torch.from_numpy(d) for d in [dqi_np, dli_np, dui_np]]
-                dP[i], dA[i] = [torch.from_numpy(d.x) for d in [dPi_np, dAi_np]]
+                dq[i] = dq_vec[i]
+                dl[i] = dl_vec[i]
+                du[i] = du_vec[i]
+                dP[i] = dP_vec[i]
+                dA[i] = dA_vec[i]
 
             grads = [dP, dq, dA, dl, du]
 
