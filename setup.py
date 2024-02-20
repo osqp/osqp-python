@@ -166,7 +166,7 @@ setup(
     package_data={'osqp.codegen.pywrapper': ['*.jinja']},
     include_package_data=True,
     zip_safe=False,
-    install_requires=['numpy>=1.7', 'scipy>=0.13.2', 'qdldl', 'jinja2'],
+    install_requires=['numpy>=1.7', 'scipy==1.11.4', 'qdldl', 'jinja2'],
     python_requires='>=3.7',
     extras_require=extras_require,
     license='Apache 2.0',
