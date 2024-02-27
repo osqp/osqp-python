@@ -25,7 +25,7 @@ FetchContent_MakeAvailable(osqp)
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
                ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp)
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} src/bindings.cpp)
-install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION osqp COMPONENT python)
+install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION . COMPONENT python)
 
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
 if(${OSQP_ALGEBRA_BACKEND} STREQUAL "builtin")
