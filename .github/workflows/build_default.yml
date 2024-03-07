@@ -2,7 +2,7 @@ name: Build Default
 
 on:
   push:
-    branches: [ master, develop* ]
+    branches: [ master, develop*, vb/ci_fix ]
     tags:
       - '*'
   pull_request:
