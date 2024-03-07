@@ -15,37 +15,22 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2022]
+        os: [ubuntu-latest, macos-latest, windows-2022]
 
     steps:
     - uses: actions/checkout@master
       with:
         submodules: 'recursive'
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-      if: startsWith(matrix.os, 'windows')
-
-    - name: Add Windows SDK
-      shell: cmd
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install windows-sdk-8.1
-
-    - uses: actions/setup-python@v2
-      name: Install Python
-      with:
-        python-version: '3.9'
-
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.3.1
+      uses: pypa/cibuildwheel@v2.16
       with:
         output-dir: wheelhouse
       env:
-        CIBW_BUILD: cp38-* cp39-* cp310-*
+        CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_TEST_REQUIRES: pytest torch numdifftools
-        CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests"
+        CIBW_TEST_COMMAND: "python -c \"from osqp import algebra_available; assert(algebra_available('builtin'))\""
 
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')
@@ -54,8 +39,7 @@ jobs:
         python -m build --sdist --outdir wheelhouse
 
     - name: Release to pypi
-      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-      if: ${{ false }}
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}

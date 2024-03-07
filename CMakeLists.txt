@@ -1,25 +1,31 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.15...3.26)
 project(ext)
 
+set(PYTHON "ON")
+set(OSQP_BUILD_UNITTESTS "OFF")
+set(OSQP_USE_LONG "OFF")
+set(OSQP_CUSTOM_PRINTING "${CMAKE_CURRENT_SOURCE_DIR}/cmake/printing.h")
+set(OSQP_CUSTOM_MEMORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/memory.h")
+set(OSQP_CODEGEN_INSTALL_DIR "osqp/codegen/codegen_src" CACHE PATH "" FORCE)
+
 include(FetchContent)
+
+find_package(pybind11 CONFIG REQUIRED)
+
 message(STATUS "Fetching/configuring OSQP")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG v1.0.0.beta1)
-
+  GIT_TAG vb/henryiii/skbuild
+)
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
-
-FetchContent_Declare(
-  pybind11
-  GIT_REPOSITORY https://github.com/pybind/pybind11.git)
-FetchContent_MakeAvailable(pybind11)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
                ${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp)
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} src/bindings.cpp)
+install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION . COMPONENT python)
 
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
 if(${OSQP_ALGEBRA_BACKEND} STREQUAL "builtin")

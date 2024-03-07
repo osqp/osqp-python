@@ -3,55 +3,35 @@ requires = ["scikit-build-core", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "osqp"
+name = "osqp-cuda"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
-readme = "README.rst"
 requires-python = ">=3.7"
 authors = [
     { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
     { name = "Goran Banjac" },
 ]
 dependencies = [
-    "jinja2",
-    "numpy>=1.7",
-    "qdldl",
-    "scipy>=0.13.2",
-    "setuptools",
+    "osqp>=1.0.0a0",
 ]
 
-[project.optional-dependencies]
-cuda = [
-    "osqp-cuda",
-]
-dev = [
-    "numdifftools",
-    "pre-commit",
-    "pytest>=6",
-    "torch",
-]
-mkl = [
-    "osqp-mkl",
-]
 
 [project.urls]
 Homepage = "https://osqp.org/"
 
 
 [tool.scikit-build]
-install.components = ["python", "codegen"]
+install.components = ["python"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 minimum-version = "0.8"
-wheel.install-dir = "osqp"
-sdist.include = ["src/osqp/_version.py"]
+cmake.source-dir = "../.."
 
 
 [tool.scikit-build.cmake.define]
-OSQP_ALGEBRA_BACKEND = "builtin"
-OSQP_EXT_MODULE_NAME = "ext_builtin"
-
-[tool.pytest.ini_options]
-testpaths = ["src/osqp/tests"]
+OSQP_ALGEBRA_BACKEND = "cuda"
+OSQP_EXT_MODULE_NAME = "osqp_cuda"
+CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"} 
+CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"} 
 
 [tool.setuptools_scm]
-write_to = "src/osqp/_version.py"
+root = "../.."
