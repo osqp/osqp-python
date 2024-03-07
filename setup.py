@@ -104,8 +104,9 @@ class CmdCMakeBuild(build_ext):
                 cmake_args += ['-A', 'x64']
             build_args += ['--', '/m']
         else:
-            cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j2']
+
+        cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
 
         if os.path.exists(self.build_temp):
             shutil.rmtree(self.build_temp)
