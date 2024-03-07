@@ -22,23 +22,8 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v1.0.2
-      if: startsWith(matrix.os, 'windows')
-
-    - name: Add Windows SDK
-      shell: cmd
-      if: startsWith(matrix.os, 'windows')
-      run: |
-        choco install windows-sdk-8.1
-
-    - uses: actions/setup-python@v2
-      name: Install Python
-      with:
-        python-version: '3.9'
-
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.3.1
+      uses: pypa/cibuildwheel@v2.16
       with:
         output-dir: wheelhouse
       env:
