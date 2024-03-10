@@ -24,11 +24,11 @@ jobs:
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
-      if: startsWith(matrix.os, 'windows')
+      if: runner.os == 'Windows'
 
     - name: Add Windows SDK
       shell: cmd
-      if: startsWith(matrix.os, 'windows')
+      if: runner.os == 'Windows'
       run: |
         choco install windows-sdk-8.1
 
