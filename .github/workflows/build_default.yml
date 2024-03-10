@@ -30,7 +30,7 @@ jobs:
         CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_TEST_REQUIRES: pytest torch numdifftools
-        CIBW_TEST_COMMAND: "python -c \"from osqp import algebra_available; assert(algebra_available('builtin'))\""
+        CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests"
 
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')

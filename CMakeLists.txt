@@ -6,7 +6,7 @@ set(OSQP_BUILD_UNITTESTS "OFF")
 set(OSQP_USE_LONG "OFF")
 set(OSQP_CUSTOM_PRINTING "${CMAKE_CURRENT_SOURCE_DIR}/cmake/printing.h")
 set(OSQP_CUSTOM_MEMORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/memory.h")
-set(OSQP_CODEGEN_INSTALL_DIR "osqp/codegen/codegen_src" CACHE PATH "" FORCE)
+set(OSQP_CODEGEN_INSTALL_DIR "codegen/codegen_src" CACHE PATH "" FORCE)
 
 include(FetchContent)
 
