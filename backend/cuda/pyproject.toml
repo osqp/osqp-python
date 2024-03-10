@@ -30,8 +30,8 @@ cmake.source-dir = "../.."
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "cuda"
 OSQP_EXT_MODULE_NAME = "osqp_cuda"
-CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"} 
-CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"} 
+CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"}
+CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"}
 
 [tool.setuptools_scm]
 root = "../.."
