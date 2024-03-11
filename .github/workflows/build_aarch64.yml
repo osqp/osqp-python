@@ -22,22 +22,15 @@ jobs:
       with:
         submodules: 'recursive'
 
-    - uses: actions/setup-python@v2
-      name: Install Python
-      with:
-        python-version: '3.9'
-
     - uses: docker/setup-qemu-action@v1
       name: Set up QEMU
 
     - name: Build wheels
-      run: |
-        python -m pip install --upgrade pip
-        python -m pip install --upgrade build
-        python -m pip install cibuildwheel
-        python -m cibuildwheel --output-dir wheelhouse
+      uses: pypa/cibuildwheel@v2.16
+      with:
+        output-dir: wheelhouse
       env:
-        CIBW_BUILD: cp38-* cp39-* cp310-*
+        CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_ARCHS_LINUX: aarch64
         CIBW_BEFORE_ALL: "yum -y update && yum install -y blas-devel lapack-devel"
@@ -46,8 +39,7 @@ jobs:
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
 
     - name: Release to pypi
-      # if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-      if: ${{ false }}
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
       env:
         TWINE_USERNAME: __token__
         TWINE_PASSWORD: ${{ secrets.pypi_password }}
