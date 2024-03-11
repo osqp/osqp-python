@@ -1,0 +1,34 @@
+[build-system]
+requires = ["scikit-build-core", "pybind11"]
+build-backend = "scikit_build_core.build"
+
+[project]
+name = "osqp-mkl"
+dynamic = ["version"]
+description = "OSQP: The Operator Splitting QP Solver"
+requires-python = ">=3.7"
+authors = [
+    { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
+    { name = "Goran Banjac" },
+]
+dependencies = [
+    "osqp>=1.0.0a0",
+]
+
+[project.urls]
+Homepage = "https://osqp.org/"
+
+
+[tool.scikit-build]
+install.components = ["python"]
+metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
+minimum-version = "0.8"
+cmake.source-dir = "../.."
+
+
+[tool.scikit-build.cmake.define]
+OSQP_ALGEBRA_BACKEND = "mkl"
+OSQP_EXT_MODULE_NAME = "osqp_mkl"
+
+[tool.setuptools_scm]
+root = "../.."
