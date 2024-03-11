@@ -115,15 +115,15 @@ def _OSQP_Fn(
             """
 
             def _get_update_flag(n_batch: int) -> bool:
-                    """
-                    This is a helper function that returns a flag if we need to update the solvers
-                    or generate them. Raises an RuntimeError if the number of solvers is invalid.
-                    """
-                    num_solvers = len(solvers)
-                    if num_solvers not in (0, n_batch):
-                        raise RuntimeError(f"Invalid number of solvers: expected 0 or {n_batch},"
-                                       f" but got {num_solvers}.")
-                    return num_solvers==n_batch
+                """
+                This is a helper function that returns a flag if we need to update the solvers
+                or generate them. Raises an RuntimeError if the number of solvers is invalid.
+                """
+                num_solvers = len(solvers)
+                if num_solvers not in (0, n_batch):
+                    raise RuntimeError(f"Invalid number of solvers: expected 0 or {n_batch},"
+                                                                    f" but got {num_solvers}.")
+                return num_solvers == n_batch
             
             def _inner_solve(i, update_flag, q, l, u, P_val, P_idx, A_val, A_idx, solver_type,
                              eps_abs, eps_rel):
@@ -135,13 +135,14 @@ def _OSQP_Fn(
                 # TODO: Cache solver object in between
                 # P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
                 if update_flag:
-                        solver = solvers[i]
-                        solver.update(q=q[i], l=l[i], u=u[i], Px=to_numpy(P_val[i]), Px_idx=P_idx,
-                                        Ax=to_numpy(A_val[i]), Ax_idx=A_idx)
+                    solver = solvers[i]
+                    solver.update(q=q[i], l=l[i], u=u[i], Px=to_numpy(P_val[i]), Px_idx=P_idx,
+                                                            Ax=to_numpy(A_val[i]), Ax_idx=A_idx)
                 else:
                     P = spa.csc_matrix((to_numpy(P_val[i]), P_idx), shape=P_shape)
                     A = spa.csc_matrix((to_numpy(A_val[i]), A_idx), shape=A_shape)
-                    solver = osqp.OSQP(algebra=algebra) #TODO: Deep copy when available
+                    # TODO: Deep copy when available
+                    solver = osqp.OSQP(algebra=algebra)
                     solver.setup(
                         P,
                         q[i],
@@ -162,7 +163,6 @@ def _OSQP_Fn(
 
                 return solver, result.x              
         
-
             params = [P_val, q_val, A_val, l_val, u_val]
 
             for p in params:
@@ -198,10 +198,10 @@ def _OSQP_Fn(
 
             update_flag = _get_update_flag(n_batch)
             n_jobs = multiprocessing.cpu_count()
-            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_inner_solve)(i=i,
-                update_flag=update_flag, q=q, l=l, u=u, P_val=P_val, P_idx=P_idx,
-                A_val=A_val, A_idx=A_idx, solver_type=solver_type, eps_abs=eps_abs,
-                eps_rel=eps_rel) for i in range(n_batch))
+            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_inner_solve)(i=i, update_flag=update_flag, q=q, l=l, u=u,
+                                                                                  P_val=P_val, P_idx=P_idx, A_val=A_val, A_idx=A_idx,
+                                                                                  solver_type=solver_type, eps_abs=eps_abs,
+                                                                                  eps_rel=eps_rel) for i in range(n_batch))
             solvers_loop, x = zip(*res)
             for i in range(n_batch):
                 if update_flag:
@@ -255,7 +255,8 @@ def _OSQP_Fn(
             du = torch.zeros((n_batch, m), dtype=dtype, device=device)
 
             n_jobs = multiprocessing.cpu_count()
-            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_loop_adjoint_derivative)(solvers[i], dl_dx[i]) for i in range(n_batch))
+            res = Parallel(n_jobs=n_jobs, prefer="threads")(delayed(_loop_adjoint_derivative)(solvers[i], dl_dx[i]) 
+                                                            for i in range(n_batch))
             dq_vec, dl_vec, du_vec, dP_vec, dA_vec = zip(*res)
             for i in range(n_batch):
                 dq[i] = dq_vec[i]
