@@ -1,8 +1,11 @@
 import numpy as np
 import scipy.sparse as spa
-import torch
-from torch.nn import Module
-from torch.autograd import Function
+try:
+    import torch
+    from torch.nn import Module
+    from torch.autograd import Function
+except ImportError as e:
+    print(f"Import Error: {e}")
 from joblib import Parallel, delayed
 import multiprocessing
 
