@@ -118,7 +118,7 @@ class PyOSQPSolver {
         OSQPInt update_data_mat(py::object, py::object, py::object, py::object);
         OSQPInt warm_start(py::object, py::object);
         OSQPInt solve();
-        OSQPInt adjoint_derivative_compute(py::object, py::object, py::object);
+        OSQPInt adjoint_derivative_compute(py::object, py::object);
         OSQPInt adjoint_derivative_get_mat(CSC&, CSC&);
         OSQPInt adjoint_derivative_get_vec(py::object, py::object, py::object);
 
@@ -290,6 +290,7 @@ OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::
         auto _dy_array = py::array_t<OSQPFloat>(dy);
         _dy = (OSQPFloat *)_dy_array.data();
     }
+
 
     return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy);
 }

@@ -433,7 +433,7 @@ class OSQP:
 
         return folder
 
-    def adjoint_derivative_compute(self, dx=None, dy_l=None, dy_u=None):
+    def adjoint_derivative_compute(self, dx=None, dy=None):
         """
         Compute adjoint derivative after solve.
         """
@@ -450,12 +450,10 @@ class OSQP:
         if results.info.status != 'solved':
             raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
-        if dy_u is None:
-            dy_u = np.zeros(self.m)
-        if dy_l is None:
-            dy_l = np.zeros(self.m)
+        if dy is None:
+            dy = np.zeros(self.m)
 
-        self._solver.adjoint_derivative_compute(dx, dy_l, dy_u)
+        self._solver.adjoint_derivative_compute(dx, dy)
 
     def adjoint_derivative_get_mat(self, as_dense=True, dP_as_triu=True):
         """
