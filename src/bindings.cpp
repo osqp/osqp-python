@@ -291,7 +291,7 @@ OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::
         _dy = (OSQPFloat *)_dy_array.data();
     }
 
-    return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy, _dy);
+    return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy);
 }
 
 OSQPInt PyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
@@ -480,7 +480,7 @@ PYBIND11_MODULE(ext_builtin, m) {
     .def("update_rho", &PyOSQPSolver::update_rho)
     .def("get_settings", &PyOSQPSolver::get_settings, py::return_value_policy::reference)
 
-    .def("adjoint_derivative_compute", &PyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true))
+    .def("adjoint_derivative_compute", &PyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy"_a.none(true))
     .def("adjoint_derivative_get_mat", &PyOSQPSolver::adjoint_derivative_get_mat, "dP"_a, "dA"_a)
     .def("adjoint_derivative_get_vec", &PyOSQPSolver::adjoint_derivative_get_vec, "dq"_a, "dl"_a, "du"_a)
 
