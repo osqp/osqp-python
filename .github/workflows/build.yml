@@ -9,7 +9,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022]
+        # Include macos-13 to get Intel x86_64 macs and maos-latest to get the Aaarch64 macs
+        os: [ubuntu-latest, macos-latest, macos-13, windows-2022]
+
+        # Build on the native architectures (macos-latest is arm64. macos-13 is x86_64)
+        include:
+        - os: macos-latest
+          osx_arch: 'arm64'
+        - os: macos-13
+          osx_arch: 'x86_64'
 
     steps:
     - uses: actions/checkout@master
@@ -38,9 +46,13 @@ jobs:
         python -m pip install cibuildwheel
         python -m cibuildwheel --output-dir wheelhouse
       env:
+        CIBW_BUILD: "cp3*"
+        # Skip testing on arm64 Python 3.8 because it uses the x86_64 executable, not the arm executable
+        CIBW_TEST_SKIP: "cp38-macosx_*:arm64"
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
-        CIBW_ENVIRONMENT_MACOS: CMAKE_GENERATOR="Unix Makefiles"
+        CIBW_ENVIRONMENT_MACOS: CMAKE_GENERATOR="Unix Makefiles" CMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}
         CIBW_ENVIRONMENT_WINDOWS: CMAKE_GENERATOR="Visual Studio 17 2022" CMAKE_GENERATOR_PLATFORM=x64
+        CIBW_BUILD_VERBOSITY: 1
 
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')

@@ -41,7 +41,7 @@ if OSQP_ARG_MARK in sys.argv:
 
 cmake_args = []
 # What variables from the environment do we wish to pass on to cmake as variables?
-cmake_env_vars = ('CMAKE_GENERATOR', 'CMAKE_GENERATOR_PLATFORM')
+cmake_env_vars = ('CMAKE_GENERATOR', 'CMAKE_GENERATOR_PLATFORM', 'CMAKE_OSX_ARCHITECTURES')
 for cmake_env_var in cmake_env_vars:
     cmake_var = os.environ.get(cmake_env_var)
     if cmake_var:
