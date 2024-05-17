@@ -36,7 +36,7 @@ jobs:
         package-dir: backend/cuda
         output-dir: wheelhouse
       env:
-        CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
+        CIBW_BUILD: "cp3?-*"
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_* *-macosx_*"
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
         CIBW_BUILD_VERBOSITY: 1
