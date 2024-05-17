@@ -53,6 +53,7 @@ sdist.include = ["src/osqp/_version.py"]
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "builtin"
 OSQP_EXT_MODULE_NAME = "ext_builtin"
+CMAKE_OSX_ARCHITECTURES = {env="CMAKE_OSX_ARCHITECTURES"}
 
 [tool.pytest.ini_options]
 testpaths = ["src/osqp/tests"]

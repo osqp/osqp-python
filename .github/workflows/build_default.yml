@@ -15,7 +15,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-2022]
+        # Include macos-13 to get Intel x86_64 macs and maos-latest to get the Aaarch64 macs
+        os: [ubuntu-latest, macos-latest, macos-13, windows-2022]
+
+        # Build on the native architectures (macos-latest is arm64. macos-13 is x86_64)
+        include:
+        - os: macos-latest
+          osx_arch: 'arm64'
+        - os: macos-13
+          osx_arch: 'x86_64'
 
     steps:
     - uses: actions/checkout@master
@@ -29,6 +37,7 @@ jobs:
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
         CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests -k \"not codegen\""
+        CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}
 
     - name: Build source
       if: runner.os == 'Linux'
