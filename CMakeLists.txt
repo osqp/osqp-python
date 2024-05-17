@@ -8,6 +8,10 @@ set(OSQP_CUSTOM_PRINTING "${CMAKE_CURRENT_SOURCE_DIR}/cmake/printing.h")
 set(OSQP_CUSTOM_MEMORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/memory.h")
 set(OSQP_CODEGEN_INSTALL_DIR "codegen/codegen_src" CACHE PATH "" FORCE)
 
+if(APPLE)
+    message(STATUS "Building for Apple arches: ${CMAKE_OSX_ARCHITECTURES}")
+endif()
+
 include(FetchContent)
 
 find_package(pybind11 CONFIG REQUIRED)

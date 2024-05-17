@@ -37,6 +37,7 @@ jobs:
         CIBW_TEST_REQUIRES: "pytest torch numdifftools"
         CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests"
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
+        CIBW_BUILD_VERBOSITY: 1
 
     - name: Release to pypi
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')

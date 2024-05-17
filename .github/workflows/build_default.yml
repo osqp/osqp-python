@@ -38,6 +38,7 @@ jobs:
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
         CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests -k \"not codegen\""
         CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}
+        CIBW_BUILD_VERBOSITY: 1
 
     - name: Build source
       if: runner.os == 'Linux'
