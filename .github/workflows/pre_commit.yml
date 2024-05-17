@@ -2,9 +2,13 @@ name: Pre-commit checks
 
 on:
   push:
-    branches: [ master, develop* ]
+    # Run this workflow on all branches because it is good to flag these errors
+    # and this workflow is "cheap"
+    branches:
+      - '*'
   pull_request:
-    branches: [ master, develop* ]
+    branches:
+      - master
 
 jobs:
   precommit:
