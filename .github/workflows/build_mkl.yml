@@ -46,7 +46,20 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
 
     - name: Upload artifacts to github
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-${{ matrix.os }}
         path: ./wheelhouse
+
+
+  merge_wheels:
+    name: Merge wheel artifacts from build_wheels OS matrix jobs
+    runs-on: ubuntu-latest
+    needs: build_wheels
+    steps:
+      - name: Merge artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          delete-merged: true
