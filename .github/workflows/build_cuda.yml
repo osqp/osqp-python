@@ -2,11 +2,13 @@ name: Build CUDA
 
 on:
   push:
-    branches: [ master, develop* ]
+    branches:
+      - master
     tags:
       - '*'
   pull_request:
-    branches: [ master, develop* ]
+    branches:
+      - master
 
 jobs:
   build_wheels:
@@ -36,9 +38,10 @@ jobs:
         package-dir: backend/cuda
         output-dir: wheelhouse
       env:
-        CIBW_BUILD: cp38-* cp39-* cp310-* cp311-* cp312-*
+        CIBW_BUILD: "cp3?-*"
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_* *-macosx_*"
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
+        CIBW_BUILD_VERBOSITY: 1
 
         CIBW_ENVIRONMENT_LINUX: CMAKE_CUDA_COMPILER=/usr/local/cuda-11.7/bin/nvcc
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
@@ -49,7 +52,20 @@ jobs:
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
 
     - name: Upload artifacts to github
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-${{ matrix.os }}
         path: ./wheelhouse
+
+
+  merge_wheels:
+    name: Merge wheel artifacts from build_wheels OS matrix jobs
+    runs-on: ubuntu-latest
+    needs: build_wheels
+    steps:
+      - name: Merge artifacts
+        uses: actions/upload-artifact/merge@v4
+        with:
+          name: wheels
+          pattern: wheels-*
+          delete-merged: true
