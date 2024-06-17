@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.17
+      uses: pypa/cibuildwheel@v2.19
       with:
         package-dir: backend/mkl
         output-dir: wheelhouse
