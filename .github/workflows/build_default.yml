@@ -11,24 +11,56 @@ on:
       - master
 
 jobs:
+  build_sdist:
+    name: Build source
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+    - uses: actions/checkout@master
+      with:
+        submodules: 'recursive'
+
+    - name: Build source
+      run: |
+        python -m pip install build
+        python -m build --sdist --outdir=wheelhouse
+
+    - name: Upload sdist to github
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-sdist
+        path: wheelhouse/*.tar.gz
+        if-no-files-found: error
+
   build_wheels:
-    name: Build wheel on ${{ matrix.os }}
+    name: Build wheel on ${{ matrix.os }} for ${{ matrix.cibw_archs }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        # Include macos-13 to get Intel x86_64 macs and maos-latest to get the Aaarch64 macs
-        os: [ubuntu-latest, macos-latest, macos-13, windows-2022]
-
-        # Build on the native architectures (macos-latest is arm64. macos-13 is x86_64)
         include:
-        - os: macos-latest
-          osx_arch: 'arm64'
-        - os: macos-13
-          osx_arch: 'x86_64'
+          - os: ubuntu-latest
+            cibw_archs: "x86_64"
+          - os: ubuntu-latest
+            cibw_archs: "aarch64"
+          - os: windows-2022
+            cibw_archs: "auto64"
+          # Include macos-13 to get Intel x86_64 macs and maos-latest to get the Aaarch64 macs
+          - os: macos-13
+            cibw_archs: "x86_64"
+          - os: macos-latest
+            cibw_archs: "arm64"
 
     steps:
     - uses: actions/checkout@master
+
+    # This might not be necessary once ARM runners become available for general use
+    - name: Set up QEMU
+      if: matrix.cibw_archs == 'aarch64'
+      uses: docker/setup-qemu-action@v3
+      with:
+        platforms: arm64
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.19
@@ -37,42 +69,43 @@ jobs:
       env:
         CIBW_BUILD: "cp3?-*"
         CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
+        # Clean the build directory between builds
+        CIBW_BEFORE_BUILD: >-
+          rm -rf {package}/osqp_sources/build
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
         CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests -k \"not codegen\""
-        CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}
+        CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.cibw_archs }}
         CIBW_BUILD_VERBOSITY: 1
-
-    - name: Build source
-      if: runner.os == 'Linux'
-      run: |
-        python -m pip install --upgrade build
-        python -m build --sdist --outdir wheelhouse
-
-    - name: Release to pypi
-      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-      env:
-        TWINE_USERNAME: __token__
-        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-        TWINE_REPOSITORY: testpypi
-      run: |
-        python -m pip install --upgrade twine
-        twine upload wheelhouse/*
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.os }}
-        path: ./wheelhouse
+        name: wheels-${{ runner.os }}-${{ matrix.cibw_archs }}
+        path: ./wheelhouse/*.whl
+        if-no-files-found: error
 
-
-  merge_wheels:
-    name: Merge wheel artifacts from build_wheels OS matrix jobs
+  publish_to_pypi:
+    name: Publish wheels to PyPi
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
-    needs: build_wheels
     steps:
-      - name: Merge artifacts
-        uses: actions/upload-artifact/merge@v4
+      - name: Download packages
+        uses: actions/download-artifact@v4
         with:
-          name: wheels
           pattern: wheels-*
-          delete-merged: true
+          path: dist
+          merge-multiple: true
+
+      - name: Print out packages
+        run: ls -la dist/*
+
+      - name: Upload wheels to pypi
+        env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        TWINE_REPOSITORY: testpypi
+        run: |
+          python -m pip install --upgrade twine
+          twine upload dist/*
+

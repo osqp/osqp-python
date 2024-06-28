@@ -43,6 +43,10 @@ jobs:
         CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
         CIBW_BUILD_VERBOSITY: 1
 
+        # Clean the build directory between builds
+        CIBW_BEFORE_BUILD: >-
+          rm -rf {package}/osqp_sources/build
+
         CIBW_ENVIRONMENT_LINUX: CMAKE_CUDA_COMPILER=/usr/local/cuda-11.7/bin/nvcc
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
         CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
@@ -54,18 +58,6 @@ jobs:
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.os }}
+        name: wheels-cuda-${{ matrix.os }}
         path: ./wheelhouse
 
-
-  merge_wheels:
-    name: Merge wheel artifacts from build_wheels OS matrix jobs
-    runs-on: ubuntu-latest
-    needs: build_wheels
-    steps:
-      - name: Merge artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: wheels
-          pattern: wheels-*
-          delete-merged: true
