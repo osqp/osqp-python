@@ -7,7 +7,7 @@ name = "osqp"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
     { name = "Goran Banjac" },
