@@ -47,7 +47,7 @@ class derivative_tests(unittest.TestCase):
 
         return [P, q, A, l, u, true_x, true_yl, true_yu]
 
-    def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
+    def get_grads(self, P, q, A, l, u, true_x, true_y=None, mode='qdldl'):
         # Get gradients by solving with osqp
         m = osqp.OSQP(algebra='builtin')
         m.setup(
@@ -66,12 +66,10 @@ class derivative_tests(unittest.TestCase):
             raise ValueError('Problem not solved!')
         x = results.x
         y = results.y
-        yl = -np.minimum(y, 0)
-        yu = np.maximum(y, 0)
-        if true_yl is None and true_yu is None:
+        if true_y is None:
             m.adjoint_derivative_compute(dx=x - true_x)
         else:
-            m.adjoint_derivative_compute(dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
+            m.adjoint_derivative_compute(dx=x - true_x, dy=y - true_y)
 
         dP, dA = m.adjoint_derivative_get_mat()
         dq, dl, du = m.adjoint_derivative_get_vec()

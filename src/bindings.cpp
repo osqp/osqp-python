@@ -314,7 +314,7 @@ OSQPInt PyOSQPSolver::codegen(const char *output_dir, const char *file_prefix, O
     return osqp_codegen(this->_solver, output_dir, file_prefix, &defines);
 }
 
-PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
+PYBIND11_MODULE(ext_builtin, m) {
 
 #ifdef OSQP_USE_FLOAT
     m.attr("OSQP_USE_FLOAT") = 1;
