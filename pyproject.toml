@@ -32,7 +32,6 @@ cuda = [
     "osqp-cuda",
 ]
 dev = [
-    "numdifftools",
     "pre-commit",
     "pytest>=6",
     "torch",

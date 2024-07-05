@@ -1,9 +1,9 @@
 import numpy.random as npr
 import numpy as np
 import torch
-import numdifftools as nd
 import numpy.testing as npt
 import scipy.sparse as spa
+from scipy.optimize import approx_fprime
 import pytest
 
 import osqp
@@ -101,7 +101,7 @@ def test_dl_dp(algebra, solver_type, atol, rtol, decimal_tol):
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dq_fd = nd.Gradient(f)(q)
+    dq_fd = approx_fprime(q, f)
     if verbose:
         print('dq_fd: ', np.round(dq_fd, decimals=4))
         print('dq: ', np.round(dq, decimals=4))

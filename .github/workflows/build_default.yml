@@ -72,7 +72,7 @@ jobs:
         # Clean the build directory between builds
         CIBW_BEFORE_BUILD: >-
           rm -rf {package}/osqp_sources/build
-        CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools
+        CIBW_TEST_REQUIRES: setuptools pytest torch
         CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests -k \"not codegen\""
         CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.cibw_archs }}
         CIBW_BUILD_VERBOSITY: 1
