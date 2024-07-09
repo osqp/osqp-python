@@ -11,7 +11,7 @@ from osqp.nn.torch import OSQP
 
 ATOL = 1e-2
 RTOL = 1e-4
-EPS = 1e-5
+EPS  = 1e-5
 
 cuda = False
 verbose = True
@@ -79,7 +79,7 @@ def get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type):
     return grads
 
 
-def test_dl_dq(algebra, solver_type):
+def test_dl_dq(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
@@ -109,7 +109,7 @@ def test_dl_dq(algebra, solver_type):
     npt.assert_allclose(dq_fd, dq, rtol=RTOL, atol=ATOL)
 
 
-def test_dl_dP(algebra, solver_type):
+def test_dl_dP(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
@@ -139,7 +139,7 @@ def test_dl_dP(algebra, solver_type):
     npt.assert_allclose(dP_fd, dP, rtol=RTOL, atol=ATOL)
 
 
-def test_dl_dA(algebra, solver_type):
+def test_dl_dA(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
@@ -169,7 +169,7 @@ def test_dl_dA(algebra, solver_type):
     npt.assert_allclose(dA_fd, dA, rtol=RTOL, atol=ATOL)
 
 
-def test_dl_dl(algebra, solver_type):
+def test_dl_dl(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
@@ -199,7 +199,7 @@ def test_dl_dl(algebra, solver_type):
     npt.assert_allclose(dl_fd, dl, rtol=RTOL, atol=ATOL)
 
 
-def test_dl_du(algebra, solver_type):
+def test_dl_du(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
