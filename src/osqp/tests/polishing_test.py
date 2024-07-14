@@ -1,5 +1,6 @@
 from types import SimpleNamespace
 import numpy as np
+import scipy as sp
 from scipy import sparse
 import pytest
 import numpy.testing as nptest
@@ -80,9 +81,12 @@ def test_polish_random(self):
     self.n = 30
     self.m = 50
     Pt = sparse.random(self.n, self.n)
+    if sp.__version__[:5] == "1.12.":
+        Pt = Pt.T
     self.P = Pt.T @ Pt
     self.q = np.random.randn(self.n)
     self.A = sparse.csc_matrix(np.random.randn(self.m, self.n))
+
     self.l = -3 + np.random.randn(self.m)
     self.u = 3 + np.random.randn(self.m)
     model = osqp.OSQP(algebra=self.model.algebra)

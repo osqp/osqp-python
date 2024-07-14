@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 import osqp
 import numpy as np
+import scipy as sp
 from scipy import sparse
 import pytest
 import numpy.testing as nptest
@@ -18,6 +19,8 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
     self.P = sparse.csc_matrix((self.n, self.n))
     self.q = np.zeros(self.n)
     self.A = sparse.random(self.m, self.n, density=1.0, format='csc')
+    if sp.__version__[:5] == "1.12.":
+        self.A = self.A.T
     self.u = np.random.rand(self.m)
     self.l = self.u
     self.opts = {
