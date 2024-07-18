@@ -126,13 +126,14 @@ def test_dl_dP(algebra, solver_type, atol, rtol, decimal_tol):
     )
 
     def f(P):
+        P = P.reshape(n,n)
         model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
         res = model.solve()
         x_hat = res.x
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dP_fd = approx_fprime(P, f, epsilon=EPS)
+    dP_fd = approx_fprime(P.ravel(), f, epsilon=EPS)
     if verbose:
         print('dP_fd: ', np.round(dP_fd, decimals=4))
         print('dP: ', np.round(dP, decimals=4))
@@ -156,13 +157,14 @@ def test_dl_dA(algebra, solver_type, atol, rtol, decimal_tol):
     )
 
     def f(A):
+        A = A.reshape((m,n))
         model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
         res = model.solve()
         x_hat = res.x
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dA_fd = approx_fprime(A, f, epsilon=EPS)
+    dA_fd = approx_fprime(A.ravel(), f, epsilon=EPS)
     if verbose:
         print('dA_fd: ', np.round(dA_fd, decimals=4))
         print('dA: ', np.round(dA, decimals=4))
