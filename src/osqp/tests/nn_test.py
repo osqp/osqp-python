@@ -127,6 +127,7 @@ def test_dl_dP(algebra, solver_type, atol, rtol, decimal_tol):
 
     def f(P):
         P = P.reshape(n,n)
+        P = spa.csc_matrix(P)
         model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
         res = model.solve()
         x_hat = res.x
@@ -158,6 +159,7 @@ def test_dl_dA(algebra, solver_type, atol, rtol, decimal_tol):
 
     def f(A):
         A = A.reshape((m,n))
+        A = spa.csc_matrix(A)
         model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
         res = model.solve()
         x_hat = res.x
