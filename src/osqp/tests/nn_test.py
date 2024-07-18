@@ -133,7 +133,7 @@ def test_dl_dP(algebra, solver_type, atol, rtol, decimal_tol):
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dP_fd = approx_fprime(P.ravel(), f, epsilon=EPS)
+    dP_fd = approx_fprime(P.tolil().reshape((1,n*n)), f, epsilon=EPS)
     if verbose:
         print('dP_fd: ', np.round(dP_fd, decimals=4))
         print('dP: ', np.round(dP, decimals=4))
@@ -164,7 +164,7 @@ def test_dl_dA(algebra, solver_type, atol, rtol, decimal_tol):
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dA_fd = approx_fprime(A.ravel(), f, epsilon=EPS)
+    dA_fd = approx_fprime(A.tolil().reshape((1,m*n)), f, epsilon=EPS)
     if verbose:
         print('dA_fd: ', np.round(dA_fd, decimals=4))
         print('dA: ', np.round(dA, decimals=4))
