@@ -56,6 +56,7 @@ jobs:
         CIBW_ENVIRONMENT_MACOS: CMAKE_GENERATOR="Unix Makefiles" CMAKE_OSX_ARCHITECTURES=${{ matrix.osx_arch }}
         CIBW_ENVIRONMENT_WINDOWS: CMAKE_GENERATOR="Visual Studio 17 2022" CMAKE_GENERATOR_PLATFORM=x64
         CIBW_BUILD_VERBOSITY: 1
+        CIBW_TEST_EXTRAS: "dev"
 
     - name: Build source
       if: startsWith(matrix.os, 'ubuntu')
