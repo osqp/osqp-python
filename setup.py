@@ -265,7 +265,6 @@ setup(name='osqp',
       package_dir={'': 'src'},
       include_package_data=True,  # Include package data from MANIFEST.in
       install_requires=requirements,
-      license='Apache 2.0',
       url="https://osqp.org/",
       cmdclass={'build_ext': build_ext_osqp},
       packages=find_namespace_packages(where='src'),

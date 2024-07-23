@@ -32,8 +32,10 @@ jobs:
         python -m cibuildwheel --output-dir wheelhouse
       env:
         CIBW_ARCHS_LINUX: aarch64
-        CIBW_BEFORE_ALL: "yum -y update && yum install -y blas-devel lapack-devel suitesparse-devel"
+        CIBW_BEFORE_ALL: "rm -rf {package}/osqp_sources/build && yum -y update && yum install -y blas-devel lapack-devel suitesparse-devel"
         CIBW_ENVIRONMENT_LINUX: CMAKE_GENERATOR="Unix Makefiles"
+        CIBW_BUILD_VERBOSITY: 1
+        CIBW_TEST_EXTRAS: dev
 
     - name: Release to pypi
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
