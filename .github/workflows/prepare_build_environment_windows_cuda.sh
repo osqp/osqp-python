@@ -3,6 +3,6 @@
 set -e
 set -x
 
-curl -s -L -nv -o cuda.exe https://developer.download.nvidia.com/compute/cuda/11.6.1/local_installers/cuda_11.6.1_511.65_windows.exe
-./cuda.exe -s nvcc_11.6 cudart_11.6 cublas_dev_11.6 curand_dev_11.6 cusparse_dev_11.6 thrust_11.6 visual_studio_integration_11.6
+curl -s -L -nv -o cuda.exe https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.85_windows.exe
+./cuda.exe -s nvcc_12.5 cudart_12.5 cublas_dev_12.5 curand_dev_12.5 cusparse_dev_12.5 thrust_12.5 visual_studio_integration_12.5
 rm cuda.exe

@@ -46,11 +46,11 @@ jobs:
         CIBW_BEFORE_BUILD: >-
           rm -rf {package}/osqp_sources/build
 
-        CIBW_ENVIRONMENT_LINUX: CMAKE_CUDA_COMPILER=/usr/local/cuda-11.7/bin/nvcc
+        CIBW_ENVIRONMENT_LINUX: CMAKE_CUDA_COMPILER=/usr/local/cuda-12.4/bin/nvcc
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
         CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
 
-        CIBW_ENVIRONMENT_WINDOWS: CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6/bin/nvcc.exe" CUDA_TOOLKIT_ROOT_DIR="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6" CMAKE_GENERATOR_TOOLSET="cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v11.6"
+        CIBW_ENVIRONMENT_WINDOWS: CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/bin/nvcc.exe" CUDA_TOOLKIT_ROOT_DIR="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5" CMAKE_GENERATOR_TOOLSET="cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5"
         CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_cuda.sh
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
 
