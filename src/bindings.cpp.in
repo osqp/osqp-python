@@ -118,7 +118,7 @@ class PyOSQPSolver {
         OSQPInt update_data_mat(py::object, py::object, py::object, py::object);
         OSQPInt warm_start(py::object, py::object);
         OSQPInt solve();
-        OSQPInt adjoint_derivative_compute(py::object, py::object, py::object);
+        OSQPInt adjoint_derivative_compute(py::object, py::object);
         OSQPInt adjoint_derivative_get_mat(CSC&, CSC&);
         OSQPInt adjoint_derivative_get_vec(py::object, py::object, py::object);
 
@@ -273,10 +273,9 @@ OSQPInt PyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
-OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy_l, const py::object dy_u) {
+OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy) {
     OSQPFloat* _dx;
-    OSQPFloat* _dy_l;
-    OSQPFloat* _dy_u;
+    OSQPFloat* _dy;
 
     if (dx.is_none()) {
         _dx = NULL;
@@ -285,21 +284,15 @@ OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::
         _dx = (OSQPFloat *)_dx_array.data();
     }
 
-    if (dy_l.is_none()) {
-        _dy_l = NULL;
+    if (dy.is_none()) {
+        _dy = NULL;
     } else {
-        auto _dy_l_array = py::array_t<OSQPFloat>(dy_l);
-        _dy_l = (OSQPFloat *)_dy_l_array.data();
+        auto _dy_array = py::array_t<OSQPFloat>(dy);
+        _dy = (OSQPFloat *)_dy_array.data();
     }
 
-    if (dy_u.is_none()) {
-        _dy_u = NULL;
-    } else {
-        auto _dy_u_array = py::array_t<OSQPFloat>(dy_u);
-        _dy_u = (OSQPFloat *)_dy_u_array.data();
-    }
 
-    return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy_l, _dy_u);
+    return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy);
 
 }
 
@@ -486,7 +479,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def("update_rho", &PyOSQPSolver::update_rho)
     .def("get_settings", &PyOSQPSolver::get_settings, py::return_value_policy::reference)
 
-    .def("adjoint_derivative_compute", &PyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy_l"_a.none(true), "dy_u"_a.none(true))
+    .def("adjoint_derivative_compute", &PyOSQPSolver::adjoint_derivative_compute, "dx"_a.none(true), "dy"_a.none(true))
     .def("adjoint_derivative_get_mat", &PyOSQPSolver::adjoint_derivative_get_mat, "dP"_a, "dA"_a)
     .def("adjoint_derivative_get_vec", &PyOSQPSolver::adjoint_derivative_get_vec, "dq"_a, "dl"_a, "du"_a)
 

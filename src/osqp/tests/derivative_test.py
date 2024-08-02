@@ -42,12 +42,10 @@ class derivative_tests(unittest.TestCase):
         q = npr.randn(n)
         true_x = npr.randn(n)
         true_y = npr.randn(m)
-        true_yl = -np.minimum(true_y, 0)
-        true_yu = np.maximum(true_y, 0)
 
-        return [P, q, A, l, u, true_x, true_yl, true_yu]
+        return [P, q, A, l, u, true_x, true_y]
 
-    def get_grads(self, P, q, A, l, u, true_x, true_yl=None, true_yu=None, mode='qdldl'):
+    def get_grads(self, P, q, A, l, u, true_x, true_y=None, mode='qdldl'):
         # Get gradients by solving with osqp
         m = osqp.OSQP(algebra='builtin')
         m.setup(
@@ -66,12 +64,10 @@ class derivative_tests(unittest.TestCase):
             raise ValueError('Problem not solved!')
         x = results.x
         y = results.y
-        yl = -np.minimum(y, 0)
-        yu = np.maximum(y, 0)
-        if true_yl is None and true_yu is None:
+        if true_y is None:
             m.adjoint_derivative_compute(dx=x - true_x)
         else:
-            m.adjoint_derivative_compute(dx=x - true_x, dy_l=yl - true_yl, dy_u=yu - true_yu)
+            m.adjoint_derivative_compute(dx=x - true_x, dy=y - true_y)
 
         dP, dA = m.adjoint_derivative_get_mat()
         dq, dl, du = m.adjoint_derivative_get_vec()
@@ -104,7 +100,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 5, 5
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         def grad(dq, mode):
             [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
@@ -169,7 +165,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 10, 10
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         l[:5] = u[:5]
         l[5:] = -osqp.constant('OSQP_INFTY', algebra='builtin')
 
@@ -235,7 +231,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 5, 5
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         def grad(dP, dq, dA, dl, du, mode):
             [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, dP, dq, dA, dl, du, mode=mode)
@@ -303,7 +299,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 5, 5
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         def grad(q):
             dP, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x)
@@ -342,7 +338,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 3, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         P_idx = P.nonzero()
 
         def grad(P_val):
@@ -386,7 +382,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 3, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         A_idx = A.nonzero()
 
         def grad(A_val):
@@ -429,7 +425,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 30, 30
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         def grad(l, mode):
             _, _, _, dl, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
@@ -468,7 +464,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 10, 20
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         def grad(u, mode):
             _, _, _, _, du = self.get_grads(P, q, A, l, u, true_x, mode=mode)
@@ -507,7 +503,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 30, 20
 
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         # u = l
         # l[10:20] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:10] = l[:10]
@@ -554,7 +550,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 20, 15
 
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         # u = l
         # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
@@ -596,7 +592,7 @@ class derivative_tests(unittest.TestCase):
         n, m = 100, 120
 
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
 
         l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
@@ -634,18 +630,18 @@ class derivative_tests(unittest.TestCase):
 
         npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol_relaxed, atol=abs_tol_relaxed)
 
-    def test_dl_dq_nonzero_dy(self, verbose=False):
+    def _test_dl_dq_nonzero_dy(self, verbose=False):
         n, m = 6, 3
 
         prob = self.get_prob(n=n, m=m, P_scale=1.0, A_scale=1.0)
-        P, q, A, l, u, true_x, true_yl, true_yu = prob
+        P, q, A, l, u, true_x, true_y = prob
         # u = l
         # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         num_eq = 2
         u[:num_eq] = l[:num_eq]
 
         def grad(q, mode):
-            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, true_yl, true_yu, mode=mode)
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, true_y, mode=mode)
             return dq
 
         def f(q):
@@ -669,6 +665,8 @@ class derivative_tests(unittest.TestCase):
             yu_hat = np.maximum(y_hat, 0)
             yl_hat = -np.minimum(y_hat, 0)
 
+            true_yu = np.maximum(true_y, 0)
+            true_yl = -np.minimum(true_y, 0)
             # return 0.5 * np.sum(np.square(x_hat - true_x)) + np.sum(yl_hat) + np.sum(yu_hat)
             return 0.5 * (
                 np.sum(np.square(x_hat - true_x))

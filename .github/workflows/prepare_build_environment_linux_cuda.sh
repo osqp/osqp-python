@@ -3,9 +3,7 @@
 set -e
 set -x
 
-# Install CUDA 11.2, see:
-# * https://gitlab.com/nvidia/container-images/cuda/-/blob/master/dist/11.2.2/centos7-x86_64/base/Dockerfile
 yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo
-yum install -y cuda-toolkit-11-7
+yum install -y cuda-toolkit-12-4
 
-/usr/local/cuda-11.7/bin/nvcc --version
+/usr/local/cuda-12.4/bin/nvcc --version

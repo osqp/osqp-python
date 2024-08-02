@@ -30,10 +30,13 @@ jobs:
         package-dir: backend/mkl
         output-dir: wheelhouse
       env:
-        CIBW_BUILD: "cp3?-*"
-        CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
-        CIBW_TEST_REQUIRES: setuptools pytest torch numdifftools mkl mkl-devel
+        CIBW_BUILD: "cp3*"
+        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_*"
         CIBW_BUILD_VERBOSITY: 1
+
+        # Clean the build directory between builds
+        CIBW_BEFORE_BUILD: >-
+          rm -rf {package}/osqp_sources/build
 
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh
         CIBW_ENVIRONMENT_LINUX: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
@@ -50,18 +53,5 @@ jobs:
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-${{ matrix.os }}
+        name: wheels-mkl-${{ matrix.os }}
         path: ./wheelhouse
-
-
-  merge_wheels:
-    name: Merge wheel artifacts from build_wheels OS matrix jobs
-    runs-on: ubuntu-latest
-    needs: build_wheels
-    steps:
-      - name: Merge artifacts
-        uses: actions/upload-artifact/merge@v4
-        with:
-          name: wheels
-          pattern: wheels-*
-          delete-merged: true

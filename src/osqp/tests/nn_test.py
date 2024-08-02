@@ -1,9 +1,9 @@
 import numpy.random as npr
 import numpy as np
 import torch
-import numdifftools as nd
 import numpy.testing as npt
 import scipy.sparse as spa
+from scipy.optimize import approx_fprime
 import pytest
 
 import osqp
@@ -11,6 +11,7 @@ from osqp.nn.torch import OSQP
 
 ATOL = 1e-2
 RTOL = 1e-4
+EPS = 1e-5
 
 cuda = False
 verbose = True
@@ -78,7 +79,7 @@ def get_grads_torch(P, q, A, l, u, true_x, algebra, solver_type):
     return grads
 
 
-def test_dl_dp(algebra, solver_type, atol, rtol, decimal_tol):
+def test_dl_dq(algebra, solver_type, atol, rtol, decimal_tol):
     n, m = 5, 5
 
     model = osqp.OSQP(algebra=algebra)
@@ -101,8 +102,132 @@ def test_dl_dp(algebra, solver_type, atol, rtol, decimal_tol):
 
         return 0.5 * np.sum(np.square(x_hat - true_x))
 
-    dq_fd = nd.Gradient(f)(q)
+    dq_fd = approx_fprime(q, f, epsilon=EPS)
     if verbose:
         print('dq_fd: ', np.round(dq_fd, decimals=4))
         print('dq: ', np.round(dq, decimals=4))
     npt.assert_allclose(dq_fd, dq, rtol=RTOL, atol=ATOL)
+
+
+def test_dl_dP(algebra, solver_type, atol, rtol, decimal_tol):
+    n, m = 5, 5
+
+    model = osqp.OSQP(algebra=algebra)
+    if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+        pytest.skip('No derivatives capability')
+
+    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
+    )
+
+    def f(P):
+        P = P.reshape(n, n)
+        P = spa.csc_matrix(P)
+        model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
+        res = model.solve()
+        x_hat = res.x
+
+        return 0.5 * np.sum(np.square(x_hat - true_x))
+
+    dP_fd = approx_fprime(P.toarray().flatten(), f, epsilon=EPS)
+    if verbose:
+        print('dP_fd: ', np.round(dP_fd, decimals=4))
+        print('dP: ', np.round(dP, decimals=4))
+    npt.assert_allclose(dP_fd, dP, rtol=RTOL, atol=ATOL)
+
+
+def test_dl_dA(algebra, solver_type, atol, rtol, decimal_tol):
+    n, m = 5, 5
+
+    model = osqp.OSQP(algebra=algebra)
+    if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+        pytest.skip('No derivatives capability')
+
+    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
+    )
+
+    def f(A):
+        A = A.reshape((m, n))
+        A = spa.csc_matrix(A)
+        model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
+        res = model.solve()
+        x_hat = res.x
+
+        return 0.5 * np.sum(np.square(x_hat - true_x))
+
+    dA_fd = approx_fprime(A.toarray().flatten(), f, epsilon=EPS)
+    if verbose:
+        print('dA_fd: ', np.round(dA_fd, decimals=4))
+        print('dA: ', np.round(dA, decimals=4))
+    npt.assert_allclose(dA_fd, dA, rtol=RTOL, atol=ATOL)
+
+
+def test_dl_dl(algebra, solver_type, atol, rtol, decimal_tol):
+    n, m = 5, 5
+
+    model = osqp.OSQP(algebra=algebra)
+    if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+        pytest.skip('No derivatives capability')
+
+    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
+    )
+
+    def f(l):
+        model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
+        res = model.solve()
+        x_hat = res.x
+
+        return 0.5 * np.sum(np.square(x_hat - true_x))
+
+    dl_fd = approx_fprime(l, f, epsilon=EPS)
+    if verbose:
+        print('dl_fd: ', np.round(dl_fd, decimals=4))
+        print('dl: ', np.round(dl, decimals=4))
+    npt.assert_allclose(dl_fd, dl, rtol=RTOL, atol=ATOL)
+
+
+def test_dl_du(algebra, solver_type, atol, rtol, decimal_tol):
+    n, m = 5, 5
+
+    model = osqp.OSQP(algebra=algebra)
+    if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+        pytest.skip('No derivatives capability')
+
+    [P, q, A, l, u, true_x], [dP, dq, dA, dl, du] = get_grads(
+        n=n,
+        m=m,
+        P_scale=100.0,
+        A_scale=100.0,
+        algebra=algebra,
+        solver_type=solver_type,
+    )
+
+    def f(u):
+        model.setup(P, q, A, l, u, solver_type=solver_type, verbose=False)
+        res = model.solve()
+        x_hat = res.x
+
+        return 0.5 * np.sum(np.square(x_hat - true_x))
+
+    du_fd = approx_fprime(u, f, epsilon=EPS)
+    if verbose:
+        print('du_fd: ', np.round(du_fd, decimals=4))
+        print('du: ', np.round(du, decimals=4))
+    npt.assert_allclose(du_fd, du, rtol=RTOL, atol=ATOL)

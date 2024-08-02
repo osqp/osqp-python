@@ -16,10 +16,7 @@ dependencies = [
     "jinja2",
     "numpy>=1.7",
     "qdldl",
-    # Exclude scipy 1.12 because the random sparse array function started returning
-    # the transpose of the original, breaking the unit tests. This was fixed in 1.13.0.
-    # ref: https://github.com/scipy/scipy/issues/20027
-    "scipy>=0.13.2,!=1.12.0",
+    "scipy>=0.13.2",
     "setuptools",
     "joblib",
 ]
@@ -29,10 +26,20 @@ cuda = [
     "osqp-cuda",
 ]
 dev = [
-    "numdifftools",
     "pre-commit",
     "pytest>=6",
     "torch",
+
+    # Exclude scipy 1.12 because the random sparse array function started returning
+    # the transpose of the original, breaking the unit tests. This was fixed in 1.13.0.
+    # This shouldn't actually affect the users, so there shouldn't be a need to exclude
+    # 1.12 on a user's machine.
+    # ref: https://github.com/scipy/scipy/issues/20027
+    "scipy!=1.12.0",
+
+    # As of 07/27/24, torch on many platforms (intel macs, Windows), cannot seem to coexist
+    # with numpy>=2; Since we do need torch for development purposes, we'll pin np<2
+    "numpy<2"
 ]
 mkl = [
     "osqp-mkl",
@@ -57,6 +64,10 @@ CMAKE_OSX_ARCHITECTURES = {env="CMAKE_OSX_ARCHITECTURES"}
 
 [tool.pytest.ini_options]
 testpaths = ["src/osqp/tests"]
+
+[tool.cibuildwheel]
+# Install the dependencies needed when testing the built wheels
+test-extras = ["dev"]
 
 [tool.setuptools_scm]
 write_to = "src/osqp/_version.py"
