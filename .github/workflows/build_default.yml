@@ -68,7 +68,7 @@ jobs:
         output-dir: wheelhouse
       env:
         CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "*-win32 *-manylinux_i686 *-musllinux_*"
+        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_*"
         # Clean the build directory between builds
         CIBW_BEFORE_BUILD: >-
           rm -rf {package}/osqp_sources/build
