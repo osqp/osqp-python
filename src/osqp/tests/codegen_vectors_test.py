@@ -30,6 +30,8 @@ class codegen_vectors_tests(unittest.TestCase):
         }
 
         model = osqp.OSQP(algebra='builtin')
+        if not model.has_capability('OSQP_CAPABILITY_DERIVATIVES'):
+            pytest.skip('No derivatives capability')
         model.setup(P=P, q=q, A=A, l=l, u=u, **opts)
 
         model_dir = model.codegen(
@@ -56,7 +58,7 @@ class codegen_vectors_tests(unittest.TestCase):
         sh.rmtree('codegen_vec_out', ignore_errors=True)
 
     def setUp(self):
-        self.model = osqp.OSQP()
+        self.model = osqp.OSQP(algebra='builtin')
         self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, **self.opts)
 
     def test_solve(self):
