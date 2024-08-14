@@ -31,7 +31,8 @@ jobs:
         output-dir: wheelhouse
       env:
         CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_*"
+        # Temporarily skip 3.13 because it is still an RC and our dependencies aren't there yet
+        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_* cp313-*"
         CIBW_BUILD_VERBOSITY: 1
 
         # Clean the build directory between builds
