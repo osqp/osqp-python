@@ -423,13 +423,13 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
 
     // Settings - Polishing
     .def_readwrite("delta", &OSQPSettings::delta)
-    .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter);
+    .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter)
 
     // Restarting parameters
-    .def_readwrite("restart_enable", &OSQPInt::restart_enable);
+    .def_readwrite("restart_enable", &OSQPInt::restart_enable)
     .def_readwrite("restart_sufficient", &OSQPFloat::restart_sufficient)
     .def_readwrite("restart_necessary", &OSQPFloat::restart_necessary)
-    .def_readwrite("restart_artifical", &OSQPFloat::restart_artifical)
+    .def_readwrite("restart_artifical", &OSQPFloat::restart_artifical);
 
     m.def("osqp_set_default_settings", &osqp_set_default_settings);
 
