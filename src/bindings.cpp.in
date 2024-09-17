@@ -466,7 +466,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("dual_res", &OSQPInfo::dual_res)
     .def_readonly("duality_gap", &OSQPInfo::duality_gap)
     .def_readonly("iter", &OSQPInfo::iter)
-    .def_readonly("restart_artifical", &OSQPInfo::restart_artifical)
+    .def_readonly("restarts", &OSQPInfo::restarts)
     .def_readonly("rho_updates", &OSQPInfo::rho_updates)
     .def_readonly("rho_estimate", &OSQPInfo::rho_estimate)
     .def_readonly("setup_time", &OSQPInfo::setup_time)
