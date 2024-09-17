@@ -426,10 +426,10 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("polish_refine_iter", &OSQPSettings::polish_refine_iter)
 
     // Restarting parameters
-    .def_readwrite("restart_enable", &OSQPInt::restart_enable)
-    .def_readwrite("restart_sufficient", &OSQPFloat::restart_sufficient)
-    .def_readwrite("restart_necessary", &OSQPFloat::restart_necessary)
-    .def_readwrite("restart_artifical", &OSQPFloat::restart_artifical);
+    .def_readwrite("restart_enable", &OSQPSettings::restart_enable)
+    .def_readwrite("restart_sufficient", &OSQPSettings::restart_sufficient)
+    .def_readwrite("restart_necessary", &OSQPSettings::restart_necessary)
+    .def_readwrite("restart_artifical", &OSQPSettings::restart_artifical);
 
     m.def("osqp_set_default_settings", &osqp_set_default_settings);
 
@@ -466,7 +466,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("dual_res", &OSQPInfo::dual_res)
     .def_readonly("duality_gap", &OSQPInfo::duality_gap)
     .def_readonly("iter", &OSQPInfo::iter)
-    .def_readonly("restart_artifical", &OSQPInt::restart_artifical)
+    .def_readonly("restart_artifical", &OSQPInfo::restart_artifical)
     .def_readonly("rho_updates", &OSQPInfo::rho_updates)
     .def_readonly("rho_estimate", &OSQPInfo::rho_estimate)
     .def_readonly("setup_time", &OSQPInfo::setup_time)
