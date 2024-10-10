@@ -73,7 +73,7 @@ jobs:
         twine upload wheelhouse/*
 
     - name: Upload artifacts to github
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: wheels
         path: ./wheelhouse
