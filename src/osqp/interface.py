@@ -397,12 +397,12 @@ class OSQP:
         if include_codegen_src:
             # https://github.com/python/importlib_resources/issues/85
             try:
-                handle = importlib.resources.files('osqp.codegen').joinpath('codegen_src')
+                codegen_src_path = importlib.resources.files('osqp.codegen').joinpath('codegen_src')
+                shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
             except AttributeError:
                 handle = importlib.resources.path('osqp.codegen', 'codegen_src')
-
-            with handle as codegen_src_path:
-                shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
+                with handle as codegen_src_path:
+                    shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
         os.makedirs(folder, exist_ok=True)
