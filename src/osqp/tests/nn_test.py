@@ -17,6 +17,19 @@ cuda = False
 verbose = True
 
 
+# Note (02/13/24)
+# Some versions of Python/torch/numpy cannot coexist on certain platforms.
+# This is a problem seen with numpy>=2.
+# Support is gradually being added. Rather than keep track of which versions
+# are supported and on what platforms (which is likely to change frequently),
+# we do an early check that is seen to raise RuntimeError in these cases,
+# and skip testing this module entirely.
+try:
+    torch.ones(1).cpu().numpy()
+except RuntimeError:
+    pytest.skip('torch/numpy mutual incompatibility', allow_module_level=True)
+
+
 def get_grads(
     n_batch=1,
     n=10,
