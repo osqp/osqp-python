@@ -21,7 +21,7 @@ list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG c2efeb967f5667cf18753a79206632626eb32bad
+  GIT_TAG 2747c454ff77169371bdf612ff03eec0c6702efc
 )
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
