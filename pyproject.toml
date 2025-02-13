@@ -36,10 +36,6 @@ dev = [
     # 1.12 on a user's machine.
     # ref: https://github.com/scipy/scipy/issues/20027
     "scipy!=1.12.0",
-
-    # As of 07/27/24, torch on many platforms (intel macs, Windows), cannot seem to coexist
-    # with numpy>=2; Since we do need torch for development purposes, we'll pin np<2
-    "numpy<2"
 ]
 mkl = [
     "osqp-mkl",
