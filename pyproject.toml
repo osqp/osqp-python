@@ -15,7 +15,6 @@ authors = [
 dependencies = [
     "jinja2",
     "numpy>=1.7",
-    "qdldl",
     "scipy>=0.13.2",
     "setuptools",
     "joblib",
