@@ -3,8 +3,9 @@
 set -e
 set -x
 
-# See https://github.com/oneapi-src/oneapi-ci for installer URLs
-curl -L -nv -o webimage.exe https:/registrationcenter-download.intel.com/akdlm/IRC_NAS/c961e083-5685-4f0b-ada5-c6cf16f561dd/w_BaseKit_p_2023.1.0.47256_offline.exe
+# See https://github.com/oneapi-src/oneapi-ci/blob/master/.github/workflows/build_all.yml for installer URLs
+# WINDOWS_BASEKIT_URL is the one we want here
+curl -L -nv -o webimage.exe https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae29263e-38b9-4d43-86c3-376d6e0668e7/intel-oneapi-base-toolkit-2025.0.1.47_offline.exe
 ./webimage.exe -s -x -f webimage_extracted --log extract.log
 rm webimage.exe
 ./webimage_extracted/bootstrapper.exe -s --action install --components="intel.oneapi.win.mkl.devel" --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 --log-dir=.
