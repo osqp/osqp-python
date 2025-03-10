@@ -19,7 +19,7 @@ jobs:
       matrix:
         # macos-latest now uses arm64 runners, but MKL is x86_64 only, so restrict to the macos-13 runners
         # to get x86_64 architecture.
-        os: [ubuntu-latest, macos-13, windows-2022]
+        os: [ubuntu-latest, macos-13]
 
     steps:
     - uses: actions/checkout@master
@@ -31,7 +31,7 @@ jobs:
         output-dir: wheelhouse
       env:
         CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_*"
+        CIBW_SKIP: "cp36-* cp37-* *-manylinux_i686 *-musllinux_*"
         CIBW_BUILD_VERBOSITY: 1
 
         # Clean the build directory between builds
@@ -45,10 +45,6 @@ jobs:
         CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
         CIBW_ENVIRONMENT_MACOS: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
         CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
-
-        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_mkl.sh
-        CIBW_ENVIRONMENT_WINDOWS: MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
-        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4

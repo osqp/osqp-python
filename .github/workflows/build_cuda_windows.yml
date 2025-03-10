@@ -1,0 +1,74 @@
+name: Build CUDA
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+env:
+  CUDATOOLKIT_URL: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.85_windows.exe
+  CUDATOOLKIT_COMPONENTS: nvcc_12.5 cudart_12.5 cublas_dev_12.5 curand_dev_12.5 cusparse_dev_12.5 thrust_12.5 visual_studio_integration_12.5
+
+jobs:
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: cmd
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022]
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Add msbuild to PATH
+      uses: microsoft/setup-msbuild@v2.0.0
+
+    - name: Add Windows SDK
+      run: |
+        choco install windows-sdk-8.1
+
+    - name: cache install cuda
+      id: cache-install
+      uses: actions/cache@v4
+      with:
+        path: C:\Program Files (x86)\Intel\oneAPI\
+        key: install-${{ env.WINDOWS_BASEKIT_URL }}-${{ env.WINDOWS_BASEKIT_COMPONENTS }}
+
+    - name: install cuda
+      if: steps.cache-install.outputs.cache-hit != 'true'
+      run: |
+        curl.exe --output %TEMP%\cuda.exe --url %CUDATOOLKIT_URL% --retry 5 --retry-delay 5
+        start /b /wait %TEMP%\cuda.exe -s %CUDATOOLKIT_COMPONENTS%
+        del %TEMP%\cuda.exe
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.22
+      with:
+        package-dir: backend/cuda
+        output-dir: wheelhouse
+      env:
+        CIBW_BUILD: "cp3*"
+        CIBW_SKIP: "cp36-* cp37-* *-win32"
+        CIBW_BUILD_VERBOSITY: 1
+
+        # Clean the build directory between builds
+        CIBW_BEFORE_BUILD: >-
+          rm -rf {package}/osqp_sources/build
+
+        CIBW_ENVIRONMENT: CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/bin/nvcc.exe" CUDA_TOOLKIT_ROOT_DIR="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5" CMAKE_GENERATOR_TOOLSET="cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5"
+        CIBW_REPAIR_WHEEL_COMMAND: ""
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-cuda-${{ matrix.os }}
+        path: ./wheelhouse

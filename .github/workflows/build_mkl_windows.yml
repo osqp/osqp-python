@@ -1,0 +1,73 @@
+name: Build MKL
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+env:
+  # update urls for oneapi packages according to
+  # https://github.com/oneapi-src/oneapi-ci/blob/master/.github/workflows/build_all.yml
+  WINDOWS_BASEKIT_URL: https:/registrationcenter-download.intel.com/akdlm/IRC_NAS/c961e083-5685-4f0b-ada5-c6cf16f561dd/w_BaseKit_p_2023.1.0.47256_offline.exe
+  WINDOWS_BASEKIT_COMPONENTS: intel.oneapi.win.mkl.devel
+
+
+jobs:
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: cmd
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-2022]
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: cache install oneapi
+      id: cache-install
+      uses: actions/cache@v4
+      with:
+        path: C:\Program Files (x86)\Intel\oneAPI\
+        key: install-${{ env.WINDOWS_BASEKIT_URL }}-${{ env.WINDOWS_BASEKIT_COMPONENTS }}
+
+    - name: install oneapi mkl
+      if: steps.cache-install.outputs.cache-hit != 'true'
+      run: |
+        curl.exe --output %TEMP%\webimage_base.exe --url %WINDOWS_BASEKIT_URL% --retry 5 --retry-delay 5
+        start /b /wait %TEMP%\webimage_base.exe -s -x -f webimage_base_extracted --log extract_base.log
+        del %TEMP%\webimage_base.exe
+        webimage_base_extracted\bootstrapper.exe -s --action install --components=%WINDOWS_BASEKIT_COMPONENTS% --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 --log-dir=.
+        rd /s/q "webimage_base_extracted"
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.22
+      with:
+        package-dir: backend/mkl
+        output-dir: wheelhouse
+      env:
+        CIBW_BUILD: "cp3*"
+        CIBW_SKIP: "cp36-* cp37-* *-win32"
+        CIBW_BUILD_VERBOSITY: 1
+
+        CIBW_BEFORE_ALL: pip install delvewheel
+        # Clean the build directory between builds
+        CIBW_BEFORE_BUILD: >-
+          rm -rf {package}/osqp_sources/build
+
+        CIBW_ENVIRONMENT: MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
+        CIBW_REPAIR_WHEEL_COMMAND: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v4
+      with:
+        name: wheels-mkl-${{ matrix.os }}
+        path: ./wheelhouse

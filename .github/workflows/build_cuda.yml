@@ -17,20 +17,10 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-2022]
+        os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@master
-
-    - name: Add msbuild to PATH
-      uses: microsoft/setup-msbuild@v2.0.0
-      if: runner.os == 'Windows'
-
-    - name: Add Windows SDK
-      shell: cmd
-      if: runner.os == 'Windows'
-      run: |
-        choco install windows-sdk-8.1
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.22
@@ -39,7 +29,7 @@ jobs:
         output-dir: wheelhouse
       env:
         CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_* *-macosx_*"
+        CIBW_SKIP: "cp36-* cp37-* *-manylinux_i686 *-musllinux_* *-macosx_*"
         CIBW_BUILD_VERBOSITY: 1
 
         # Clean the build directory between builds
@@ -49,10 +39,6 @@ jobs:
         CIBW_ENVIRONMENT_LINUX: CMAKE_CUDA_COMPILER=/usr/local/cuda-12.4/bin/nvcc
         CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_cuda.sh
         CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
-
-        CIBW_ENVIRONMENT_WINDOWS: CMAKE_CUDA_COMPILER="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/bin/nvcc.exe" CUDA_TOOLKIT_ROOT_DIR="C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5" CMAKE_GENERATOR_TOOLSET="cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5"
-        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_cuda.sh
-        CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4

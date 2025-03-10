@@ -45,7 +45,7 @@ class derivative_tests(unittest.TestCase):
 
         return [P, q, A, l, u, true_x, true_y]
 
-    def get_grads(self, P, q, A, l, u, true_x, true_y=None, mode='qdldl'):
+    def get_grads(self, P, q, A, l, u, true_x, true_y=None):
         # Get gradients by solving with osqp
         m = osqp.OSQP(algebra='builtin')
         m.setup(
@@ -75,7 +75,7 @@ class derivative_tests(unittest.TestCase):
 
         return grads
 
-    def get_forward_grads(self, P, q, A, l, u, dP, dq, dA, dl, du, mode='qdldl'):
+    def get_forward_grads(self, P, q, A, l, u, dP, dq, dA, dl, du):
         # Get gradients by solving with osqp
         m = osqp.OSQP(algebra='builtin', eps_rel=eps_rel, eps_abs=eps_abs)
         m.setup(
@@ -92,7 +92,7 @@ class derivative_tests(unittest.TestCase):
         results = m.solve()
         if results.info.status != 'solved':
             raise ValueError('Problem not solved!')
-        grads = m.forward_derivative(dP=dP, dq=dq, dA=dA, dl=dl, du=du, mode=mode)
+        grads = m.forward_derivative(dP=dP, dq=dq, dA=dA, dl=dl, du=du)
         return grads
 
     @pytest.mark.skip(reason='forward derivatives not implemented yet')
@@ -102,12 +102,12 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_y = prob
 
-        def grad(dq, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
+        def grad(dq):
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
-        dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
+        dx_computed, dyl_computed, dyu_computed = grad(dq)
 
         osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
@@ -154,11 +154,11 @@ class derivative_tests(unittest.TestCase):
 
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
-            print('dx: ', np.round(dx_qdldl, decimals=4))
+            print('dx: ', np.round(dx_computed, decimals=4))
 
-        npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dx_fd, dx_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyl_fd, dyl_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyu_fd, dyu_computed, rtol=rel_tol, atol=abs_tol)
 
     @pytest.mark.skip(reason='forward derivatives not implemented yet')
     def test_eq_inf_forward(self, verbose=False):
@@ -169,12 +169,12 @@ class derivative_tests(unittest.TestCase):
         l[:5] = u[:5]
         l[5:] = -osqp.constant('OSQP_INFTY', algebra='builtin')
 
-        def grad(dq, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None, mode=mode)
+        def grad(dq):
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, None, dq, None, None, None)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
-        dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dq, 'qdldl')
+        dx_computed, dyl_computed, dyu_computed = grad(dq)
         osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
             P,
@@ -220,11 +220,11 @@ class derivative_tests(unittest.TestCase):
 
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
-            print('dx: ', np.round(dx_qdldl, decimals=4))
+            print('dx: ', np.round(dx_computed, decimals=4))
 
-        npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dx_fd, dx_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyl_fd, dyl_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyu_fd, dyu_computed, rtol=rel_tol, atol=abs_tol)
 
     @pytest.mark.skip(reason='forward derivatives not implemented yet')
     def test_multiple_forward_derivative(self, verbose=False):
@@ -233,8 +233,8 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_y = prob
 
-        def grad(dP, dq, dA, dl, du, mode):
-            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, dP, dq, dA, dl, du, mode=mode)
+        def grad(dP, dq, dA, dl, du):
+            [dx, dyl, dyu] = self.get_forward_grads(P, q, A, l, u, dP, dq, dA, dl, du)
             return dx, dyl, dyu
 
         dq = np.random.normal(size=(n))
@@ -243,7 +243,7 @@ class derivative_tests(unittest.TestCase):
         du = np.random.normal(size=(m))
         dL = np.random.normal(size=(n, n))
         dP = dL + dL.T
-        dx_qdldl, dyl_qdldl, dyu_qdldl = grad(dP, dq, dA, dl, du, 'qdldl')
+        dx_computed, dyl_computed, dyu_computed = grad(dP, dq, dA, dl, du)
         osqp_solver = osqp.OSQP(algebra='builtin')
         osqp_solver.setup(
             P,
@@ -289,11 +289,11 @@ class derivative_tests(unittest.TestCase):
 
         if verbose:
             print('dx_fd: ', np.round(dx_fd, decimals=4))
-            print('dx: ', np.round(dx_qdldl, decimals=4))
+            print('dx: ', np.round(dx_computed, decimals=4))
 
-        npt.assert_allclose(dx_fd, dx_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyl_fd, dyl_qdldl, rtol=rel_tol, atol=abs_tol)
-        npt.assert_allclose(dyu_fd, dyu_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dx_fd, dx_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyl_fd, dyl_computed, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dyu_fd, dyu_computed, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq(self, verbose=False):
         n, m = 5, 5
@@ -427,8 +427,8 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_y = prob
 
-        def grad(l, mode):
-            _, _, _, dl, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
+        def grad(l):
+            _, _, _, dl, _ = self.get_grads(P, q, A, l, u, true_x)
             return dl
 
         def f(l):
@@ -451,14 +451,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dl_qdldl = grad(l, 'qdldl')
+        dl_computed = grad(l)
         dl_fd = approx_fprime(l, f, grad_precision)
 
         if verbose:
             print('dl_fd: ', np.round(dl_fd, decimals=4).tolist())
-            print('dl_qdldl: ', np.round(dl_qdldl, decimals=4).tolist())
+            print('dl_computed: ', np.round(dl_computed, decimals=4).tolist())
 
-        npt.assert_allclose(dl_fd, dl_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dl_fd, dl_computed, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_du(self, verbose=False):
         n, m = 10, 20
@@ -466,8 +466,8 @@ class derivative_tests(unittest.TestCase):
         prob = self.get_prob(n=n, m=m, P_scale=100.0, A_scale=100.0)
         P, q, A, l, u, true_x, true_y = prob
 
-        def grad(u, mode):
-            _, _, _, _, du = self.get_grads(P, q, A, l, u, true_x, mode=mode)
+        def grad(u):
+            _, _, _, _, du = self.get_grads(P, q, A, l, u, true_x)
             return du
 
         def f(u):
@@ -490,14 +490,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        du_qdldl = grad(u, 'qdldl')
+        du_computed = grad(u)
         du_fd = approx_fprime(u, f, grad_precision)
 
         if verbose:
             print('du_fd: ', np.round(du_fd, decimals=4))
-            print('du: ', np.round(du_qdldl, decimals=4))
+            print('du: ', np.round(du_computed, decimals=4))
 
-        npt.assert_allclose(du_fd, du_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(du_fd, du_computed, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dA_eq(self, verbose=False):
         n, m = 30, 20
@@ -510,9 +510,9 @@ class derivative_tests(unittest.TestCase):
 
         A_idx = A.nonzero()
 
-        def grad(A_val, mode):
+        def grad(A_val):
             A_qp = sparse.csc_matrix((A_val, A_idx), shape=A.shape)
-            _, _, dA, _, _ = self.get_grads(P, q, A_qp, l, u, true_x, mode=mode)
+            _, _, dA, _, _ = self.get_grads(P, q, A_qp, l, u, true_x)
             return dA
 
         def f(A_val):
@@ -536,15 +536,15 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dA_qdldl = grad(A.data, 'qdldl')
+        dA_computed = grad(A.data)
         dA_fd_val = approx_fprime(A.data, f, grad_precision)
         dA_fd = sparse.csc_matrix((dA_fd_val, A_idx), shape=A.shape)
 
         if verbose:
             print('dA_fd: ', np.round(dA_fd.data, decimals=6))
-            print('dA_qdldl: ', np.round(dA_qdldl.data, decimals=6))
+            print('dA_computed: ', np.round(dA_computed.data, decimals=6))
 
-        npt.assert_allclose(dA_qdldl, dA_fd.todense(), rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dA_computed, dA_fd.todense(), rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_eq(self, verbose=False):
         n, m = 20, 15
@@ -555,8 +555,8 @@ class derivative_tests(unittest.TestCase):
         # l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
-        def grad(q, mode):
-            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
+        def grad(q):
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x)
             return dq
 
         def f(q):
@@ -579,14 +579,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dq_qdldl = grad(q, 'qdldl')
+        dq_computed = grad(q)
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
-            print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
+            print('dq_computed: ', np.round(dq_computed, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dq_fd, dq_computed, rtol=rel_tol, atol=abs_tol)
 
     def test_dl_dq_eq_large(self, verbose=False):
         n, m = 100, 120
@@ -597,8 +597,8 @@ class derivative_tests(unittest.TestCase):
         l[20:40] = -osqp.constant('OSQP_INFTY', algebra='builtin')
         u[:20] = l[:20]
 
-        def grad(q, mode):
-            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, mode=mode)
+        def grad(q):
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x)
             return dq
 
         def f(q):
@@ -621,14 +621,14 @@ class derivative_tests(unittest.TestCase):
 
             return 0.5 * np.sum(np.square(x_hat - true_x))
 
-        dq_qdldl = grad(q, 'qdldl')
+        dq_computed = grad(q)
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
-            print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
+            print('dq_computed: ', np.round(dq_computed, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol_relaxed, atol=abs_tol_relaxed)
+        npt.assert_allclose(dq_fd, dq_computed, rtol=rel_tol_relaxed, atol=abs_tol_relaxed)
 
     def _test_dl_dq_nonzero_dy(self, verbose=False):
         n, m = 6, 3
@@ -640,8 +640,8 @@ class derivative_tests(unittest.TestCase):
         num_eq = 2
         u[:num_eq] = l[:num_eq]
 
-        def grad(q, mode):
-            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, true_y, mode=mode)
+        def grad(q):
+            _, dq, _, _, _ = self.get_grads(P, q, A, l, u, true_x, true_y)
             return dq
 
         def f(q):
@@ -674,11 +674,11 @@ class derivative_tests(unittest.TestCase):
                 + np.sum(np.square(yu_hat - true_yu))
             )
 
-        dq_qdldl = grad(q, 'qdldl')
+        dq_computed = grad(q)
         dq_fd = approx_fprime(q, f, grad_precision)
 
         if verbose:
             print('dq_fd: ', np.round(dq_fd, decimals=4))
-            print('dq_qdldl: ', np.round(dq_qdldl, decimals=4))
+            print('dq_computed: ', np.round(dq_computed, decimals=4))
 
-        npt.assert_allclose(dq_fd, dq_qdldl, rtol=rel_tol, atol=abs_tol)
+        npt.assert_allclose(dq_fd, dq_computed, rtol=rel_tol, atol=abs_tol)
