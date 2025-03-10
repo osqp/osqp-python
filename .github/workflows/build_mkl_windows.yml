@@ -58,6 +58,7 @@ jobs:
         CIBW_SKIP: "cp36-* cp37-* *-win32"
         CIBW_BUILD_VERBOSITY: 1
 
+        CIBW_BEFORE_ALL: pip install delvewheel
         # Clean the build directory between builds
         CIBW_BEFORE_BUILD: >-
           rm -rf {package}/osqp_sources/build
