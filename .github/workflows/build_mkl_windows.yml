@@ -10,6 +10,13 @@ on:
     branches:
       - master
 
+env:
+  # update urls for oneapi packages according to
+  # https://github.com/oneapi-src/oneapi-ci/blob/master/.github/workflows/build_all.yml
+  WINDOWS_BASEKIT_URL: https://registrationcenter-download.intel.com/akdlm/IRC_NAS/ae29263e-38b9-4d43-86c3-376d6e0668e7/intel-oneapi-base-toolkit-2025.0.1.47_offline.exe
+  WINDOWS_BASEKIT_COMPONENTS: intel.oneapi.win.mkl.devel
+
+
 jobs:
   build_wheels:
     name: Build wheel on ${{ matrix.os }}
@@ -17,12 +24,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-latest now uses arm64 runners, but MKL is x86_64 only, so restrict to the macos-13 runners
-        # to get x86_64 architecture.
-        os: [ubuntu-latest, macos-13]
+        os: [windows-2022]
 
     steps:
     - uses: actions/checkout@master
+
+    - name: cache install oneapi
+      id: cache-install
+      uses: actions/cache@v4
+      with:
+        path: C:\Program Files (x86)\Intel\oneAPI\
+        key: install-${{ env.WINDOWS_BASEKIT_URL }}-${{ env.WINDOWS_BASEKIT_COMPONENTS }}
+
+    - name: install oneapi mkl
+      if: steps.cache-install.outputs.cache-hit != 'true'
+      run: |
+        curl.exe --output %TEMP%\webimage_base.exe --url %WINDOWS_BASEKIT_URL% --retry 5 --retry-delay 5
+        start /b /wait %TEMP%\webimage_base.exe -s -x -f webimage_base_extracted --log extract_base.log
+        del %TEMP%\webimage_base.exe
+        webimage_base_extracted\bootstrapper.exe -s --action install --components=%WINDOWS_BASEKIT_COMPONENTS% --eula=accept -p=NEED_VS2017_INTEGRATION=0 -p=NEED_VS2019_INTEGRATION=0 --log-dir=.
+        rd /s/q "webimage_base_extracted"
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.22
@@ -38,15 +59,6 @@ jobs:
         CIBW_BEFORE_BUILD: >-
           rm -rf {package}/osqp_sources/build
 
-        CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh
-        CIBW_ENVIRONMENT_LINUX: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
-        CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
-
-        CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
-        CIBW_ENVIRONMENT_MACOS: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
-        CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
-
-        CIBW_BEFORE_ALL_WINDOWS: bash .github/workflows/prepare_build_environment_windows_mkl.sh
         CIBW_ENVIRONMENT_WINDOWS: MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
         CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
 
