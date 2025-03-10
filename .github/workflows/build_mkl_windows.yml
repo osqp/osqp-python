@@ -21,6 +21,9 @@ jobs:
   build_wheels:
     name: Build wheel on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: cmd
     strategy:
       fail-fast: false
       matrix:
