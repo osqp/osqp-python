@@ -8,7 +8,7 @@ on:
       - '*'
   pull_request:
     branches:
-      - master, vb/interface_fixes
+      - master
 
 env:
   # update urls for oneapi packages according to
