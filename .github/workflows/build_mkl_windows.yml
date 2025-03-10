@@ -3,7 +3,7 @@ name: Build MKL
 on:
   push:
     branches:
-      - master, vb/interface_fixes_ci
+      - master
     tags:
       - '*'
   pull_request:
