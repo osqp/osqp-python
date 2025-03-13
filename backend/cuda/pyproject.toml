@@ -34,7 +34,7 @@ CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"}
 CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"}
 
 [tool.cibuildwheel]
-build = "cp38*"
+build = "cp3*"
 skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
