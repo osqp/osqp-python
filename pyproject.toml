@@ -18,7 +18,7 @@ authors = [
 dependencies = [
     "jinja2",
     "numpy>=1.7",
-    "scipy>=0.13.2,!=1.12.0",
+    "scipy>=0.13.2",
     "setuptools",
     "joblib",
 ]
