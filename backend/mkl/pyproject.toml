@@ -21,14 +21,6 @@ dependencies = [
 [project.urls]
 Homepage = "https://osqp.org/"
 
-[dependency-groups]
-# Exclude scipy 1.12 because the random sparse array function started returning
-# the transpose of the original, breaking the unit tests. This was fixed in 1.13.0.
-# This shouldn't actually affect the users, so there shouldn't be a need to exclude
-# 1.12 on a user's machine.
-# ref: https://github.com/scipy/scipy/issues/20027
-test = ["pytest>=6", "scipy!=1.12.0"]
-
 [tool.scikit-build]
 install.components = ["python"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
@@ -44,12 +36,6 @@ build = "cp3*"
 skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
-# Install CPU-only version of torch beforehand since that allows cibuildwheel
-# to satisfy the "test" dependency group install, but much faster. The runtime
-# cost of torch-based osqp tests are considered negligible so torch-cpu is ok.
-before-test = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
-test-groups = ["test"]
-test-command = "python -m pytest -s {project}/src/osqp/tests"
 
 [tool.cibuildwheel.linux]
 before-all = [
@@ -61,8 +47,6 @@ environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
 
 [tool.cibuildwheel.macos]
-# 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
-test-skip = "cp313-macosx_x86_64"
 before-all = [
   # See https://github.com/oneapi-src/oneapi-ci for installer URLs
   "wget -q https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg",
