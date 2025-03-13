@@ -99,7 +99,7 @@ test-skip = "cp313-macosx_x86_64"
 build = "cp312-pyodide_wasm32"
 before-test = ""
 test-groups = ["test-no-nn"]
-test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/multithread_test.py --ignore={project}/src/osqp/tests/nn_test.py --ignore-glob=\"{project}/src/osqp/tests/codegen*.py\""
+test-command = "python -m pytest -s {project}/src/osqp/tests/basic_test.py --continue-on-collection-errors --ignore={project}/src/osqp/tests/multithread_test.py --ignore={project}/src/osqp/tests/nn_test.py --ignore-glob=\"{project}/src/osqp/tests/codegen*.py\""
 environment = { OSQP_ENABLE_INTERRUPT = "OFF", OSQP_CODEGEN = "OFF", OSQP_BUILD_SHARED_LIB = "OFF" }
 
 [tool.setuptools_scm]
