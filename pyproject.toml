@@ -57,8 +57,8 @@ cuda = [
 # Some newer platforms (e.g. cp313-macosx_x86_64 as of 03/13/25), do not
 # support installation of torch at all, which is why it is useful to have this
 # dependency group.
-test-no-torch = ["pytest>=6", "scipy!=1.12.0"]
-test = ["torch", { include-group = "test-no-torch" }]
+test-no-nn = ["pytest>=6"]
+test = ["torch", "scipy!=1.12.0", { include-group = "test-no-nn" }]
 dev = ["pre-commit", { include-group = "test" }]
 
 [tool.scikit-build]
@@ -98,7 +98,7 @@ test-skip = "cp313-macosx_x86_64"
 [tool.cibuildwheel.pyodide]
 build = "cp312-pyodide_wasm32"
 before-test = ""
-test-groups = ["test-no-torch"]
+test-groups = ["test-no-nn"]
 test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/multithread_test.py --ignore={project}/src/osqp/tests/nn_test.py --ignore-glob=\"{project}/src/osqp/tests/codegen*.py\""
 environment = { OSQP_ENABLE_INTERRUPT = "OFF", OSQP_CODEGEN = "OFF", OSQP_BUILD_SHARED_LIB = "OFF" }
 

@@ -61,6 +61,8 @@ environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
 
 [tool.cibuildwheel.macos]
+# 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
+test-skip = "cp313-macosx_x86_64"
 before-all = [
   # See https://github.com/oneapi-src/oneapi-ci for installer URLs
   "wget -q https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg",
