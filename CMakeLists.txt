@@ -14,14 +14,21 @@ endif()
 
 include(FetchContent)
 
+# 03/05/24 - Use modern python discovery
+set(PYBIND11_FINDPYTHON "ON")
+
 find_package(pybind11 CONFIG REQUIRED)
+
+# 03/05/24 - Workaround because OSQP CMakeLists.txt is using old variable names
+set(PYTHON_FOUND "ON")
+set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 
 message(STATUS "Fetching/configuring OSQP")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
-  GIT_TAG ff371613bef82e85fb431590343853846ff96203
+  GIT_TAG 115ddb5376ad8b1ae4fe6653f3d38fcc37fee6f9
 )
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)

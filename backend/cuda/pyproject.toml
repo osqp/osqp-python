@@ -6,19 +6,20 @@ build-backend = "scikit_build_core.build"
 name = "osqp-cuda"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
     { name = "Goran Banjac" },
+    { name = "Vineet Bansal", email = "vineetbansal@protonmail.com" },
+    { name = "Amit Solomon", email = "as3993@princeton.edu" },
+    { name = "Henry Schreiner", email = "HenrySchreinerIII@gmail.com" },
 ]
 dependencies = [
     "osqp>=1.0.0a0",
 ]
 
-
 [project.urls]
 Homepage = "https://osqp.org/"
-
 
 [tool.scikit-build]
 install.components = ["python"]
@@ -26,12 +27,34 @@ metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 minimum-version = "0.8"
 cmake.source-dir = "../.."
 
-
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "cuda"
 OSQP_EXT_MODULE_NAME = "osqp_cuda"
 CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"}
 CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"}
+
+[tool.cibuildwheel]
+build = "cp3*"
+skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+build-verbosity = 1
+before-build = "rm -rf {package}/osqp_sources/build"
+test-groups = ["test"]
+test-command = "python -m pytest -s {project}/src/osqp/tests"
+repair-wheel-command = ""
+
+[tool.cibuildwheel.linux]
+before-all = [
+  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo",
+  "yum install -y cuda-toolkit-12-4"
+]
+environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.4/bin/nvcc" }
+
+[tool.cibuildwheel.windows]
+before-all = [
+  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo",
+  "yum install -y cuda-toolkit-12-4"
+]
+environment = { CMAKE_CUDA_COMPILER = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/bin/nvcc.exe", CUDA_TOOLKIT_ROOT_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5", CMAKE_GENERATOR_TOOLSET = "cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5" }
 
 [tool.setuptools_scm]
 root = "../.."
