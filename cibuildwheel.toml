@@ -1,0 +1,22 @@
+[tool.cibuildwheel]
+build = "cp3*"
+skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+build-verbosity = 1
+before-build = "rm -rf {package}/osqp_sources/build"
+# Install CPU-only version of torch beforehand since that allows cibuildwheel
+# to satisfy the "test" dependency group install, but much faster. The runtime
+# cost of torch-based osqp tests are considered negligible so torch-cpu is ok.
+before-test = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
+test-groups = ["test"]
+test-command = "python -m pytest -s {project}/src/osqp/tests"
+
+[tool.cibuildwheel.macos]
+# 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
+test-skip = "cp313-macosx_x86_64"
+
+[tool.cibuildwheel.pyodide]
+build = "cp312-pyodide_wasm32"
+before-test = ""
+test-groups = ["test-no-nn"]
+test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/multithread_test.py --ignore={project}/src/osqp/tests/nn_test.py --ignore-glob=\"{project}/src/osqp/tests/codegen*.py\""
+environment = { OSQP_ENABLE_INTERRUPT = "OFF", OSQP_CODEGEN = "OFF", OSQP_BUILD_SHARED_LIB = "OFF" }
