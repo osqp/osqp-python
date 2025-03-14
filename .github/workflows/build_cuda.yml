@@ -26,7 +26,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.23
       with:
         package-dir: backend/cuda
-        config-file: cibuildwheel.toml
+        config-file: backend/cuda/cibuildwheel.toml
         output-dir: wheelhouse
 
     - name: Upload artifacts to github

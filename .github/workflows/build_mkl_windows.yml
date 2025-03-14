@@ -52,7 +52,7 @@ jobs:
       uses: pypa/cibuildwheel@v2.23
       with:
         package-dir: backend/mkl
-        config-file: cibuildwheel.toml
+        config-file: backend/mkl/cibuildwheel.toml
         output-dir: wheelhouse
 
     - name: Upload artifacts to github
