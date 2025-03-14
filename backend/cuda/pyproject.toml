@@ -6,26 +6,26 @@ build-backend = "scikit_build_core.build"
 name = "osqp-cuda"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 authors = [
     { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
     { name = "Goran Banjac" },
+    { name = "Vineet Bansal", email = "vineetbansal@protonmail.com" },
+    { name = "Amit Solomon", email = "as3993@princeton.edu" },
+    { name = "Henry Schreiner", email = "HenrySchreinerIII@gmail.com" },
 ]
 dependencies = [
     "osqp>=1.0.0a0",
 ]
 
-
 [project.urls]
 Homepage = "https://osqp.org/"
-
 
 [tool.scikit-build]
 install.components = ["python"]
 metadata.version.provider = "scikit_build_core.metadata.setuptools_scm"
 minimum-version = "0.8"
 cmake.source-dir = "../.."
-
 
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "cuda"

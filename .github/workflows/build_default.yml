@@ -63,20 +63,12 @@ jobs:
         platforms: arm64
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.22
+      uses: pypa/cibuildwheel@v2.23
       with:
+        config-file: cibuildwheel.toml
         output-dir: wheelhouse
       env:
-        CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-win32 *-manylinux_i686 *-musllinux_*"
-        # Clean the build directory between builds
-        CIBW_BEFORE_BUILD: >-
-          rm -rf {package}/osqp_sources/build
-        CIBW_TEST_COMMAND: "python -m pytest -s {project}/src/osqp/tests"
-        # 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
-        CIBW_TEST_SKIP: "cp313-macosx_x86_64"
         CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.cibw_archs }}
-        CIBW_BUILD_VERBOSITY: 1
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4

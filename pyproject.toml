@@ -11,6 +11,9 @@ requires-python = ">=3.8"
 authors = [
     { name = "Bartolomeo Stellato", email = "bartolomeo.stellato@gmail.com" },
     { name = "Goran Banjac" },
+    { name = "Vineet Bansal", email = "vineetbansal@protonmail.com" },
+    { name = "Amit Solomon", email = "as3993@princeton.edu" },
+    { name = "Henry Schreiner", email = "HenrySchreinerIII@gmail.com" },
 ]
 dependencies = [
     "jinja2",
@@ -20,10 +23,14 @@ dependencies = [
     "joblib",
 ]
 
+[project.urls]
+Homepage = "https://osqp.org/"
+
 [project.optional-dependencies]
-cuda = [
-    "osqp-cuda",
+mkl = [
+    "osqp-mkl",
 ]
+# Include this `dev` extra till pip completely supports PEP735
 dev = [
     "pre-commit",
     "pytest>=6",
@@ -36,13 +43,23 @@ dev = [
     # ref: https://github.com/scipy/scipy/issues/20027
     "scipy!=1.12.0",
 ]
-mkl = [
-    "osqp-mkl",
+cuda = [
+    "osqp-cuda",
 ]
 
-[project.urls]
-Homepage = "https://osqp.org/"
+[dependency-groups]
+# Exclude scipy 1.12 because the random sparse array function started returning
+# the transpose of the original, breaking the unit tests. This was fixed in 1.13.0.
+# This shouldn't actually affect the users, so there shouldn't be a need to exclude
+# 1.12 on a user's machine.
+# ref: https://github.com/scipy/scipy/issues/20027
 
+# Some newer platforms (e.g. cp313-macosx_x86_64 as of 03/13/25), do not
+# support installation of torch at all, which is why it is useful to have this
+# dependency group.
+test-no-nn = ["pytest>=6"]
+test = ["torch", "scipy!=1.12.0", { include-group = "test-no-nn" }]
+dev = ["pre-commit", { include-group = "test" }]
 
 [tool.scikit-build]
 install.components = ["python", "codegen"]
@@ -51,18 +68,16 @@ minimum-version = "0.8"
 wheel.install-dir = "osqp"
 sdist.include = ["src/osqp/_version.py"]
 
-
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "builtin"
 OSQP_EXT_MODULE_NAME = "ext_builtin"
+OSQP_ENABLE_INTERRUPT = {env="OSQP_ENABLE_INTERRUPT"}
+OSQP_CODEGEN = {env="OSQP_CODEGEN"}
+OSQP_BUILD_SHARED_LIB = {env="OSQP_BUILD_SHARED_LIB"}
 CMAKE_OSX_ARCHITECTURES = {env="CMAKE_OSX_ARCHITECTURES"}
 
 [tool.pytest.ini_options]
 testpaths = ["src/osqp/tests"]
-
-[tool.cibuildwheel]
-# Install the dependencies needed when testing the built wheels
-test-extras = ["dev"]
 
 [tool.setuptools_scm]
 write_to = "src/osqp/_version.py"

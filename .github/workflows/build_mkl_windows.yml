@@ -49,22 +49,11 @@ jobs:
         rd /s/q "webimage_base_extracted"
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.22
+      uses: pypa/cibuildwheel@v2.23
       with:
         package-dir: backend/mkl
+        config-file: backend/mkl/cibuildwheel.toml
         output-dir: wheelhouse
-      env:
-        CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-win32"
-        CIBW_BUILD_VERBOSITY: 1
-
-        CIBW_BEFORE_ALL: pip install delvewheel
-        # Clean the build directory between builds
-        CIBW_BEFORE_BUILD: >-
-          rm -rf {package}/osqp_sources/build
-
-        CIBW_ENVIRONMENT: MKL_ROOT="C:/Program Files (x86)/Intel/oneAPI/mkl/latest" MKL_DIR="C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl"
-        CIBW_REPAIR_WHEEL_COMMAND: "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4

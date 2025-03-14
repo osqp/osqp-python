@@ -25,26 +25,11 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.22
+      uses: pypa/cibuildwheel@v2.23
       with:
         package-dir: backend/mkl
+        config-file: backend/mkl/cibuildwheel.toml
         output-dir: wheelhouse
-      env:
-        CIBW_BUILD: "cp3*"
-        CIBW_SKIP: "cp36-* cp37-* *-manylinux_i686 *-musllinux_*"
-        CIBW_BUILD_VERBOSITY: 1
-
-        # Clean the build directory between builds
-        CIBW_BEFORE_BUILD: >-
-          rm -rf {package}/osqp_sources/build
-
-        CIBW_BEFORE_ALL_LINUX: bash .github/workflows/prepare_build_environment_linux_mkl.sh
-        CIBW_ENVIRONMENT_LINUX: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
-        CIBW_REPAIR_WHEEL_COMMAND_LINUX: ""
-
-        CIBW_BEFORE_ALL_MACOS: bash .github/workflows/prepare_build_environment_macos_mkl.sh
-        CIBW_ENVIRONMENT_MACOS: "MKL_ROOT=/opt/intel/oneapi/mkl/latest"
-        CIBW_REPAIR_WHEEL_COMMAND_MACOS: ""
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4

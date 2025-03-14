@@ -1,0 +1,16 @@
+[tool.cibuildwheel]
+build = "cp3*"
+skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+build-verbosity = 1
+before-build = "rm -rf {package}/osqp_sources/build"
+repair-wheel-command = ""
+
+[tool.cibuildwheel.linux]
+before-all = [
+  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo",
+  "yum install -y cuda-toolkit-12-4"
+]
+environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.4/bin/nvcc" }
+
+[tool.cibuildwheel.windows]
+environment = { CMAKE_CUDA_COMPILER = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5/bin/nvcc.exe", CUDA_TOOLKIT_ROOT_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5", CMAKE_GENERATOR_TOOLSET = "cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.5" }

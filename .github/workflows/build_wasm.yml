@@ -1,4 +1,4 @@
-name: Build CUDA
+name: Build WASM
 
 on:
   push:
@@ -12,25 +12,22 @@ on:
 
 jobs:
   build_wheels:
-    name: Build wheel on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
+    name: Build wasm32 wheels
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@master
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.23
+      env:
+        CIBW_PLATFORM: pyodide
       with:
-        package-dir: backend/cuda
-        config-file: backend/cuda/cibuildwheel.toml
+        config-file: cibuildwheel.toml
         output-dir: wheelhouse
 
     - name: Upload artifacts to github
       uses: actions/upload-artifact@v4
       with:
-        name: wheels-cuda-${{ matrix.os }}
+        name: wheels-wasm32
         path: ./wheelhouse

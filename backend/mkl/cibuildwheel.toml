@@ -1,0 +1,30 @@
+[tool.cibuildwheel]
+build = "cp3*"
+skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+build-verbosity = 1
+before-build = "rm -rf {package}/osqp_sources/build"
+
+[tool.cibuildwheel.linux]
+before-all = [
+  "yum-config-manager --add-repo https://yum.repos.intel.com/oneapi",
+  "rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB",
+  "yum --nogpgcheck install -y intel-oneapi-mkl-devel-2023.0.0"
+]
+environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
+repair-wheel-command = ""
+
+[tool.cibuildwheel.macos]
+before-all = [
+  # See https://github.com/oneapi-src/oneapi-ci for installer URLs
+  "wget -q https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg",
+  "hdiutil attach -noverify -noautofsck m_BaseKit_p_2023.2.0.49398.dmg",
+  "sudo /Volumes/m_BaseKit_p_2023.2.0.49398/bootstrapper.app/Contents/MacOS/bootstrapper --silent --eula accept --components intel.oneapi.mac.mkl.devel",
+  "pip install 'cmake==3.18.4'"
+]
+environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
+repair-wheel-command = ""
+
+[tool.cibuildwheel.windows]
+before-all = "pip install delvewheel"
+environment = { MKL_ROOT = "C:/Program Files (x86)/Intel/oneAPI/mkl/latest", MKL_DIR = "C:/Program Files (x86)/Intel/oneAPI/mkl/latest/lib/cmake/mkl" }
+repair-wheel-command = "delvewheel repair {wheel} --wheel-dir {dest_dir} --no-mangle-all --add-path \"C:/Program Files (x86)/Intel/oneAPI/mkl/latest/redist/intel64\" --add-dll \"mkl_sequential.2.dll;mkl_def.2.dll;mkl_intel_thread.2.dll\""
