@@ -23,6 +23,7 @@ jobs:
       env:
         CIBW_PLATFORM: pyodide
       with:
+        config-file: cibuildwheel.toml
         output-dir: wheelhouse
 
     - name: Upload artifacts to github
