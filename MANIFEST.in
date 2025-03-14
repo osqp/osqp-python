@@ -1,4 +1,4 @@
-include README.rst LICENSE requirements.txt
+include README.md LICENSE
 include src/osqp/tests/solutions/*.npz
 recursive-include src/extension *
 recursive-include src/osqp/codegen/pywrapper *
