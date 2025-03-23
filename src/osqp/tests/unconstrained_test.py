@@ -22,7 +22,7 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'verbose': False,
         'eps_abs': 1e-08,
         'eps_rel': 1e-08,
-        'polish': False,
+        'polishing': False,
     }
     self.model = osqp.OSQP(algebra=algebra)
     self.model.setup(P=self.P, q=self.q, A=self.A, l=self.l, u=self.u, solver_type=solver_type, **self.opts)

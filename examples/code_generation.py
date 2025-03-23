@@ -17,6 +17,9 @@ if __name__ == '__main__':
     # Setup workspace and change alpha parameter
     prob.setup(P, q, A, l, u, alpha=1.0)
 
+    # The OSQP object has "capabilities" that define what it can do.
+    assert prob.has_capability('OSQP_CAPABILITY_CODEGEN')
+
     # Generate C code
     # fmt: off
     prob.codegen(

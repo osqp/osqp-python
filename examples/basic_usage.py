@@ -19,3 +19,7 @@ if __name__ == '__main__':
 
     # Solve problem
     res = prob.solve()
+
+    print('Status:', res.info.status)
+    print('Objective value:', res.info.obj_val)
+    print('Optimal solution x:', res.x)

@@ -24,9 +24,9 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'max_iter': 2500,
         'rho': 0.1,
         'adaptive_rho': False,
-        'polish': False,
+        'polishing': False,
         'check_termination': 1,
-        'warm_start': True,
+        'warm_starting': True,
         'solver_type': solver_type,
     }
     ns.model = OSQP(algebra=algebra)
@@ -146,3 +146,9 @@ def test_upper_triangular_P(self):
         res_triu.info.obj_val,
         decimal=self.decimal_tol,
     )
+
+
+def test_update_invalid(self):
+    # can't update unsupported setting
+    with pytest.raises(ValueError):
+        self.model.update_settings(foo=42)

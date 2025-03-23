@@ -17,7 +17,7 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'eps_dual_inf': 1e-6,
         'scaling': 3,
         'max_iter': 2500,
-        'polish': False,
+        'polishing': False,
         'check_termination': 1,
         'polish_refine_iter': 4,
         'solver_type': solver_type,

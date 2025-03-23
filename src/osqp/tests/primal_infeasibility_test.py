@@ -14,7 +14,7 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'eps_rel': 1e-05,
         'eps_dual_inf': 1e-20,
         'max_iter': 2500,
-        'polish': False,
+        'polishing': False,
         'solver_type': solver_type,
     }
     self.model = osqp.OSQP(algebra=algebra)

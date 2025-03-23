@@ -27,8 +27,8 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'scaling': True,
         'alpha': 1.6,
         'max_iter': 5000,
-        'polish': False,
-        'warm_start': True,
+        'polishing': False,
+        'warm_starting': True,
         'polish_refine_iter': 4,
         'solver_type': solver_type,
     }

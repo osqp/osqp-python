@@ -13,7 +13,7 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
         'adaptive_rho': False,
         'eps_abs': 1e-08 if solver_type == 'direct' else 1e-2,
         'eps_rel': 1e-08 if solver_type == 'direct' else 1e-2,
-        'polish': False,
+        'polishing': False,
         'check_termination': 1,
         'solver_type': solver_type,
     }

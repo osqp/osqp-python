@@ -71,11 +71,6 @@ class OSQP:
     def __init__(self, *args, **kwargs):
         self.m = None
         self.n = None
-        self.P = None
-        self.q = None
-        self.A = None
-        self.l = None
-        self.u = None
 
         self.algebra = kwargs.pop('algebra') if 'algebra' in kwargs else default_algebra()
         if not algebra_available(self.algebra):
@@ -251,8 +246,11 @@ class OSQP:
         for k in self.ext.OSQPSettings.__dict__:
             if not k.startswith('__'):
                 if k in kwargs:
-                    setattr(self.settings, k, kwargs[k])
+                    setattr(self.settings, k, kwargs.pop(k))
                     settings_changed = True
+
+        if kwargs:
+            raise ValueError(f'Unrecognized settings {list(kwargs.keys())}')
 
         if settings_changed and self._solver is not None:
             self._solver.update_settings(self.settings)
@@ -299,31 +297,31 @@ class OSQP:
 
     def setup(self, P, q, A, l, u, **settings):
         m, n, P, q, A, l, u = self._infer_mnpqalu(P=P, q=q, A=A, l=l, u=u)
+        self._derivative_cache.update({'P': P, 'q': q, 'A': A, 'l': l, 'u': u})
         self.m = m
         self.n = n
-        self.P = self.ext.CSC(P.astype(self._dtype))
-        self.q = q.astype(self._dtype)
-        self.A = self.ext.CSC(A.astype(self._dtype))
-        self.l = l.astype(self._dtype)
-        self.u = u.astype(self._dtype)
+        P = self.ext.CSC(P.astype(self._dtype))
+        q = q.astype(self._dtype)
+        A = self.ext.CSC(A.astype(self._dtype))
+        l = l.astype(self._dtype)
+        u = u.astype(self._dtype)
 
         self.settings = self.ext.OSQPSettings()
         self.ext.osqp_set_default_settings(self.settings)
         self.update_settings(**settings)
 
         self._solver = self.ext.OSQPSolver(
-            self.P,
-            self.q,
-            self.A,
-            self.l,
-            self.u,
+            P,
+            q,
+            A,
+            l,
+            u,
             self.m,
             self.n,
             self.settings,
         )
         if 'rho' in settings:
             self._solver.update_rho(settings['rho'])
-        self._derivative_cache.update({'P': P, 'q': q, 'A': A, 'l': l, 'u': u})
 
     def warm_start(self, x=None, y=None):
         # TODO: sanity checks on types/dimensions

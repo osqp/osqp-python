@@ -26,7 +26,7 @@ class codegen_vectors_tests(unittest.TestCase):
             'rho': 0.01,
             'alpha': 1.6,
             'max_iter': 10000,
-            'warm_start': True,
+            'warm_starting': True,
         }
 
         model = osqp.OSQP(algebra='builtin')

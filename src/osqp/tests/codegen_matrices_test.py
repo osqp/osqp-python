@@ -27,7 +27,7 @@ class codegen_matrices_tests(unittest.TestCase):
             'eps_rel': 1e-08,
             'alpha': 1.6,
             'max_iter': 3000,
-            'warm_start': True,
+            'warm_starting': True,
         }
 
         model = osqp.OSQP(algebra='builtin')
