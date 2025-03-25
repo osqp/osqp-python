@@ -1,4 +1,4 @@
-name: Build CUDA
+name: Build CUDA Windows
 
 on:
   push:
@@ -11,8 +11,8 @@ on:
       - master
 
 env:
-  CUDATOOLKIT_URL: https://developer.download.nvidia.com/compute/cuda/12.5.1/local_installers/cuda_12.5.1_555.85_windows.exe
-  CUDATOOLKIT_COMPONENTS: nvcc_12.5 cudart_12.5 cublas_dev_12.5 curand_dev_12.5 cusparse_dev_12.5 thrust_12.5 visual_studio_integration_12.5
+  CUDATOOLKIT_URL: https://developer.download.nvidia.com/compute/cuda/12.6.3/local_installers/cuda_12.6.3_561.17_windows.exe
+  CUDATOOLKIT_COMPONENTS: nvcc_12.6 cudart_12.6 cublas_dev_12.6 curand_dev_12.6 cusparse_dev_12.6 thrust_12.6 visual_studio_integration_12.6
 
 jobs:
   build_wheels:
@@ -41,7 +41,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: C:\Program Files (x86)\Intel\oneAPI\
-        key: install-${{ env.WINDOWS_BASEKIT_URL }}-${{ env.WINDOWS_BASEKIT_COMPONENTS }}
+        key: install-${{ env.CUDATOOLKIT_URL }}-${{ env.CUDATOOLKIT_COMPONENTS }}
 
     - name: install cuda
       if: steps.cache-install.outputs.cache-hit != 'true'

@@ -3,7 +3,7 @@ requires = ["scikit-build-core", "pybind11"]
 build-backend = "scikit_build_core.build"
 
 [project]
-name = "osqp-cuda"
+name = "osqp-cu12"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
 requires-python = ">=3.8"
