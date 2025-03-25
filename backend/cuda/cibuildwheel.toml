@@ -7,7 +7,8 @@ repair-wheel-command = ""
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel7/x86_64/cuda-rhel7.repo",
+  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo",
+  "yum search cuda-toolkit*",
   "yum install -y cuda-toolkit-12-6"
 ]
 environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.6/bin/nvcc" }
