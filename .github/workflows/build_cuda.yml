@@ -1,4 +1,4 @@
-name: Build CUDA
+name: Build CUDA Linux
 
 on:
   push:

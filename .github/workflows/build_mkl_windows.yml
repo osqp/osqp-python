@@ -1,4 +1,4 @@
-name: Build MKL
+name: Build MKL Windows
 
 on:
   push:

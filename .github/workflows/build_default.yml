@@ -79,7 +79,7 @@ jobs:
 
   publish_to_pypi:
     name: Publish wheels to PyPi
-    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+    if: false
     needs: [build_sdist, build_wheels]
     runs-on: ubuntu-latest
     steps:
