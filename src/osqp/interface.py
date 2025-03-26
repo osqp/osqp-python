@@ -89,17 +89,56 @@ def constant(which, algebra='builtin'):
         raise RuntimeError(f'Unknown constant {which}')
 
 
-# Dynamically construct an IntEnum from available osqp_status_type members.
-# For all values, see https://osqp.org/docs/interfaces/status_values.html
-def construct_solver_status_enum():
+def construct_enum(binding_enum_name):
+    """
+    Dynamically construct an IntEnum from available enum members.
+    For all values, see https://osqp.org/docs/interfaces/status_values.html
+    """
     m = default_algebra_module()
-    return IntEnum('SolverStatus', [(v.name, v.value) for v in m.osqp_status_type.__members__.values()])
+    binding_enum = getattr(m, binding_enum_name)
+    return IntEnum('SolverStatus', [(v.name, v.value) for v in binding_enum.__members__.values()])
 
 
-SolverStatus = construct_solver_status_enum()
+SolverStatus = construct_enum('osqp_status_type')
+SolverError = construct_enum('osqp_error_type')
+
+
+class OSQPException(Exception):
+    """
+    OSQPException is raised by the wrapper interface when it encounters an
+    exception by the underlying OSQP solver.
+    """
+
+    def __init__(self, error_code=None):
+        if error_code:
+            self.args = (error_code,)
+
+    def __eq__(self, error_code):
+        return len(self.args) > 0 and self.args[0] == error_code
 
 
 class OSQP:
+
+    """
+    For OSQP bindings (see bindings.cpp.in) that throw `ValueError`s
+    (through `throw py::value_error(...)`), we catch and re-raise them
+    as `OSQPException`s, with the correct int value as args[0].
+    """
+
+    @classmethod
+    def raises_error(cls, fn, *args, **kwargs):
+        try:
+            return_value = fn(*args, **kwargs)
+        except ValueError as e:
+            if e.args:
+                try:
+                    error_code = int(e.args[0])
+                except ValueError:
+                    error_code = None
+            raise OSQPException(error_code)
+        else:
+            return return_value
+
     def __init__(self, *args, **kwargs):
         self.m = None
         self.n = None
@@ -285,7 +324,7 @@ class OSQP:
             raise ValueError(f'Unrecognized settings {list(kwargs.keys())}')
 
         if settings_changed and self._solver is not None:
-            self._solver.update_settings(self.settings)
+            self.raises_error(self._solver.update_settings, self.settings)
 
     def update(self, **kwargs):
         # TODO: sanity-check on types/dimensions
@@ -342,7 +381,8 @@ class OSQP:
         self.ext.osqp_set_default_settings(self.settings)
         self.update_settings(**settings)
 
-        self._solver = self.ext.OSQPSolver(
+        self._solver = self.raises_error(
+            self.ext.OSQPSolver,
             P,
             q,
             A,
@@ -359,16 +399,23 @@ class OSQP:
         # TODO: sanity checks on types/dimensions
         return self._solver.warm_start(x, y)
 
-    def solve(self, raise_error=False):
+    def solve(self, raise_error=None):
+        if raise_error is None:
+            warnings.warn(
+                'The default value of raise_error will change to True in the future.',
+                PendingDeprecationWarning,
+            )
+            raise_error = False
+
         self._solver.solve()
 
         info = self._solver.info
-        if info.status_val == self.constant('OSQP_NON_CVX'):
+        if info.status_val == SolverStatus.OSQP_NON_CVX:
             info.obj_val = np.nan
         # TODO: Handle primal/dual infeasibility
 
-        if info.status_val != self.constant('OSQP_SOLVED') and raise_error:
-            raise ValueError('Problem not solved!')
+        if info.status_val != SolverStatus.OSQP_SOLVED and raise_error:
+            raise OSQPException(info.status_val)
 
         # Create a Namespace of OSQPInfo keys and associated values
         _info = SimpleNamespace(**{k: getattr(info, k) for k in info.__class__.__dict__ if not k.startswith('__')})
@@ -477,7 +524,7 @@ class OSQP:
                 'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
             )
 
-        if results.info.status != 'solved':
+        if results.info.status_val != SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
         if dy is None:
@@ -499,7 +546,7 @@ class OSQP:
                 'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
             )
 
-        if results.info.status != 'solved':
+        if results.info.status_val != SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
         P, _ = self._derivative_cache['P'], self._derivative_cache['q']
@@ -533,7 +580,7 @@ class OSQP:
                 'Problem has not been solved. ' 'You cannot take derivatives. ' 'Please call the solve function.'
             )
 
-        if results.info.status != 'solved':
+        if results.info.status_val != SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem has not been solved to optimality. ' 'You cannot take derivatives')
 
         dq = np.empty(self.n).astype(self._dtype)
