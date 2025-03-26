@@ -89,18 +89,18 @@ def constant(which, algebra='builtin'):
         raise RuntimeError(f'Unknown constant {which}')
 
 
-def construct_enum(binding_enum_name):
+def construct_enum(name, binding_enum_name):
     """
     Dynamically construct an IntEnum from available enum members.
     For all values, see https://osqp.org/docs/interfaces/status_values.html
     """
     m = default_algebra_module()
     binding_enum = getattr(m, binding_enum_name)
-    return IntEnum('SolverStatus', [(v.name, v.value) for v in binding_enum.__members__.values()])
+    return IntEnum(name, [(v.name, v.value) for v in binding_enum.__members__.values()])
 
 
-SolverStatus = construct_enum('osqp_status_type')
-SolverError = construct_enum('osqp_error_type')
+SolverStatus = construct_enum('SolverStatus', 'osqp_status_type')
+SolverError = construct_enum('SolverError', 'osqp_error_type')
 
 
 class OSQPException(Exception):
