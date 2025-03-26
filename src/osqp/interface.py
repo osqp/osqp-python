@@ -1,6 +1,7 @@
 import sys
 import os
 from types import SimpleNamespace
+from enum import IntEnum
 import shutil
 import subprocess
 import warnings
@@ -49,9 +50,30 @@ def default_algebra():
     raise RuntimeError('No algebra backend available!')
 
 
-def constant(which, algebra):
+def default_algebra_module():
+    """
+    Get the default algebra module.
+    Note: importlib.import_module is cached so we pay almost no penalty
+      for repeated calls to this function.
+    """
+    return importlib.import_module(_ALGEBRA_MODULES[default_algebra()])
+
+
+def constant(which, algebra='builtin'):
+    """
+    Get a named constant from the extension module.
+    Since constants are typically consistent across osqp algebras,
+    we use the `builtin` algebra (always guaranteed to be available)
+    by default.
+    """
     m = importlib.import_module(_ALGEBRA_MODULES[algebra])
     _constant = getattr(m, which, None)
+
+    if which in m.osqp_status_type.__members__:
+        warnings.warn(
+            'Direct access to osqp status values will be deprecated. Please use the SolverStatus enum instead.',
+            PendingDeprecationWarning,
+        )
 
     # If the constant was exported directly as an atomic type in the extension, use it;
     # Otherwise it's an enum out of which we can obtain the raw value
@@ -65,6 +87,16 @@ def constant(which, algebra):
             return np.nan
 
         raise RuntimeError(f'Unknown constant {which}')
+
+
+# Dynamically construct an IntEnum from available osqp_status_type members.
+# For all values, see https://osqp.org/docs/interfaces/status_values.html
+def construct_solver_status_enum():
+    m = default_algebra_module()
+    return IntEnum('SolverStatus', [(v.name, v.value) for v in m.osqp_status_type.__members__.values()])
+
+
+SolverStatus = construct_solver_status_enum()
 
 
 class OSQP:

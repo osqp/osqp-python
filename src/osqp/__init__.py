@@ -7,4 +7,5 @@ from osqp.interface import (  # noqa: F401
     algebra_available,
     algebras_available,
     default_algebra,
+    SolverStatus,
 )

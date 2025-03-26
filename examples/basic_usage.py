@@ -20,6 +20,10 @@ if __name__ == '__main__':
     # Solve problem
     res = prob.solve()
 
+    # Check solver status
+    # For all values, see https://osqp.org/docs/interfaces/status_values.html
+    assert res.info.status_val == osqp.SolverStatus.OSQP_SOLVED
+
     print('Status:', res.info.status)
     print('Objective value:', res.info.obj_val)
     print('Optimal solution x:', res.x)
