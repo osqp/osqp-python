@@ -131,10 +131,11 @@ class OSQP:
             return_value = fn(*args, **kwargs)
         except ValueError as e:
             if e.args:
+                error_code = None
                 try:
                     error_code = int(e.args[0])
                 except ValueError:
-                    error_code = None
+                    pass
             raise OSQPException(error_code)
         else:
             return return_value
