@@ -122,9 +122,7 @@ def _OSQP_Fn(
                 """
                 num_solvers = len(solvers)
                 if num_solvers not in (0, n_batch):
-                    raise RuntimeError(
-                        f'Invalid number of solvers: expected 0 or {n_batch},' f' but got {num_solvers}.'
-                    )
+                    raise RuntimeError(f'Invalid number of solvers: expected 0 or {n_batch}, but got {num_solvers}.')
                 return num_solvers == n_batch
 
             def _inner_solve(i, update_flag, q, l, u, P_val, P_idx, A_val, A_idx, solver_type, eps_abs, eps_rel):
@@ -157,8 +155,8 @@ def _OSQP_Fn(
                         eps_rel=eps_rel,
                     )
                 result = solver.solve()
-                status = result.info.status
-                if status != 'solved':
+                status = result.info.status_val
+                if status != osqp.SolverStatus.OSQP_SOLVED:
                     # TODO: We can replace this with something calmer and
                     # add some more options around potentially ignoring this.
                     raise RuntimeError(f'Unable to solve QP, status: {status}')

@@ -21,7 +21,7 @@ def self(algebra, solver_type, atol, rtol, decimal_tol):
 
 def test_non_convex_small_sigma(self, solver_type):
     if solver_type == 'direct':
-        with pytest.raises(ValueError):
+        with pytest.raises(osqp.OSQPException):
             self.model.setup(
                 P=self.P,
                 q=self.q,
