@@ -151,8 +151,7 @@ PyOSQPSolver::PyOSQPSolver(
 
     OSQPInt status = osqp_setup(&this->_solver, &this->_P.getcsc(), (OSQPFloat *)this->_q.data(), &this->_A.getcsc(), (OSQPFloat *)this->_l.data(), (OSQPFloat *)this->_u.data(), m, n, settings);
     if (status) {
-        std::string message = "Setup Error (Error Code " + std::to_string(status) + ")";
-        throw py::value_error(message);
+        throw py::value_error(std::to_string(status));
     }
 }
 
@@ -199,7 +198,12 @@ OSQPInt PyOSQPSolver::solve() {
 }
 
 OSQPInt PyOSQPSolver::update_settings(const OSQPSettings& new_settings) {
-    return osqp_update_settings(this->_solver, &new_settings);
+    OSQPInt status = osqp_update_settings(this->_solver, &new_settings);
+    if (status) {
+        throw py::value_error(std::to_string(status));
+    } else {
+        return status;
+    }
 }
 
 OSQPInt PyOSQPSolver::update_rho(OSQPFloat rho_new) {
@@ -352,6 +356,20 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .value("OSQP_SIGINT", OSQP_SIGINT)
     .value("OSQP_UNSOLVED", OSQP_UNSOLVED)
     .export_values();
+
+    // Solver Errors
+    py::enum_<osqp_error_type>(m, "osqp_error_type", py::module_local())
+    .value("OSQP_NO_ERROR", OSQP_NO_ERROR)
+    .value("OSQP_DATA_VALIDATION_ERROR", OSQP_DATA_VALIDATION_ERROR)
+    .value("OSQP_SETTINGS_VALIDATION_ERROR", OSQP_SETTINGS_VALIDATION_ERROR)
+    .value("OSQP_LINSYS_SOLVER_INIT_ERROR", OSQP_LINSYS_SOLVER_INIT_ERROR)
+    .value("OSQP_NONCVX_ERROR", OSQP_NONCVX_ERROR)
+    .value("OSQP_MEM_ALLOC_ERROR", OSQP_MEM_ALLOC_ERROR)
+    .value("OSQP_WORKSPACE_NOT_INIT_ERROR", OSQP_WORKSPACE_NOT_INIT_ERROR)
+    .value("OSQP_ALGEBRA_LOAD_ERROR", OSQP_ALGEBRA_LOAD_ERROR)
+    .value("OSQP_CODEGEN_DEFINES_ERROR", OSQP_CODEGEN_DEFINES_ERROR)
+    .value("OSQP_DATA_NOT_INITIALIZED", OSQP_DATA_NOT_INITIALIZED)
+    .value("OSQP_FUNC_NOT_IMPLEMENTED", OSQP_FUNC_NOT_IMPLEMENTED);
 
     // Preconditioner Type
     py::enum_<osqp_precond_type>(m, "osqp_precond_type", py::module_local())

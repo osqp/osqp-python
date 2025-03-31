@@ -2,9 +2,12 @@
 #   and is not in version control.
 from osqp._version import version as __version__  # noqa: F401
 from osqp.interface import (  # noqa: F401
+    OSQPException,
     OSQP,
     constant,
     algebra_available,
     algebras_available,
     default_algebra,
+    SolverStatus,
+    SolverError,
 )

@@ -60,7 +60,7 @@ class derivative_tests(unittest.TestCase):
             verbose=True,
         )
         results = m.solve()
-        if results.info.status != 'solved':
+        if results.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x = results.x
         y = results.y
@@ -90,7 +90,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         results = m.solve()
-        if results.info.status != 'solved':
+        if results.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         grads = m.forward_derivative(dP=dP, dq=dq, dA=dA, dl=dl, du=du)
         return grads
@@ -122,7 +122,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
@@ -140,7 +140,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
@@ -188,7 +188,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
@@ -206,7 +206,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
@@ -257,7 +257,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x1 = res.x
         y1 = res.y
@@ -275,7 +275,7 @@ class derivative_tests(unittest.TestCase):
             verbose=False,
         )
         res = osqp_solver.solve()
-        if res.info.status != 'solved':
+        if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
             raise ValueError('Problem not solved!')
         x2 = res.x
         y2 = res.y
@@ -319,7 +319,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -361,7 +361,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -405,7 +405,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -445,7 +445,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -484,7 +484,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -530,7 +530,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -573,7 +573,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -615,7 +615,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
 
@@ -658,7 +658,7 @@ class derivative_tests(unittest.TestCase):
                 verbose=False,
             )
             res = m.solve()
-            if res.info.status != 'solved':
+            if res.info.status_val != osqp.SolverStatus.OSQP_SOLVED:
                 raise ValueError('Problem not solved!')
             x_hat = res.x
             y_hat = res.y
