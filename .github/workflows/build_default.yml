@@ -42,8 +42,6 @@ jobs:
         include:
           - os: ubuntu-latest
             cibw_archs: "x86_64"
-          - os: ubuntu-latest
-            cibw_archs: "aarch64"
           - os: windows-2022
             cibw_archs: "auto64"
           # Include macos-13 to get Intel x86_64 macs and maos-latest to get the Aaarch64 macs
@@ -54,13 +52,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@master
-
-    # This might not be necessary once ARM runners become available for general use
-    - name: Set up QEMU
-      if: matrix.cibw_archs == 'aarch64'
-      uses: docker/setup-qemu-action@v3
-      with:
-        platforms: arm64
 
     - name: Build wheels
       uses: pypa/cibuildwheel@v2.23
