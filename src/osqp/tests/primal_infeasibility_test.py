@@ -1,3 +1,4 @@
+import os
 from types import SimpleNamespace
 import osqp
 from scipy import sparse
@@ -49,6 +50,12 @@ def test_primal_infeasible_problem(self):
     res = self.model.solve()
 
     assert res.info.status_val == self.model.constant('OSQP_PRIMAL_INFEASIBLE')
+
+    normalized_prim_inf_cert = res.prim_inf_cert / np.linalg.norm(res.prim_inf_cert)
+    normalized_prim_inf_cert_correct = np.load(
+        os.path.join(os.path.dirname(__file__), 'solutions', 'test_primal_infeasibility.npz')
+    )['normalized_prim_inf_cert_correct']
+    assert np.allclose(normalized_prim_inf_cert, normalized_prim_inf_cert_correct)
 
 
 def test_primal_and_dual_infeasible_problem(self):

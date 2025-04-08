@@ -1,3 +1,4 @@
+import os
 from types import SimpleNamespace
 import osqp
 import numpy as np
@@ -42,6 +43,12 @@ def test_dual_infeasible_lp(self):
 
     assert res.info.status_val == self.model.constant('OSQP_DUAL_INFEASIBLE')
 
+    normalized_dual_inf_cert = res.dual_inf_cert / np.linalg.norm(res.dual_inf_cert)
+    normalized_dual_inf_cert_correct = np.load(
+        os.path.join(os.path.dirname(__file__), 'solutions', 'test_dual_infeasibility.npz')
+    )['lp_normalized_dual_inf_cert_correct']
+    assert np.allclose(normalized_dual_inf_cert, normalized_dual_inf_cert_correct)
+
 
 def test_dual_infeasible_qp(self):
     # Dual infeasible example
@@ -57,6 +64,12 @@ def test_dual_infeasible_qp(self):
     res = self.model.solve()
 
     assert res.info.status_val == self.model.constant('OSQP_DUAL_INFEASIBLE')
+
+    normalized_dual_inf_cert = res.dual_inf_cert / np.linalg.norm(res.dual_inf_cert)
+    normalized_dual_inf_cert_correct = np.load(
+        os.path.join(os.path.dirname(__file__), 'solutions', 'test_dual_infeasibility.npz')
+    )['qp_normalized_dual_inf_cert_correct']
+    assert np.allclose(normalized_dual_inf_cert, normalized_dual_inf_cert_correct)
 
 
 def test_primal_and_dual_infeasible_problem(self):
