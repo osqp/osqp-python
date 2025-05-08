@@ -188,9 +188,9 @@ class OSQP:
         if P is None:
             P = spa.csc_matrix(
                 (
-                    np.zeros((0,), dtype=np.double),  # data
-                    np.zeros((0,), dtype=np.int),  # indices
-                    np.zeros((n + 1,), dtype=np.int),
+                    np.zeros((0,), dtype=self._dtype),  # data
+                    np.zeros((0,), dtype=self._itype),  # indices
+                    np.zeros((n + 1,), dtype=self._itype),
                 ),  # indptr
                 shape=(n, n),
             )
@@ -200,9 +200,9 @@ class OSQP:
         if A is None:
             A = spa.csc_matrix(
                 (
-                    np.zeros((0,), dtype=np.double),  # data
-                    np.zeros((0,), dtype=np.int),  # indices
-                    np.zeros((n + 1,), dtype=np.int),
+                    np.zeros((0,), dtype=self._dtype),  # data
+                    np.zeros((0,), dtype=self._itype),  # indices
+                    np.zeros((n + 1,), dtype=self._itype),
                 ),  # indptr
                 shape=(m, n),
             )
