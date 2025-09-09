@@ -22,7 +22,7 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       name: Install Python
       with:
         python-version: '3.9'
