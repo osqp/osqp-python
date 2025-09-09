@@ -23,7 +23,7 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.23
+      uses: pypa/cibuildwheel@v3.1
       with:
         package-dir: backend/cuda
         config-file: backend/cuda/cibuildwheel.toml

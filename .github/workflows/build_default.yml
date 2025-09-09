@@ -54,7 +54,7 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.23
+      uses: pypa/cibuildwheel@v3.1
       with:
         config-file: cibuildwheel.toml
         output-dir: wheelhouse
