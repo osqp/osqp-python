@@ -9,6 +9,8 @@ before-build = "rm -rf {package}/osqp_sources/build"
 before-test = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
 test-groups = ["test"]
 test-command = "python -m pytest -s {project}/src/osqp/tests"
+# 09/10/25 - Skip testing on cp313-manylinux_aarch64 because torch/numpy deps are unsatisfiable
+test-skip = "cp313-manylinux_aarch64"
 
 [tool.cibuildwheel.macos]
 # 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
