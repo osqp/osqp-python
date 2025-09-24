@@ -25,7 +25,6 @@ set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 
 message(STATUS "Fetching/configuring OSQP")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
-set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
