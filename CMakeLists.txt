@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15...3.26)
+cmake_minimum_required(VERSION 3.16...3.26)
 project(ext)
 
 set(PYTHON "ON")
@@ -25,10 +25,13 @@ set(PYTHON_INCLUDE_DIRS ${Python_INCLUDE_DIRS})
 
 message(STATUS "Fetching/configuring OSQP")
 list(APPEND CMAKE_MESSAGE_INDENT "  ")
+set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
 FetchContent_Declare(
   osqp
   GIT_REPOSITORY https://github.com/osqp/osqp.git
+  GIT_SHALLOW ON
   GIT_TAG vb/git_submods
+  GIT_SUBMODULES ext/qdldl
 )
 list(POP_BACK CMAKE_MESSAGE_INDENT)
 FetchContent_MakeAvailable(osqp)
