@@ -370,7 +370,8 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .value("OSQP_CODEGEN_DEFINES_ERROR", OSQP_CODEGEN_DEFINES_ERROR)
     .value("OSQP_DATA_NOT_INITIALIZED", OSQP_DATA_NOT_INITIALIZED)
     .value("OSQP_FUNC_NOT_IMPLEMENTED", OSQP_FUNC_NOT_IMPLEMENTED)
-    .value("OSQP_RUNTIME_ERROR", OSQP_RUNTIME_ERROR);
+    .value("OSQP_RUNTIME_ERROR", OSQP_RUNTIME_ERROR)
+    .export_values();
 
     // Preconditioner Type
     py::enum_<osqp_precond_type>(m, "osqp_precond_type", py::module_local())
