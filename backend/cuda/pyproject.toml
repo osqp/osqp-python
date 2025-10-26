@@ -32,6 +32,7 @@ OSQP_ALGEBRA_BACKEND = "cuda"
 OSQP_EXT_MODULE_NAME = "osqp_cuda"
 CMAKE_CUDA_COMPILER = {env="CMAKE_CUDA_COMPILER"}
 CUDA_TOOLKIT_ROOT_DIR = {env="CUDA_TOOLKIT_ROOT_DIR"}
+OSQP_USE_FLOAT = {env="OSQP_USE_FLOAT"}
 
 [tool.setuptools_scm]
 root = "../.."
