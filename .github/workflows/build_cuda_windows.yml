@@ -58,7 +58,7 @@ jobs:
         output-dir: wheelhouse
 
     - name: Upload artifacts to github
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: wheels-cuda-${{ matrix.os }}
         path: ./wheelhouse

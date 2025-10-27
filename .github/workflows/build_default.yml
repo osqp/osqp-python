@@ -27,7 +27,7 @@ jobs:
         python -m build --sdist --outdir=wheelhouse
 
     - name: Upload sdist to github
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: wheels-sdist
         path: wheelhouse/*.tar.gz
@@ -64,7 +64,7 @@ jobs:
         CIBW_ENVIRONMENT_MACOS: CMAKE_OSX_ARCHITECTURES=${{ matrix.cibw_archs }}
 
     - name: Upload artifacts to github
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: wheels-${{ runner.os }}-${{ matrix.cibw_archs }}
         path: ./wheelhouse/*.whl
