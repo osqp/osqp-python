@@ -436,6 +436,7 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readwrite("eps_dual_inf", &OSQPSettings::eps_dual_inf)
     .def_readwrite("scaled_termination", &OSQPSettings::scaled_termination)
     .def_readwrite("check_termination", &OSQPSettings::check_termination)
+    .def_readwrite("check_dualgap", &OSQPSettings::check_dualgap)
     .def_readwrite("time_limit", &OSQPSettings::time_limit)
 
     // Settings - Polishing
@@ -472,8 +473,10 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("status_polish", &OSQPInfo::status_polish)
     // obj_val is readwrite because Python wrappers may overwrite this value based on status_val
     .def_readwrite("obj_val", &OSQPInfo::obj_val)
+    .def_readwrite("dual_obj_val", &OSQPInfo::dual_obj_val)
     .def_readonly("prim_res", &OSQPInfo::prim_res)
     .def_readonly("dual_res", &OSQPInfo::dual_res)
+    .def_readonly("duality_gap", &OSQPInfo::duality_gap)
     .def_readonly("iter", &OSQPInfo::iter)
     .def_readonly("rho_updates", &OSQPInfo::rho_updates)
     .def_readonly("rho_estimate", &OSQPInfo::rho_estimate)
@@ -481,7 +484,9 @@ PYBIND11_MODULE(@OSQP_EXT_MODULE_NAME@, m) {
     .def_readonly("solve_time", &OSQPInfo::solve_time)
     .def_readonly("update_time", &OSQPInfo::update_time)
     .def_readonly("polish_time", &OSQPInfo::polish_time)
-    .def_readonly("run_time", &OSQPInfo::run_time);
+    .def_readonly("run_time", &OSQPInfo::run_time)
+    .def_readonly("primdual_int", &OSQPInfo::primdual_int)
+    .def_readonly("rel_kkt_error", &OSQPInfo::rel_kkt_error);
 
     // Solver
     py::class_<PyOSQPSolver>(m, "OSQPSolver", py::module_local())
