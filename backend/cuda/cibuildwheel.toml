@@ -9,9 +9,9 @@ repair-wheel-command = ""
 before-all = [
   "dnf config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo",
   "dnf search cuda-toolkit*",
-  "dnf install -y cuda-toolkit-12-6"
+  "dnf install -y cuda-toolkit-12-8"
 ]
-environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.6/bin/nvcc" }
+environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.8/bin/nvcc" }
 
 [tool.cibuildwheel.windows]
 environment = { CMAKE_CUDA_COMPILER = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6/bin/nvcc.exe", CUDA_TOOLKIT_ROOT_DIR = "C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6", CMAKE_GENERATOR_TOOLSET = "cuda=C:/Program Files/NVIDIA GPU Computing Toolkit/CUDA/v12.6" }
