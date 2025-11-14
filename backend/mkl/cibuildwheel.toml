@@ -6,9 +6,9 @@ before-build = "rm -rf {package}/osqp_sources/build"
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum-config-manager --add-repo https://yum.repos.intel.com/oneapi",
+  "dnf config-manager --add-repo https://yum.repos.intel.com/oneapi",
   "rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB",
-  "yum --nogpgcheck install -y intel-oneapi-mkl-devel-2023.0.0"
+  "dnf --nogpgcheck install -y intel-oneapi-mkl-devel-2025.0"
 ]
 environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
@@ -16,6 +16,7 @@ repair-wheel-command = ""
 [tool.cibuildwheel.macos]
 before-all = [
   # See https://github.com/oneapi-src/oneapi-ci for installer URLs
+  # macOS must use an old version because newer versions dropped compatibility for x86-based macOS
   "wget -q https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg",
   "hdiutil attach -noverify -noautofsck m_BaseKit_p_2023.2.0.49398.dmg",
   "sudo /Volumes/m_BaseKit_p_2023.2.0.49398/bootstrapper.app/Contents/MacOS/bootstrapper --silent --eula accept --components intel.oneapi.mac.mkl.devel",
