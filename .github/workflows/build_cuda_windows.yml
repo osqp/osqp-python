@@ -38,7 +38,7 @@ jobs:
 
     - name: cache install cuda
       id: cache-install
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: C:\Program Files (x86)\Intel\oneAPI\
         key: install-${{ env.CUDATOOLKIT_URL }}-${{ env.CUDATOOLKIT_COMPONENTS }}
