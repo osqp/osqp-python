@@ -1,4 +1,5 @@
 #include <iostream>
+#include <memory>
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
 
@@ -132,6 +133,7 @@ class PyOSQPSolver {
         const CSC& _A;
         py::array_t<OSQPFloat> _u;
         OSQPSolver *_solver;
+        std::unique_ptr<PyOSQPSolution> _solution_cache;
 };
 
 PyOSQPSolver::PyOSQPSolver(
@@ -143,8 +145,7 @@ PyOSQPSolver::PyOSQPSolver(
         OSQPInt m,
         OSQPInt n,
         const OSQPSettings *settings
-): m(m), n(n), _P(P), _A(A) {
-    this->_solver = new OSQPSolver();
+): m(m), n(n), _P(P), _A(A), _solver(nullptr) {
     this->_q = q;
     this->_l = l;
     this->_u = u;
@@ -164,8 +165,10 @@ OSQPSettings* PyOSQPSolver::get_settings() {
 }
 
 PyOSQPSolution& PyOSQPSolver::get_solution() {
-    PyOSQPSolution* solution = new PyOSQPSolution(*this->_solver->solution, this->m, this->n);
-    return *solution;
+    if (!_solution_cache) {
+        _solution_cache = std::make_unique<PyOSQPSolution>(*this->_solver->solution, this->m, this->n);
+    }
+    return *_solution_cache;
 }
 
 OSQPInfo* PyOSQPSolver::get_info() {
