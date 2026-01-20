@@ -1,15 +1,12 @@
 [tool.cibuildwheel]
 build = "cp3*"
-# 01/20/26 - cp311-* added to list because we can't get scipy to install
-# (for wheel testing purposes). Building scipy insists on OpenBLAS which is
-# unavailable inside the container.
-skip = ["cp36-*", "cp37-*", "cp311-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 # Install CPU-only version of torch beforehand since that allows cibuildwheel
 # to satisfy the "test" dependency group install, but much faster. The runtime
 # cost of torch-based osqp tests are considered negligible so torch-cpu is ok.
-before-test = "pip install torch --prefer-binary --index-url https://download.pytorch.org/whl/cpu"
+before-test = "pip install torch --index-url https://download.pytorch.org/whl/cpu"
 test-groups = ["test"]
 test-command = "python -m pytest -s {project}/src/osqp/tests"
 # 09/10/25 - Skip testing on cp313-manylinux_aarch64 because torch/numpy deps are unsatisfiable
