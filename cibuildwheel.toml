@@ -12,6 +12,9 @@ test-command = "python -m pytest -s {project}/src/osqp/tests"
 # 09/10/25 - Skip testing on cp313-manylinux_aarch64 because torch/numpy deps are unsatisfiable
 test-skip = "cp313-manylinux_aarch64"
 
+[tool.cibuildwheel.linux]
+before-all = "yum install -y openblas-devel"
+
 [tool.cibuildwheel.macos]
 # 02/13/25 - Skip testing on cp313-macosx_x86_64 because torch/numpy deps are unsatisfiable
 test-skip = "cp313-macosx_x86_64"

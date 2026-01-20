@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 project(ext)
 
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 set(PYTHON "ON")
 set(OSQP_BUILD_UNITTESTS "OFF")
 set(OSQP_USE_LONG "OFF")
