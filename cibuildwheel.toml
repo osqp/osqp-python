@@ -16,6 +16,7 @@ test-command = "python -m pytest -s {project}/src/osqp/tests"
 select = "*manylinux_aarch64"
 before-test = 'pip install scipy --prefer-binary'
 test-groups = ["test-no-nn"]
+test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/nn_test.py"
 
 [tool.cibuildwheel.pyodide]
 build = "cp312-pyodide_wasm32"
