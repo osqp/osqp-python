@@ -25,7 +25,7 @@ jobs:
     - uses: actions/checkout@master
 
     - name: Build wheels
-      uses: pypa/cibuildwheel@v2.23
+      uses: pypa/cibuildwheel@v3.3
       with:
         package-dir: backend/mkl
         config-file: backend/mkl/cibuildwheel.toml
