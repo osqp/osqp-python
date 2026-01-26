@@ -6,7 +6,7 @@ before-build = "rm -rf {package}/osqp_sources/build"
 # Install CPU-only version of torch beforehand since that allows cibuildwheel
 # to satisfy the "test" dependency group install, but much faster. The runtime
 # cost of torch-based osqp tests are considered negligible so torch-cpu is ok.
-before-test = 'pip install "scipy!=1.12.0,<1.17" && pip install torch --index-url https://download.pytorch.org/whl/cpu'
+before-test = 'pip install scipy --prefer-binary && pip install torch --index-url https://download.pytorch.org/whl/cpu'
 test-groups = ["test"]
 test-command = "python -m pytest -s {project}/src/osqp/tests"
 # 09/10/25 - Skip testing on cp313-manylinux_aarch64 because torch/numpy deps are unsatisfiable
