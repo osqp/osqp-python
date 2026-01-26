@@ -13,7 +13,7 @@ test-command = "python -m pytest -s {project}/src/osqp/tests"
 [[tool.cibuildwheel.overrides]]
 # Platforms on which installing pytorch is problematic, so we skip testing
 # the `osqp.nn` module
-select = "*manylinux_aarch64"
+select = "*manylinux_aarch64 cp313-macosx_x86_64"
 before-test = 'pip install scipy --prefer-binary'
 test-groups = ["test-no-nn"]
 test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/nn_test.py"
