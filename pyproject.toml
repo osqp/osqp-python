@@ -58,7 +58,7 @@ cu12 = [
 # support installation of torch at all, which is why it is useful to have this
 # dependency group.
 test-no-nn = ["pytest>=6"]
-test = ["torch", "scipy!=1.12.0,<1.17", { include-group = "test-no-nn" }]
+test = ["torch", "scipy!=1.12.0", { include-group = "test-no-nn" }]
 dev = ["pre-commit", { include-group = "test" }]
 
 [tool.scikit-build]
