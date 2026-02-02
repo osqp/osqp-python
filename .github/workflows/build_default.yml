@@ -40,17 +40,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
-            cibw_archs: "x86_64"
+#          - os: ubuntu-latest
+#            cibw_archs: "x86_64"
           - os: ubuntu-24.04-arm
             cibw_archs: "auto"
-          - os: windows-2022
-            cibw_archs: "auto64"
+#          - os: windows-2022
+#            cibw_archs: "auto64"
           # Include macos-15-intel to get Intel x86_64 macs and macos-latest to get the Aaarch64 macs
           - os: macos-15-intel
             cibw_archs: "x86_64"
-          - os: macos-latest
-            cibw_archs: "arm64"
+#          - os: macos-latest
+#            cibw_archs: "arm64"
 
     steps:
     - uses: actions/checkout@master
