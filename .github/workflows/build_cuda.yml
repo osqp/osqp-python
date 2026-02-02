@@ -1,0 +1,36 @@
+name: Build CUDA Linux
+
+on:
+  push:
+    branches:
+      - master
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build_wheels:
+    name: Build wheel on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+
+    steps:
+    - uses: actions/checkout@master
+
+    - name: Build wheels
+      uses: pypa/cibuildwheel@v2.23
+      with:
+        package-dir: backend/cuda
+        config-file: backend/cuda/cibuildwheel.toml
+        output-dir: wheelhouse
+
+    - name: Upload artifacts to github
+      uses: actions/upload-artifact@v5
+      with:
+        name: wheels-cuda-${{ matrix.os }}
+        path: ./wheelhouse
