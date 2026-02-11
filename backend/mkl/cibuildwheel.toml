@@ -6,9 +6,9 @@ before-build = "rm -rf {package}/osqp_sources/build"
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum-config-manager --add-repo https://yum.repos.intel.com/oneapi",
+  "dnf config-manager --add-repo https://yum.repos.intel.com/oneapi",
   "rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB",
-  "yum --nogpgcheck install -y intel-oneapi-mkl-devel"
+  "dnf --nogpgcheck install -y intel-oneapi-mkl-devel-2023.0.0"
 ]
 environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
