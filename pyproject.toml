@@ -7,6 +7,7 @@ name = "osqp"
 dynamic = ["version"]
 description = "OSQP: The Operator Splitting QP Solver"
 license = "Apache-2.0"
+license-files = ["LICENSE"]
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
