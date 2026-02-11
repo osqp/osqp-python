@@ -1,6 +1,6 @@
 [tool.cibuildwheel]
 build = "cp3*"
-skip = ["cp36-*", "cp37-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+skip = ["cp313t-*", "cp314t-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 
@@ -8,7 +8,7 @@ before-build = "rm -rf {package}/osqp_sources/build"
 before-all = [
   "yum-config-manager --add-repo https://yum.repos.intel.com/oneapi",
   "rpm --import https://yum.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB",
-  "yum --nogpgcheck install -y intel-oneapi-mkl-devel-2023.0.0"
+  "yum --nogpgcheck install -y intel-oneapi-mkl-devel"
 ]
 environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
