@@ -46,6 +46,8 @@ jobs:
             cibw_archs: "auto"
           - os: windows-2022
             cibw_archs: "auto64"
+          - os: windows-11-arm
+            cibw_archs: "ARM64"
           # Include macos-15-intel to get Intel x86_64 macs and macos-latest to get the Aaarch64 macs
           - os: macos-15-intel
             cibw_archs: "x86_64"
