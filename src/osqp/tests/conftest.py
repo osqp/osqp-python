@@ -28,4 +28,5 @@ def pytest_generate_tests(metafunc):
             ('cuda', 'indirect', 1e-2, 1e-3, 2),
         )
 
-    metafunc.parametrize(parameters, values)
+    if 'algebra' in metafunc.fixturenames:
+        metafunc.parametrize(parameters, values)
