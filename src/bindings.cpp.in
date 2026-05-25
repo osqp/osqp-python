@@ -176,18 +176,18 @@ OSQPInfo* PyOSQPSolver::get_info() {
 }
 
 OSQPInt PyOSQPSolver::warm_start(py::object x, py::object y) {
-    OSQPFloat* _x;
-    OSQPFloat* _y;
+    OSQPFloat* _x = NULL;
+    OSQPFloat* _y = NULL;
 
-    if (x.is_none()) {
-        _x = NULL;
-    } else {
-        _x = (OSQPFloat *)py::array_t<OSQPFloat>(x).data();
+    py::array_t<OSQPFloat> _x_arr, _y_arr;
+
+    if (!x.is_none()) {
+        _x_arr = py::array_t<OSQPFloat>(x);
+        _x = (OSQPFloat *)_x_arr.data();
     }
-    if (y.is_none()) {
-        _y = NULL;
-    } else {
-        _y = (OSQPFloat *)py::array_t<OSQPFloat>(y).data();
+    if (!y.is_none()) {
+        _y_arr = py::array_t<OSQPFloat>(y);
+        _y = (OSQPFloat *)_y_arr.data();
     }
 
     return osqp_warm_start(this->_solver, _x, _y);
@@ -214,93 +214,83 @@ OSQPInt PyOSQPSolver::update_rho(OSQPFloat rho_new) {
 }
 
 OSQPInt PyOSQPSolver::update_data_vec(py::object q, py::object l, py::object u) {
-    OSQPFloat* _q;
-    OSQPFloat* _l;
-    OSQPFloat* _u;
+    OSQPFloat* _q = NULL;
+    OSQPFloat* _l = NULL;
+    OSQPFloat* _u = NULL;
 
-    if (q.is_none()) {
-        _q = NULL;
-    } else {
-        _q = (OSQPFloat *)py::array_t<OSQPFloat>(q).data();
+    py::array_t<OSQPFloat> _q_arr, _l_arr, _u_arr;
+
+    if (!q.is_none()) {
+        _q_arr = py::array_t<OSQPFloat>(q);
+        _q = (OSQPFloat *)_q_arr.data();
     }
-    if (l.is_none()) {
-        _l = NULL;
-    } else {
-        _l = (OSQPFloat *)py::array_t<OSQPFloat>(l).data();
+    if (!l.is_none()) {
+        _l_arr = py::array_t<OSQPFloat>(l);
+        _l = (OSQPFloat *)_l_arr.data();
     }
-    if (u.is_none()) {
-        _u = NULL;
-    } else {
-        _u = (OSQPFloat *)py::array_t<OSQPFloat>(u).data();
+    if (!u.is_none()) {
+        _u_arr = py::array_t<OSQPFloat>(u);
+        _u = (OSQPFloat *)_u_arr.data();
     }
 
     return osqp_update_data_vec(this->_solver, _q, _l, _u);
 }
 
 OSQPInt PyOSQPSolver::update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::object A_i) {
-    OSQPFloat* _P_x;
-    OSQPInt* _P_i;
+    OSQPFloat* _P_x = NULL;
+    OSQPInt* _P_i = NULL;
     OSQPInt _P_n = 0;
-    OSQPFloat* _A_x;
-    OSQPInt* _A_i;
+    OSQPFloat* _A_x = NULL;
+    OSQPInt* _A_i = NULL;
     OSQPInt _A_n = 0;
 
-    if (P_x.is_none()) {
-        _P_x = NULL;
-    } else {
-        auto _P_x_array = py::array_t<OSQPFloat>(P_x);
-        _P_x = (OSQPFloat *)_P_x_array.data();
-        _P_n = _P_x_array.size();
+    py::array_t<OSQPFloat> _P_x_arr, _A_x_arr;
+    py::array_t<OSQPInt> _P_i_arr, _A_i_arr;
+
+    if (!P_x.is_none()) {
+        _P_x_arr = py::array_t<OSQPFloat>(P_x);
+        _P_x = (OSQPFloat *)_P_x_arr.data();
+        _P_n = _P_x_arr.size();
     }
 
-    if (P_i.is_none()) {
-        _P_i = NULL;
-    } else {
-        auto _P_i_array = py::array_t<OSQPInt>(P_i);
-        _P_i = (OSQPInt *)_P_i_array.data();
-        _P_n = _P_i_array.size();
+    if (!P_i.is_none()) {
+        _P_i_arr = py::array_t<OSQPInt>(P_i);
+        _P_i = (OSQPInt *)_P_i_arr.data();
+        _P_n = _P_i_arr.size();
     }
 
-    if (A_x.is_none()) {
-        _A_x = NULL;
-    } else {
-        auto _A_x_array = py::array_t<OSQPFloat>(A_x);
-        _A_x = (OSQPFloat *)_A_x_array.data();
-        _A_n = _A_x_array.size();
+    if (!A_x.is_none()) {
+        _A_x_arr = py::array_t<OSQPFloat>(A_x);
+        _A_x = (OSQPFloat *)_A_x_arr.data();
+        _A_n = _A_x_arr.size();
     }
 
-    if (A_i.is_none()) {
-        _A_i = NULL;
-    } else {
-        auto _A_i_array = py::array_t<OSQPInt>(A_i);
-        _A_i = (OSQPInt *)_A_i_array.data();
-        _A_n = _A_i_array.size();
+    if (!A_i.is_none()) {
+        _A_i_arr = py::array_t<OSQPInt>(A_i);
+        _A_i = (OSQPInt *)_A_i_arr.data();
+        _A_n = _A_i_arr.size();
     }
 
     return osqp_update_data_mat(this->_solver, _P_x, _P_i, _P_n, _A_x, _A_i, _A_n);
 }
 
 OSQPInt PyOSQPSolver::adjoint_derivative_compute(const py::object dx, const py::object dy) {
-    OSQPFloat* _dx;
-    OSQPFloat* _dy;
+    OSQPFloat* _dx = NULL;
+    OSQPFloat* _dy = NULL;
 
-    if (dx.is_none()) {
-        _dx = NULL;
-    } else {
-        auto _dx_array = py::array_t<OSQPFloat>(dx);
-        _dx = (OSQPFloat *)_dx_array.data();
+    py::array_t<OSQPFloat> _dx_arr, _dy_arr;
+
+    if (!dx.is_none()) {
+        _dx_arr = py::array_t<OSQPFloat>(dx);
+        _dx = (OSQPFloat *)_dx_arr.data();
     }
 
-    if (dy.is_none()) {
-        _dy = NULL;
-    } else {
-        auto _dy_array = py::array_t<OSQPFloat>(dy);
-        _dy = (OSQPFloat *)_dy_array.data();
+    if (!dy.is_none()) {
+        _dy_arr = py::array_t<OSQPFloat>(dy);
+        _dy = (OSQPFloat *)_dy_arr.data();
     }
-
 
     return osqp_adjoint_derivative_compute(this->_solver, _dx, _dy);
-
 }
 
 OSQPInt PyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
@@ -311,9 +301,10 @@ OSQPInt PyOSQPSolver::adjoint_derivative_get_mat(CSC& dP, CSC& dA) {
 }
 
 OSQPInt PyOSQPSolver::adjoint_derivative_get_vec(py::object dq, py::object dl, py::object du) {
-    OSQPFloat* _dq = (OSQPFloat *)py::array_t<OSQPFloat>(dq).data();
-    OSQPFloat* _dl = (OSQPFloat *)py::array_t<OSQPFloat>(dl).data();
-    OSQPFloat* _du = (OSQPFloat *)py::array_t<OSQPFloat>(du).data();
+    py::array_t<OSQPFloat> _dq_arr(dq), _dl_arr(dl), _du_arr(du);
+    OSQPFloat* _dq = (OSQPFloat *)_dq_arr.data();
+    OSQPFloat* _dl = (OSQPFloat *)_dl_arr.data();
+    OSQPFloat* _du = (OSQPFloat *)_du_arr.data();
 
     return osqp_adjoint_derivative_get_vec(this->_solver, _dq, _dl, _du);
 }
