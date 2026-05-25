@@ -1,6 +1,7 @@
 [![PyPI version](https://badge.fury.io/py/osqp.svg)](https://badge.fury.io/py/osqp)
 [![Python 3.8‒3.14](https://img.shields.io/badge/python-3.8%E2%80%923.14-blue)](https://www.python.org)
 [![Build](https://github.com/osqp/osqp-python/actions/workflows/build_default.yml/badge.svg)](https://github.com/osqp/osqp-python/actions/workflows/build_default.yml)
+[![CodSpeed](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/osqp/osqp-python?utm_source=badge)
 
 # OSQP Python
 Python wrapper for [OSQP](https://osqp.org): The Operator Splitting QP solver.
