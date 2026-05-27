@@ -1,6 +1,6 @@
 [tool.cibuildwheel]
 build = "cp3*"
-skip = ["cp313t-*", "cp314t-*", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+skip = ["cp314t-win_amd64", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 
@@ -19,7 +19,7 @@ before-all = [
   "wget -q https://registrationcenter-download.intel.com/akdlm/IRC_NAS/cd013e6c-49c4-488b-8b86-25df6693a9b7/m_BaseKit_p_2023.2.0.49398.dmg",
   "hdiutil attach -noverify -noautofsck m_BaseKit_p_2023.2.0.49398.dmg",
   "sudo /Volumes/m_BaseKit_p_2023.2.0.49398/bootstrapper.app/Contents/MacOS/bootstrapper --silent --eula accept --components intel.oneapi.mac.mkl.devel",
-  "pip install 'cmake==3.18.4'"
+  "pip install cmake"
 ]
 environment = { MKL_ROOT = "/opt/intel/oneapi/mkl/latest" }
 repair-wheel-command = ""
