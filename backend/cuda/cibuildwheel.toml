@@ -1,15 +1,14 @@
 [tool.cibuildwheel]
 build = "cp3*"
-skip = ["cp38-*", "cp314t-win_amd64", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+skip = ["cp314t-win_amd64", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 repair-wheel-command = ""
 
 [tool.cibuildwheel.linux]
 before-all = [
-  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel9/x86_64/cuda-rhel9.repo",
-  "yum install -y cuda-cccl-12-6-12.6.77-1.x86_64",
-  "yum install -y cuda-toolkit-12-6 --skip-broken"
+  "yum-config-manager --add-repo https://developer.download.nvidia.com/compute/cuda/repos/rhel8/x86_64/cuda-rhel8.repo",
+  "yum install -y --setopt=obsoletes=0 cuda-toolkit-12-6"
 ]
 environment = { CMAKE_CUDA_COMPILER = "/usr/local/cuda-12.6/bin/nvcc" }
 
