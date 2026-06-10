@@ -20,6 +20,28 @@ include(FetchContent)
 # 03/05/24 - Use modern python discovery
 set(PYBIND11_FINDPYTHON "ON")
 
+# Free-threaded (no-GIL) CPython on Windows ships only pythonXYt.lib (note the
+# trailing "t"); the regular pythonXY.lib is absent. Unless FindPython is asked
+# to search the gil_disabled ABI, it resolves the extension module's import
+# library to the missing pythonXY.lib and the link fails with
+# "LNK1104: cannot open file 'pythonXY.lib'". scikit-build-core seeds
+# Python_EXECUTABLE in the initial cache, so detect a free-threaded interpreter
+# here and steer the FindPython invocation that pybind11 performs below to the
+# correct ABI. The Python_FIND_ABI 4-tuple's last element selects gil_disabled
+# (requires CMake >= 3.30). No-op on regular interpreters.
+if(DEFINED Python_EXECUTABLE)
+    execute_process(
+        COMMAND "${Python_EXECUTABLE}" -c
+                "import sysconfig;print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
+        OUTPUT_VARIABLE OSQP_PY_GIL_DISABLED
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+if(WIN32 AND OSQP_PY_GIL_DISABLED STREQUAL "1")
+    message(STATUS "Free-threaded Python detected; searching gil_disabled ABI (pythonXYt.lib)")
+    set(Python_FIND_ABI "OFF" "ANY" "ANY" "ON")
+endif()
+
 find_package(pybind11 CONFIG REQUIRED)
 
 # 03/05/24 - Workaround because OSQP CMakeLists.txt is using old variable names
@@ -41,20 +63,12 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} ${CMAKE_CURRENT_BINARY_DIR}/src/bindings.cpp)
 install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION . COMPONENT python)
 
-# Free-threaded (no-GIL) Python on Windows ships only pythonXYt.lib. The MSVC
-# auto-link pragma in pyconfig.h selects pythonXY.lib (no "t") unless
-# Py_GIL_DISABLED is defined at compile time, producing a spurious LNK1104 for
-# the non-existent pythonXY.lib when building cp3XXt wheels. Mirror what
-# setuptools does: ask the interpreter and define the macro ourselves so the
-# correct import library is linked. No-op on non-free-threaded interpreters.
-execute_process(
-    COMMAND "${Python_EXECUTABLE}" -c
-            "import sysconfig;print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
-    OUTPUT_VARIABLE OSQP_PY_GIL_DISABLED
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# Also define Py_GIL_DISABLED at compile time on free-threaded interpreters.
+# The MSVC auto-link pragma in pyconfig.h selects pythonXY.lib (no "t") unless
+# this macro is set, and the extension must be built with the same flag the
+# interpreter uses to keep the C ABI in sync. Reuses OSQP_PY_GIL_DISABLED
+# computed above. No-op on non-free-threaded interpreters.
 if(OSQP_PY_GIL_DISABLED STREQUAL "1")
-    message(STATUS "Free-threaded Python detected; defining Py_GIL_DISABLED")
     target_compile_definitions(${OSQP_EXT_MODULE_NAME} PRIVATE Py_GIL_DISABLED=1)
 endif()
 
