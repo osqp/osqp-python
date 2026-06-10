@@ -1,6 +1,6 @@
 [tool.cibuildwheel]
 build = "cp3*"
-skip = ["cp314t-win_amd64", "*-win32", "*-manylinux_i686", "*-musllinux_*"]
+skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 
