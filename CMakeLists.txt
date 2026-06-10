@@ -41,6 +41,23 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} ${CMAKE_CURRENT_BINARY_DIR}/src/bindings.cpp)
 install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION . COMPONENT python)
 
+# Free-threaded (no-GIL) Python on Windows ships only pythonXYt.lib. The MSVC
+# auto-link pragma in pyconfig.h selects pythonXY.lib (no "t") unless
+# Py_GIL_DISABLED is defined at compile time, producing a spurious LNK1104 for
+# the non-existent pythonXY.lib when building cp3XXt wheels. Mirror what
+# setuptools does: ask the interpreter and define the macro ourselves so the
+# correct import library is linked. No-op on non-free-threaded interpreters.
+execute_process(
+    COMMAND "${Python_EXECUTABLE}" -c
+            "import sysconfig;print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
+    OUTPUT_VARIABLE OSQP_PY_GIL_DISABLED
+    OUTPUT_STRIP_TRAILING_WHITESPACE
+)
+if(OSQP_PY_GIL_DISABLED STREQUAL "1")
+    message(STATUS "Free-threaded Python detected; defining Py_GIL_DISABLED")
+    target_compile_definitions(${OSQP_EXT_MODULE_NAME} PRIVATE Py_GIL_DISABLED=1)
+endif()
+
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
 if(${OSQP_ALGEBRA_BACKEND} STREQUAL "builtin")
     target_link_libraries(ext_builtin PUBLIC pybind11::module osqpstatic)
