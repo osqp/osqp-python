@@ -20,6 +20,35 @@ include(FetchContent)
 # 03/05/24 - Use modern python discovery
 set(PYBIND11_FINDPYTHON "ON")
 
+if(DEFINED Python_EXECUTABLE)
+    execute_process(
+        COMMAND "${Python_EXECUTABLE}" -c
+                "import sysconfig;print(1 if sysconfig.get_config_var('Py_GIL_DISABLED') else 0)"
+        OUTPUT_VARIABLE OSQP_PY_GIL_DISABLED
+        OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+endif()
+if(OSQP_PY_GIL_DISABLED STREQUAL "1")
+    message(STATUS "Free-threaded Python detected; defining Py_GIL_DISABLED for all targets")
+
+    # (1) Define Py_GIL_DISABLED for EVERY translation unit that includes
+    # <Python.h>, not just the pybind11 module. OSQP's C sources pull in
+    # cmake/memory.h and cmake/printing.h (which include <Python.h>) and are
+    # compiled into osqpstatic/OSQPLIB. Without the macro, the MSVC auto-link
+    # pragma in pyconfig.h bakes a "pythonXY.lib" (no "t") dependency into those
+    # objects, and the final link can't satisfy it -> LNK1104. A directory-scope
+    # definition set before the OSQP subproject is added reaches all targets.
+    add_compile_definitions(Py_GIL_DISABLED=1)
+
+    # (2) Steer the FindPython invocation that pybind11 performs below to the
+    # gil_disabled ABI so the module's own import library resolves to
+    # pythonXYt.lib. The Python_FIND_ABI 4-tuple's last element selects
+    # gil_disabled (requires CMake >= 3.30). Windows-only ABI naming concern.
+    if(WIN32)
+        set(Python_FIND_ABI "OFF" "ANY" "ANY" "ON")
+    endif()
+endif()
+
 find_package(pybind11 CONFIG REQUIRED)
 
 # 03/05/24 - Workaround because OSQP CMakeLists.txt is using old variable names
