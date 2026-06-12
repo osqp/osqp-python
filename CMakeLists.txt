@@ -20,10 +20,6 @@ include(FetchContent)
 # 03/05/24 - Use modern python discovery
 set(PYBIND11_FINDPYTHON "ON")
 
-# Free-threaded (no-GIL) CPython on Windows ships only pythonXYt.lib (note the
-# trailing "t"); the regular pythonXY.lib is absent. scikit-build-core seeds
-# Python_EXECUTABLE in the initial cache, so detect a free-threaded interpreter
-# up front and handle the two ways a stale "pythonXY.lib" reference creeps in.
 if(DEFINED Python_EXECUTABLE)
     execute_process(
         COMMAND "${Python_EXECUTABLE}" -c
