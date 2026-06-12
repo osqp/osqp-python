@@ -70,11 +70,6 @@ minimum-version = "0.8"
 wheel.install-dir = "osqp"
 sdist.include = ["src/osqp/_version.py"]
 
-[[tool.scikit-build.overrides]]
-if.platform-system="win32"
-if.abi-flags="t"
-cmake.version = ">=4.2"
-
 [tool.scikit-build.cmake.define]
 OSQP_ALGEBRA_BACKEND = "builtin"
 OSQP_EXT_MODULE_NAME = "ext_builtin"
