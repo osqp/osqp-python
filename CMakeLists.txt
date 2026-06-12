@@ -21,14 +21,9 @@ include(FetchContent)
 set(PYBIND11_FINDPYTHON "ON")
 
 # Free-threaded (no-GIL) CPython on Windows ships only pythonXYt.lib (note the
-# trailing "t"); the regular pythonXY.lib is absent. Unless FindPython is asked
-# to search the gil_disabled ABI, it resolves the extension module's import
-# library to the missing pythonXY.lib and the link fails with
-# "LNK1104: cannot open file 'pythonXY.lib'". scikit-build-core seeds
+# trailing "t"); the regular pythonXY.lib is absent. scikit-build-core seeds
 # Python_EXECUTABLE in the initial cache, so detect a free-threaded interpreter
-# here and steer the FindPython invocation that pybind11 performs below to the
-# correct ABI. The Python_FIND_ABI 4-tuple's last element selects gil_disabled
-# (requires CMake >= 3.30). No-op on regular interpreters.
+# up front and handle the two ways a stale "pythonXY.lib" reference creeps in.
 if(DEFINED Python_EXECUTABLE)
     execute_process(
         COMMAND "${Python_EXECUTABLE}" -c
@@ -37,9 +32,25 @@ if(DEFINED Python_EXECUTABLE)
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
 endif()
-if(WIN32 AND OSQP_PY_GIL_DISABLED STREQUAL "1")
-    message(STATUS "Free-threaded Python detected; searching gil_disabled ABI (pythonXYt.lib)")
-    set(Python_FIND_ABI "OFF" "ANY" "ANY" "ON")
+if(OSQP_PY_GIL_DISABLED STREQUAL "1")
+    message(STATUS "Free-threaded Python detected; defining Py_GIL_DISABLED for all targets")
+
+    # (1) Define Py_GIL_DISABLED for EVERY translation unit that includes
+    # <Python.h>, not just the pybind11 module. OSQP's C sources pull in
+    # cmake/memory.h and cmake/printing.h (which include <Python.h>) and are
+    # compiled into osqpstatic/OSQPLIB. Without the macro, the MSVC auto-link
+    # pragma in pyconfig.h bakes a "pythonXY.lib" (no "t") dependency into those
+    # objects, and the final link can't satisfy it -> LNK1104. A directory-scope
+    # definition set before the OSQP subproject is added reaches all targets.
+    add_compile_definitions(Py_GIL_DISABLED=1)
+
+    # (2) Steer the FindPython invocation that pybind11 performs below to the
+    # gil_disabled ABI so the module's own import library resolves to
+    # pythonXYt.lib. The Python_FIND_ABI 4-tuple's last element selects
+    # gil_disabled (requires CMake >= 3.30). Windows-only ABI naming concern.
+    if(WIN32)
+        set(Python_FIND_ABI "OFF" "ANY" "ANY" "ON")
+    endif()
 endif()
 
 find_package(pybind11 CONFIG REQUIRED)
@@ -62,15 +73,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/src/bindings.cpp.in
                ${CMAKE_CURRENT_BINARY_DIR}/src/bindings.cpp)
 pybind11_add_module(${OSQP_EXT_MODULE_NAME} ${CMAKE_CURRENT_BINARY_DIR}/src/bindings.cpp)
 install(TARGETS ${OSQP_EXT_MODULE_NAME} DESTINATION . COMPONENT python)
-
-# Also define Py_GIL_DISABLED at compile time on free-threaded interpreters.
-# The MSVC auto-link pragma in pyconfig.h selects pythonXY.lib (no "t") unless
-# this macro is set, and the extension must be built with the same flag the
-# interpreter uses to keep the C ABI in sync. Reuses OSQP_PY_GIL_DISABLED
-# computed above. No-op on non-free-threaded interpreters.
-if(OSQP_PY_GIL_DISABLED STREQUAL "1")
-    target_compile_definitions(${OSQP_EXT_MODULE_NAME} PRIVATE Py_GIL_DISABLED=1)
-endif()
 
 # TODO: We shouldn't have to do this once the interfaces are set up correctly
 if(${OSQP_ALGEBRA_BACKEND} STREQUAL "builtin")
