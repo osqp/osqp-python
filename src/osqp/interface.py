@@ -7,6 +7,7 @@ import subprocess
 import warnings
 import importlib
 import importlib.resources
+import importlib.util
 import numpy as np
 import scipy.sparse as spa
 from jinja2 import Environment, PackageLoader, select_autoescape
@@ -446,6 +447,31 @@ class OSQP:
             with open(os.path.join(output_folder, template_base_name), 'w') as f:
                 f.write(template.render(**kwargs))
 
+    def _codegen_src_path(self):
+        """Locate the bundled C codegen sources (``codegen_src``)."""
+
+        # https://github.com/python/importlib_resources/issues/85
+        try:
+            candidate = importlib.resources.files('osqp.codegen').joinpath('codegen_src')
+            if os.path.isdir(str(candidate)):
+                return str(candidate)
+        except AttributeError:
+            with importlib.resources.path('osqp.codegen', 'codegen_src') as candidate:
+                if os.path.isdir(str(candidate)):
+                    return str(candidate)
+
+        # Editable install: codegen_src is installed alongside the builtin extension.
+        spec = importlib.util.find_spec('osqp.ext_builtin')
+        if spec is not None and spec.origin is not None:
+            candidate = os.path.join(os.path.dirname(spec.origin), 'codegen', 'codegen_src')
+            if os.path.isdir(candidate):
+                return candidate
+
+        raise FileNotFoundError(
+            'Could not locate the bundled codegen sources (codegen_src). '
+            'Ensure osqp was built with codegen support (OSQP_CODEGEN).'
+        )
+
     def codegen(
         self,
         folder,
@@ -478,14 +504,8 @@ class OSQP:
 
         folder = os.path.abspath(folder)
         if include_codegen_src:
-            # https://github.com/python/importlib_resources/issues/85
-            try:
-                codegen_src_path = importlib.resources.files('osqp.codegen').joinpath('codegen_src')
-                shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
-            except AttributeError:
-                handle = importlib.resources.path('osqp.codegen', 'codegen_src')
-                with handle as codegen_src_path:
-                    shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
+            codegen_src_path = self._codegen_src_path()
+            shutil.copytree(codegen_src_path, folder, dirs_exist_ok=force_rewrite)
 
         # The C codegen call expects the folder to exist and have a trailing slash
         os.makedirs(folder, exist_ok=True)
