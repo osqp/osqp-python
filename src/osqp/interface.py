@@ -25,6 +25,14 @@ _ALGEBRA_MODULES = {
 OSQP_ALGEBRA_BACKEND = os.environ.get('OSQP_ALGEBRA_BACKEND')  # If envvar is set, that algebra is used by default
 
 
+def is_csc(sp_mat):
+    """Check if the sparse matrix or array is in the csc format."""
+    if hasattr(spa, 'csc_array'):
+        return isinstance(sp_mat, (spa.csc_matrix, spa.csc_array))
+    else:
+        return isinstance(sp_mat, spa.csc_matrix)
+
+
 def algebra_available(algebra):
     assert algebra in _ALGEBRAS, f'Unknown algebra {algebra}'
     module = _ALGEBRA_MODULES[algebra]
@@ -222,10 +230,10 @@ class OSQP:
             P = spa.triu(P, format='csc')
 
         # Convert matrices in CSC form to individual pointers
-        if not spa.isspmatrix_csc(P):
+        if not is_csc(P):
             warnings.warn('Converting sparse P to a CSC matrix. This may take a while...')
             P = P.tocsc()
-        if not spa.isspmatrix_csc(A):
+        if not is_csc(A):
             warnings.warn('Converting sparse A to a CSC matrix. This may take a while...')
             A = A.tocsc()
 

@@ -8,6 +8,14 @@ import numpy as np
 from scipy import sparse
 
 
+def is_csc(sp_mat):
+    """Check if the sparse matrix or array is in the csc format."""
+    if hasattr(sparse, 'csc_array'):
+        return isinstance(sp_mat, (sparse.csc_matrix, sparse.csc_array))
+    else:
+        return isinstance(sp_mat, sparse.csc_matrix)
+
+
 class OSQP(object):
     def __init__(self):
         self._model = _osqp.OSQP()
@@ -104,10 +112,10 @@ class OSQP(object):
             raise TypeError('A is required to be a sparse matrix')
 
         # Convert matrices in CSC form and to individual pointers
-        if not sparse.isspmatrix_csc(P):
+        if not is_csc(P):
             warn('Converting sparse P to a CSC ' + '(compressed sparse column) matrix. (It may take a while...)')
             P = P.tocsc()
-        if not sparse.isspmatrix_csc(A):
+        if not is_csc(A):
             warn('Converting sparse A to a CSC ' + '(compressed sparse column) matrix. (It may take a while...)')
             A = A.tocsc()
 
