@@ -1,5 +1,5 @@
 [build-system]
-requires = ["scikit-build-core", "pybind11>=2.13"]
+requires = ["scikit-build-core", "pybind11>=3.0.0"]
 build-backend = "scikit_build_core.build"
 
 [project]
@@ -20,9 +20,12 @@ authors = [
 dependencies = [
     "jinja2",
     "numpy>=1.7",
+    "numpy>=2.1.0; python_version >= '3.14'",
     "scipy>=0.13.2",
+    "scipy>=1.15.2; python_version >= '3.14'",
     "setuptools",
     "joblib",
+    "joblib>=1.4.2; python_version >= '3.14'",
 ]
 
 [project.urls]
