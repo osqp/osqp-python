@@ -90,7 +90,7 @@ OSQPInt update_data_mat(py::object P_x, py::object P_i, py::object A_x, py::obje
 }
 #endif
 
-PYBIND11_MODULE({{extension_name}}, m) {
+PYBIND11_MODULE({{extension_name}}, m, py::mod_gil_not_used()) {
     m.def("solve", &solve);
     m.def("update_data_vec", &update_data_vec, "Update q/l/u", py::arg("q") = py::none(), py::arg("l") = py::none(), py::arg("u") = py::none());
 #if OSQP_EMBEDDED_MODE == 2
