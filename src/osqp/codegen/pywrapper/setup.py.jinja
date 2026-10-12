@@ -33,11 +33,13 @@ class CmdCMakeBuild(build_ext):
             build_args += [f'--config={cfg}']
 
         if system() == "Windows":
-            cmake_args += ['-G', 'Visual Studio 17 2022']
+            generator = os.environ.get('CMAKE_GENERATOR', 'Visual Studio 17 2022')
+            cmake_args += ['-G', generator]
             cmake_args += ['-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{}={}'.format(cfg.upper(), extdir)]
-            if sys.maxsize > 2 ** 32:
-                cmake_args += ['-A', 'x64']
-            build_args += ['--', '/m']
+            if generator.startswith('Visual Studio'):
+                platform = {'win32': 'Win32', 'win-amd64': 'x64', 'win-arm64': 'ARM64'}[self.plat_name]
+                cmake_args += ['-A', platform]
+            build_args += ['--parallel', '2']
         else:
             cmake_args += ['-DCMAKE_BUILD_TYPE=' + cfg]
             build_args += ['--', '-j2']
