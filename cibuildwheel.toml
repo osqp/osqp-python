@@ -1,6 +1,9 @@
 [tool.cibuildwheel]
 build = "cp3*"
-skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*"]
+# cp315t: the adjoint-derivative tests crash on free-threaded 3.15, because OSQP
+# frees malloc() buffers with c_free (PyMem_RawFree here). Re-enable once OSQP
+# includes the fix (osqp/osqp#799).
+skip = ["*-win32", "*-manylinux_i686", "*-musllinux_*", "cp315t-*"]
 build-verbosity = 1
 before-build = "rm -rf {package}/osqp_sources/build"
 # Install CPU-only version of torch beforehand since that allows cibuildwheel
@@ -13,7 +16,7 @@ test-command = "python -m pytest -s {project}/src/osqp/tests"
 [[tool.cibuildwheel.overrides]]
 # Platforms on which installing pytorch is problematic, so we skip testing
 # the `osqp.nn` module
-select = "*manylinux_aarch64 cp313-macosx_x86_64 cp314-macosx_x86_64"
+select = "*manylinux_aarch64 cp313-macosx_x86_64 cp314-macosx_x86_64 cp315-macosx_x86_64"
 before-test = 'pip install scipy --prefer-binary'
 test-groups = ["test-no-nn"]
 test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/nn_test.py"
@@ -21,7 +24,7 @@ test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-colle
 [[tool.cibuildwheel.overrides]]
 # Free-threaded Python: torch support is experimental and not available
 # on all platforms, so skip the nn tests.
-select = "cp313t-* cp314t-*"
+select = "cp313t-* cp314t-* cp315t-*"
 before-test = 'pip install scipy --prefer-binary'
 test-groups = ["test-no-nn"]
 test-command = "python -m pytest -s {project}/src/osqp/tests --continue-on-collection-errors --ignore={project}/src/osqp/tests/nn_test.py"
